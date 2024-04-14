@@ -47,7 +47,11 @@ namespace Project_v1.Controllers {
                     return StatusCode(StatusCodes.Status403Forbidden, new Response { Status = "Error", Message = "Invalid password!" });
                 }
 
-                return Ok(new { Token = _tokenService.CreateToken(existingUser) });
+                var role = await _userManager.GetRolesAsync(existingUser);
+
+                return Ok(new { UserName = existingUser.UserName,
+                                Role = role[0],
+                                Token = _tokenService.CreateToken(existingUser) });
             } catch (Exception e) {
                 return StatusCode(StatusCodes.Status500InternalServerError, new Response { Status = "Error", Message = "An error occurred while processing your request." + e });
             }
