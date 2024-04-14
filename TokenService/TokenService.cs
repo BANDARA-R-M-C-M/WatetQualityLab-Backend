@@ -27,7 +27,7 @@ namespace Project_v1.TokenService {
             var roles = _userManager.GetRolesAsync(user).Result;
 
             foreach (var role in roles) {
-                claims.Add(new Claim(ClaimTypes.Role, role));
+                claims.Add(new Claim("Role", role));
             }
             
             var credentials = new SigningCredentials(_key, SecurityAlgorithms.HmacSha256Signature);

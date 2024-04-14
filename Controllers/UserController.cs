@@ -31,7 +31,7 @@ namespace Project_v1.Controllers {
 
         [HttpPost]
         [Route("login")]
-        public async Task<IActionResult> Login(Login loginUser) {
+        public async Task<IActionResult> Login([FromBody]Login loginUser) {
             try {
                 if (loginUser == null || !ModelState.IsValid) {
                     return BadRequest(new Response { Status = "Error", Message = "Invalid user data!" });
@@ -59,7 +59,7 @@ namespace Project_v1.Controllers {
 
         [HttpPost]
         [Route("signup")]
-        public async Task<IActionResult> Signup(Signup registeredUser) {
+        public async Task<IActionResult> Signup([FromBody]Signup registeredUser) {
             try {
                 if (registeredUser == null || !ModelState.IsValid) {
                     return BadRequest(new Response { Status = "Error", Message = "Invalid user data!" });
@@ -90,13 +90,86 @@ namespace Project_v1.Controllers {
 
                 await _userManager.AddToRoleAsync(newUser, registeredUser.Role);
 
-                /*return Ok(new { Token = _tokenService.CreateToken(newUser) });*/
-
                 return StatusCode(StatusCodes.Status201Created, new Response { Status = "Success", Message = "User created successfully!" });
             } catch (Exception e) {
                 return StatusCode(StatusCodes.Status500InternalServerError, new Response { Status = "Error", Message = "An error occurred while processing your request." + e });
             }
         }
 
+        [HttpGet]
+        [Route("getmlts")]
+        public async Task<IActionResult> GetMLTs() {
+            try {
+                var mlts = await _userManager.GetUsersInRoleAsync("MLT");
+                var usernames = mlts.Select(m => m.UserName);
+                return Ok(usernames);
+            } catch (Exception e) {
+                return StatusCode(StatusCodes.Status500InternalServerError, new Response { Status = "Error", Message = "An error occurred while processing your request." + e });
+            }
+        }
+
+        [HttpGet]
+        [Route("getphis")]
+        public async Task<IActionResult> GetPHIs() {
+            try {
+                var phis = await _userManager.GetUsersInRoleAsync("PHI");
+                var usernames = phis.Select(p => p.UserName);
+                return Ok(usernames);
+            } catch (Exception e) {
+                return StatusCode(StatusCodes.Status500InternalServerError, new Response { Status = "Error", Message = "An error occurred while processing your request." + e });
+            }
+        }
+
+        [HttpGet]
+        [Route("getmohsupervisors")]
+        public async Task<IActionResult> GetAdmins() {
+            try {
+                var mohsupervisors = await _userManager.GetUsersInRoleAsync("MOH_Supervisor");
+                var usernames = mohsupervisors.Select(m => m.UserName);
+                return Ok(usernames);
+            } catch (Exception e) {
+                return StatusCode(StatusCodes.Status500InternalServerError, new Response { Status = "Error", Message = "An error occurred while processing your request." + e });
+            }
+        }
+
+        [HttpPut]
+        [Route("updateuser/{id}")]
+        public async Task<IActionResult> UpdateUser([FromRoute] String id,[FromBody]SystemUser updatedUser) {
+            try {
+                var user = await _userManager.FindByIdAsync(id);
+
+                if (user == null) {
+                    return StatusCode(StatusCodes.Status404NotFound, new Response { Status = "Error", Message = "User not found!" });
+                }
+
+                user.UserName = updatedUser.UserName;
+                user.Email = updatedUser.Email;
+                user.PhoneNumber = updatedUser.PhoneNumber;
+
+                await _userManager.UpdateAsync(user);
+
+                return Ok(new Response { Status = "Success", Message = "User updated successfully!" });
+            } catch (Exception e) {
+                return StatusCode(StatusCodes.Status500InternalServerError, new Response { Status = "Error", Message = "An error occurred while processing your request." + e });
+            }
+        }
+
+        [HttpDelete]
+        [Route("deleteuser/{id}")]
+        public async Task<IActionResult> DeleteUser([FromRoute] String id) {
+            try {
+                var user = await _userManager.FindByIdAsync(id);
+
+                if (user == null) {
+                    return StatusCode(StatusCodes.Status404NotFound, new Response { Status = "Error", Message = "User not found!" });
+                }
+
+                await _userManager.DeleteAsync(user);
+
+                return Ok(new Response { Status = "Success", Message = "User deleted successfully!" });
+            } catch (Exception e) {
+                return StatusCode(StatusCodes.Status500InternalServerError, new Response { Status = "Error", Message = "An error occurred while processing your request." + e });
+            }
+        }
     }
 }
