@@ -49,7 +49,7 @@ namespace Project_v1.Controllers {
 
                 var role = await _userManager.GetRolesAsync(existingUser);
 
-                return Ok(new { UserName = existingUser.UserName,
+                return Ok(new { Username = existingUser.UserName,
                                 Role = role[0],
                                 Token = _tokenService.CreateToken(existingUser) });
             } catch (Exception e) {
@@ -122,7 +122,7 @@ namespace Project_v1.Controllers {
 
         [HttpGet]
         [Route("getmohsupervisors")]
-        public async Task<IActionResult> GetAdmins() {
+        public async Task<IActionResult> GetMOHSupervisors() {
             try {
                 var mohsupervisors = await _userManager.GetUsersInRoleAsync("MOH_Supervisor");
                 var usernames = mohsupervisors.Select(m => m.UserName);
@@ -142,11 +142,16 @@ namespace Project_v1.Controllers {
                     return StatusCode(StatusCodes.Status404NotFound, new Response { Status = "Error", Message = "User not found!" });
                 }
 
+                if(updatedUser == null || !ModelState.IsValid) {
+                    return BadRequest(new Response { Status = "Error", Message = "Invalid user data!" });
+                }
+
                 user.UserName = updatedUser.UserName;
                 user.Email = updatedUser.Email;
                 user.PhoneNumber = updatedUser.PhoneNumber;
 
                 await _userManager.UpdateAsync(user);
+                await _context.SaveChangesAsync();
 
                 return Ok(new Response { Status = "Success", Message = "User updated successfully!" });
             } catch (Exception e) {
@@ -165,6 +170,7 @@ namespace Project_v1.Controllers {
                 }
 
                 await _userManager.DeleteAsync(user);
+                await _context.SaveChangesAsync();
 
                 return Ok(new Response { Status = "Success", Message = "User deleted successfully!" });
             } catch (Exception e) {
