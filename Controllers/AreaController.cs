@@ -64,7 +64,8 @@ namespace Project_v1.Controllers {
 
                 var moharea = new MOHArea {
                     MOHAreaID = moh_area.MOHAreaID,
-                    MOHArea_name = moh_area.MOHArea_name
+                    MOHArea_name = moh_area.MOHArea_name,
+                    LabID = moh_area.LabID
                 };
 
                 await _context.MOHAreas.AddAsync(moharea);
@@ -94,7 +95,6 @@ namespace Project_v1.Controllers {
                     PHIAreaID = phia_area.PHIAreaID,
                     PHIArea_name = phia_area.PHIArea_name,
                     MOHAreaId = phia_area.MOHAreaId,
-                    LabID = phia_area.LabID
                 };
 
                 await _context.PHIAreas.AddAsync(phiaArea);

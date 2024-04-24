@@ -11,6 +11,7 @@ namespace Project_v1.Models {
         /*public virtual ICollection<Mlt> Mlts { get; set; } = new List<Mlt>();*/
         public virtual ICollection<SystemUser> Mlts { get; set; } = new List<SystemUser>();
         public virtual ICollection<Report> Reports { get; set; } = new List<Report>();
-        public virtual ICollection<PHIArea> PHIAreas { get; set; } = new List<PHIArea>();
+        /*public virtual ICollection<PHIArea> PHIAreas { get; set; } = new List<PHIArea>();*/
+        public virtual ICollection<MOHArea> MOHAreas { get; set; } = new List<MOHArea>();//PHIArea kiyana eka MOHArea kiyl wens kara migration eka dunne na
     }
 }

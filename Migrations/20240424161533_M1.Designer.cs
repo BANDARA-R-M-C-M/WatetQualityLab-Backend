@@ -12,8 +12,8 @@ using Project_v1.Data;
 namespace Project_v1.Migrations
 {
     [DbContext(typeof(ApplicationDBContext))]
-    [Migration("20240413165003_M5")]
-    partial class M5
+    [Migration("20240424161533_M1")]
+    partial class M1
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -55,25 +55,25 @@ namespace Project_v1.Migrations
                     b.HasData(
                         new
                         {
-                            Id = "973dd9ff-c60d-45c1-961f-53e68c4ac1ef",
+                            Id = "c9a188f4-5814-4b3c-822c-f6c25ad272ae",
                             Name = "Admin",
                             NormalizedName = "ADMIN"
                         },
                         new
                         {
-                            Id = "33ac6f4c-73c9-4032-8add-3ad2c7e496b8",
+                            Id = "0dec872b-c518-401d-a258-cc9e2b101b22",
                             Name = "Mlt",
                             NormalizedName = "MLT"
                         },
                         new
                         {
-                            Id = "5d0d5bb6-77e1-45e1-8ff4-c1fb2d3342db",
+                            Id = "0cc92a94-dd5f-4949-873d-7a75ff2360e2",
                             Name = "MohSupervisor",
                             NormalizedName = "MOH_Supervisor"
                         },
                         new
                         {
-                            Id = "96d6a490-0c3d-4f7c-8d86-004b7cef5804",
+                            Id = "137a709e-00b5-43c9-b2c5-9b1c216ddebf",
                             Name = "Phi",
                             NormalizedName = "PHI"
                         });
@@ -212,11 +212,17 @@ namespace Project_v1.Migrations
                     b.Property<string>("MOHAreaID")
                         .HasColumnType("nvarchar(450)");
 
+                    b.Property<string>("LabID")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
                     b.Property<string>("MOHArea_name")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("MOHAreaID");
+
+                    b.HasIndex("LabID");
 
                     b.ToTable("MOHAreas");
                 });
@@ -273,11 +279,7 @@ namespace Project_v1.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("SampleRefId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("SampleRefId1")
+                    b.Property<string>("SampleId")
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
@@ -285,14 +287,14 @@ namespace Project_v1.Migrations
 
                     b.HasIndex("LabId");
 
-                    b.HasIndex("SampleRefId1");
+                    b.HasIndex("SampleId");
 
                     b.ToTable("Reports");
                 });
 
             modelBuilder.Entity("Project_v1.Models.Sample", b =>
                 {
-                    b.Property<string>("SampleRefId")
+                    b.Property<string>("SampleId")
                         .HasColumnType("nvarchar(450)");
 
                     b.Property<bool>("Acceptance")
@@ -324,7 +326,7 @@ namespace Project_v1.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.HasKey("SampleRefId");
+                    b.HasKey("SampleId");
 
                     b.HasIndex("PHIAreaId");
 
@@ -343,11 +345,6 @@ namespace Project_v1.Migrations
                         .IsConcurrencyToken()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("Discriminator")
-                        .IsRequired()
-                        .HasMaxLength(21)
-                        .HasColumnType("nvarchar(21)");
-
                     b.Property<string>("Email")
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)");
@@ -355,11 +352,17 @@ namespace Project_v1.Migrations
                     b.Property<bool>("EmailConfirmed")
                         .HasColumnType("bit");
 
+                    b.Property<string>("LabID")
+                        .HasColumnType("nvarchar(450)");
+
                     b.Property<bool>("LockoutEnabled")
                         .HasColumnType("bit");
 
                     b.Property<DateTimeOffset?>("LockoutEnd")
                         .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("MOHAreaId")
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("NormalizedEmail")
                         .HasMaxLength(256)
@@ -368,6 +371,9 @@ namespace Project_v1.Migrations
                     b.Property<string>("NormalizedUserName")
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)");
+
+                    b.Property<string>("PHIAreaId")
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("PasswordHash")
                         .HasColumnType("nvarchar(max)");
@@ -390,6 +396,10 @@ namespace Project_v1.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("LabID");
+
+                    b.HasIndex("MOHAreaId");
+
                     b.HasIndex("NormalizedEmail")
                         .HasDatabaseName("EmailIndex");
 
@@ -398,47 +408,9 @@ namespace Project_v1.Migrations
                         .HasDatabaseName("UserNameIndex")
                         .HasFilter("[NormalizedUserName] IS NOT NULL");
 
-                    b.ToTable("AspNetUsers", (string)null);
-
-                    b.HasDiscriminator<string>("Discriminator").HasValue("SystemUser");
-
-                    b.UseTphMappingStrategy();
-                });
-
-            modelBuilder.Entity("Project_v1.Models.Users.Mlt", b =>
-                {
-                    b.HasBaseType("Project_v1.Models.Users.SystemUser");
-
-                    b.Property<string>("LabID")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.HasIndex("LabID");
-
-                    b.HasDiscriminator().HasValue("Mlt");
-                });
-
-            modelBuilder.Entity("Project_v1.Models.Users.Moh_supervisor", b =>
-                {
-                    b.HasBaseType("Project_v1.Models.Users.SystemUser");
-
-                    b.Property<string>("MOHAreaId")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.HasIndex("MOHAreaId");
-
-                    b.HasDiscriminator().HasValue("Moh_supervisor");
-                });
-
-            modelBuilder.Entity("Project_v1.Models.Users.Phi", b =>
-                {
-                    b.HasBaseType("Project_v1.Models.Users.SystemUser");
-
-                    b.Property<string>("PHIAreaId")
-                        .HasColumnType("nvarchar(450)");
-
                     b.HasIndex("PHIAreaId");
 
-                    b.HasDiscriminator().HasValue("Phi");
+                    b.ToTable("AspNetUsers", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -492,6 +464,17 @@ namespace Project_v1.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("Project_v1.Models.MOHArea", b =>
+                {
+                    b.HasOne("Project_v1.Models.Lab", "Lab")
+                        .WithMany("MOHAreas")
+                        .HasForeignKey("LabID")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Lab");
+                });
+
             modelBuilder.Entity("Project_v1.Models.PHIArea", b =>
                 {
                     b.HasOne("Project_v1.Models.MOHArea", "MOHArea")
@@ -513,7 +496,7 @@ namespace Project_v1.Migrations
 
                     b.HasOne("Project_v1.Models.Sample", "Sample")
                         .WithMany("Reports")
-                        .HasForeignKey("SampleRefId1")
+                        .HasForeignKey("SampleId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -533,35 +516,31 @@ namespace Project_v1.Migrations
                     b.Navigation("PHIArea");
                 });
 
-            modelBuilder.Entity("Project_v1.Models.Users.Mlt", b =>
+            modelBuilder.Entity("Project_v1.Models.Users.SystemUser", b =>
                 {
                     b.HasOne("Project_v1.Models.Lab", "Lab")
                         .WithMany("Mlts")
                         .HasForeignKey("LabID");
 
-                    b.Navigation("Lab");
-                });
-
-            modelBuilder.Entity("Project_v1.Models.Users.Moh_supervisor", b =>
-                {
                     b.HasOne("Project_v1.Models.MOHArea", "MOHArea")
                         .WithMany("Moh_supervisors")
                         .HasForeignKey("MOHAreaId");
 
-                    b.Navigation("MOHArea");
-                });
-
-            modelBuilder.Entity("Project_v1.Models.Users.Phi", b =>
-                {
                     b.HasOne("Project_v1.Models.PHIArea", "PHIArea")
                         .WithMany("Phis")
                         .HasForeignKey("PHIAreaId");
+
+                    b.Navigation("Lab");
+
+                    b.Navigation("MOHArea");
 
                     b.Navigation("PHIArea");
                 });
 
             modelBuilder.Entity("Project_v1.Models.Lab", b =>
                 {
+                    b.Navigation("MOHAreas");
+
                     b.Navigation("Mlts");
 
                     b.Navigation("Reports");

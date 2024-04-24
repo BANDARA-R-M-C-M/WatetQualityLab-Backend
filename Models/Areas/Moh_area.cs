@@ -2,5 +2,6 @@
     public class Moh_area {
         public string MOHAreaID { get; set; }
         public string MOHArea_name { get; set; }
+        public string LabID { get; set; }
     }
 }

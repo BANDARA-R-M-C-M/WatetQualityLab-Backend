@@ -3,7 +3,7 @@
 namespace Project_v1.Models {
     public class Sample {
         [Key]
-        public string SampleRefId { get; set; }
+        public string SampleId { get; set; }
         public string StateOfChlorination { get; set; }
         public DateOnly DateOfCollection { get; set; }
         public string CatagoryOfUse { get; set; }
