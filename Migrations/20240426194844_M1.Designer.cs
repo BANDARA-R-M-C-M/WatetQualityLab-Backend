@@ -12,7 +12,7 @@ using Project_v1.Data;
 namespace Project_v1.Migrations
 {
     [DbContext(typeof(ApplicationDBContext))]
-    [Migration("20240424161533_M1")]
+    [Migration("20240426194844_M1")]
     partial class M1
     {
         /// <inheritdoc />
@@ -28,7 +28,6 @@ namespace Project_v1.Migrations
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
                 {
                     b.Property<string>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("ConcurrencyStamp")
@@ -55,25 +54,25 @@ namespace Project_v1.Migrations
                     b.HasData(
                         new
                         {
-                            Id = "c9a188f4-5814-4b3c-822c-f6c25ad272ae",
+                            Id = "R1",
                             Name = "Admin",
                             NormalizedName = "ADMIN"
                         },
                         new
                         {
-                            Id = "0dec872b-c518-401d-a258-cc9e2b101b22",
+                            Id = "R2",
                             Name = "Mlt",
                             NormalizedName = "MLT"
                         },
                         new
                         {
-                            Id = "0cc92a94-dd5f-4949-873d-7a75ff2360e2",
+                            Id = "R3",
                             Name = "MohSupervisor",
                             NormalizedName = "MOH_Supervisor"
                         },
                         new
                         {
-                            Id = "137a709e-00b5-43c9-b2c5-9b1c216ddebf",
+                            Id = "R4",
                             Name = "Phi",
                             NormalizedName = "PHI"
                         });
@@ -297,13 +296,14 @@ namespace Project_v1.Migrations
                     b.Property<string>("SampleId")
                         .HasColumnType("nvarchar(450)");
 
-                    b.Property<bool>("Acceptance")
-                        .HasColumnType("bit");
+                    b.Property<string>("Acceptance")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
-                    b.Property<DateOnly>("AnalyzedDate")
-                        .HasColumnType("date");
+                    b.Property<DateTime>("AnalyzedDate")
+                        .HasColumnType("datetime2");
 
-                    b.Property<string>("CatagoryOfUse")
+                    b.Property<string>("CatagoryOfSource")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
@@ -311,18 +311,18 @@ namespace Project_v1.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<DateOnly>("DateOfCollection")
-                        .HasColumnType("date");
+                    b.Property<DateTime>("DateOfCollection")
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("PHIAreaId")
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
-                    b.Property<string>("Phi_Area")
+                    b.Property<string>("StateOfChlorination")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("StateOfChlorination")
+                    b.Property<string>("phiAreaName")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
