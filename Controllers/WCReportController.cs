@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -62,6 +63,15 @@ namespace Project_v1.Controllers {
 
                 var samples = await _context.Samples
                     .Where(sample => phiAreaIds.Contains(sample.PHIAreaId))
+                    .Select(sample => new {
+                        sample.SampleId,
+                        sample.StateOfChlorination,
+                        sample.DateOfCollection,
+                        sample.CatagoryOfSource,
+                        sample.CollectingSource,
+                        sample.phiAreaName,
+                        sample.Acceptance
+                    })
                     .ToListAsync();
 
                 return Ok(samples);
@@ -69,7 +79,7 @@ namespace Project_v1.Controllers {
                 return StatusCode(StatusCodes.Status500InternalServerError, new Response { Status = "Error", Message = "An error occurred while processing your request." + e });
             }
         }
-
+                                                                             
         [HttpPost]
         [Route("AddWCSample")]
         public async Task<IActionResult> AddWCSample([FromBody] Wc_sample wcsample) {
@@ -79,12 +89,13 @@ namespace Project_v1.Controllers {
                 }
 
                 var sample = new Sample {
-                    SampleId = wcsample.SampleRefId,
+                    SampleId = wcsample.SampleId,
                     StateOfChlorination = wcsample.StateOfChlorination,
-                    DateOfCollection = DateOnly.ParseExact(wcsample.DateOfCollection, "yyyy-mm-dd", null),
-                    CatagoryOfUse = wcsample.CatagoryOfUse,
+                    DateOfCollection = wcsample.DateOfCollection,
+                    CatagoryOfSource = wcsample.CatagoryOfSource,
                     CollectingSource = wcsample.CollectingSource,
-                    Phi_Area = wcsample.Phi_Area,
+                    Acceptance = "Pending",
+                    phiAreaName = wcsample.phiAreaName,
                     PHIAreaId = wcsample.PHIAreaID
                 };
 
@@ -121,6 +132,26 @@ namespace Project_v1.Controllers {
                 await _context.SaveChangesAsync();
 
                 return Ok(new Response { Status = "Success", Message = "WC Report added successfully!" });
+            } catch (Exception e) {
+                return StatusCode(StatusCodes.Status500InternalServerError, new Response { Status = "Error", Message = "An error occurred while processing your request." + e });
+            }
+        }
+
+        [HttpPut]
+        [Route("updateSampleStatus")]
+        public async Task<IActionResult> UpdateSampleStatus([FromBody] SampleStatus sampleStatus) {
+            try {
+                var sampleToUpdate = await _context.Samples.FindAsync(sampleStatus.SampleId);
+
+                if (sampleToUpdate == null) {
+                    return NotFound(new Response { Status = "Error", Message = "Sample not found!" });
+                }
+
+                sampleToUpdate.Acceptance = sampleStatus.Status;
+
+                await _context.SaveChangesAsync();
+
+                return Ok(new Response { Status = "Success", Message = "Sample acceptance updated successfully!" });
             } catch (Exception e) {
                 return StatusCode(StatusCodes.Status500InternalServerError, new Response { Status = "Error", Message = "An error occurred while processing your request." + e });
             }

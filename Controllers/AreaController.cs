@@ -32,11 +32,16 @@ namespace Project_v1.Controllers {
         [Route("GetPHIAreas")]
         public async Task<IActionResult> GetPHIAreas() {
             try {
-                var phiaareas = await _context.PHIAreas.Include(PHIArea => PHIArea.Samples).ToListAsync();
+                var phiareas = await _context.PHIAreas.ToListAsync();
 
-                var Phi_areas = phiaareas.Select(s => s.PHIArea_name).ToList();
+                var phiAreas = phiareas
+                .Select(phiarea => new {
+                    phiarea.PHIAreaID,
+                    phiarea.PHIArea_name
+                })
+                .ToList();
 
-                return Ok(phiaareas);
+                return Ok(phiAreas);
             } catch (Exception e) {
                 return StatusCode(StatusCodes.Status500InternalServerError, new Response { Status = "Error", Message = "An error occurred while processing your request." + e });
             }

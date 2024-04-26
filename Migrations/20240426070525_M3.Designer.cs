@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Project_v1.Data;
 
@@ -11,9 +12,11 @@ using Project_v1.Data;
 namespace Project_v1.Migrations
 {
     [DbContext(typeof(ApplicationDBContext))]
-    partial class ApplicationDBContextModelSnapshot : ModelSnapshot
+    [Migration("20240426070525_M3")]
+    partial class M3
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -297,8 +300,8 @@ namespace Project_v1.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<DateTime>("AnalyzedDate")
-                        .HasColumnType("datetime2");
+                    b.Property<DateOnly>("AnalyzedDate")
+                        .HasColumnType("date");
 
                     b.Property<string>("CatagoryOfSource")
                         .IsRequired()
@@ -308,18 +311,18 @@ namespace Project_v1.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<DateTime>("DateOfCollection")
-                        .HasColumnType("datetime2");
+                    b.Property<DateOnly>("DateOfCollection")
+                        .HasColumnType("date");
 
                     b.Property<string>("PHIAreaId")
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
-                    b.Property<string>("StateOfChlorination")
+                    b.Property<string>("Phi_Area")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("phiAreaName")
+                    b.Property<string>("StateOfChlorination")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 

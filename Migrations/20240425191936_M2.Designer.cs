@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Project_v1.Data;
 
@@ -11,9 +12,11 @@ using Project_v1.Data;
 namespace Project_v1.Migrations
 {
     [DbContext(typeof(ApplicationDBContext))]
-    partial class ApplicationDBContextModelSnapshot : ModelSnapshot
+    [Migration("20240425191936_M2")]
+    partial class M2
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -25,6 +28,7 @@ namespace Project_v1.Migrations
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
                 {
                     b.Property<string>("Id")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("ConcurrencyStamp")
@@ -51,25 +55,25 @@ namespace Project_v1.Migrations
                     b.HasData(
                         new
                         {
-                            Id = "R1",
+                            Id = "4ae37312-225a-4df5-a0b1-807b2c172cfe",
                             Name = "Admin",
                             NormalizedName = "ADMIN"
                         },
                         new
                         {
-                            Id = "R2",
+                            Id = "a8d5c59d-af20-41af-bb83-c846cf9aacb3",
                             Name = "Mlt",
                             NormalizedName = "MLT"
                         },
                         new
                         {
-                            Id = "R3",
+                            Id = "3380c1f8-5cef-4f29-8b98-b74dca46f176",
                             Name = "MohSupervisor",
                             NormalizedName = "MOH_Supervisor"
                         },
                         new
                         {
-                            Id = "R4",
+                            Id = "5a0d2a27-55f4-4c5b-bc4f-f8c9dae91281",
                             Name = "Phi",
                             NormalizedName = "PHI"
                         });
@@ -297,8 +301,8 @@ namespace Project_v1.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<DateTime>("AnalyzedDate")
-                        .HasColumnType("datetime2");
+                    b.Property<DateOnly>("AnalyzedDate")
+                        .HasColumnType("date");
 
                     b.Property<string>("CatagoryOfSource")
                         .IsRequired()
@@ -308,18 +312,18 @@ namespace Project_v1.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<DateTime>("DateOfCollection")
-                        .HasColumnType("datetime2");
+                    b.Property<DateOnly>("DateOfCollection")
+                        .HasColumnType("date");
 
                     b.Property<string>("PHIAreaId")
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
-                    b.Property<string>("StateOfChlorination")
+                    b.Property<string>("Phi_Area")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("phiAreaName")
+                    b.Property<string>("StateOfChlorination")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 

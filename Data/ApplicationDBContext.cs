@@ -27,19 +27,15 @@ namespace Project_v1.Data {
         protected override void OnModelCreating(ModelBuilder builder) {
             base.OnModelCreating(builder);
 
-            builder.Entity<IdentityRole>(entity => {
-                entity.Property(e => e.Id).ValueGeneratedOnAdd();
-            });
-
             this.SeedRoles(builder);
         }
 
         private void SeedRoles(ModelBuilder builder) {
             builder.Entity<IdentityRole>().HasData(
-                               new IdentityRole { Name = "Admin", NormalizedName = "ADMIN" },
-                               new IdentityRole { Name = "Mlt", NormalizedName = "MLT" },
-                               new IdentityRole { Name = "MohSupervisor", NormalizedName = "MOH_Supervisor" },
-                               new IdentityRole { Name = "Phi", NormalizedName = "PHI" }
+                               new IdentityRole { Id = "R1", Name = "Admin", NormalizedName = "ADMIN" },
+                               new IdentityRole { Id = "R2", Name = "Mlt", NormalizedName = "MLT" },
+                               new IdentityRole { Id = "R3", Name = "MohSupervisor", NormalizedName = "MOH_Supervisor" },
+                               new IdentityRole { Id = "R4", Name = "Phi", NormalizedName = "PHI" }
             );
         }
     }

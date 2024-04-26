@@ -21,7 +21,7 @@ namespace Project_v1.TokenService {
         public string CreateToken(SystemUser user) {
             var claims = new List<Claim> {
                 new Claim("Username", user.UserName),
-                new Claim("Email", user.Email)
+                new Claim("UserId", user.Id)
             };
 
             var roles = _userManager.GetRolesAsync(user).Result;
@@ -34,7 +34,7 @@ namespace Project_v1.TokenService {
 
             var tokenDescriptor = new SecurityTokenDescriptor {
                 Subject = new ClaimsIdentity(claims),
-                Expires = DateTime.Now.AddDays(1),
+                Expires = DateTime.Now.AddHours(1),
                 SigningCredentials = credentials,
                 Issuer = _config["JWT:Issuer"],
                 Audience = _config["JWT:Audience"]
