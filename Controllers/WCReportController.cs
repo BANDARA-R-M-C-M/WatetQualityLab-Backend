@@ -37,22 +37,22 @@ namespace Project_v1.Controllers {
 
         [HttpGet]
         [Route("newsamples")]
-        public async Task<IActionResult> GetNewSamples(String userId) {
+        public async Task<IActionResult> GetNewSamples(String mltId) {
             try {
-                var user = await _userManager.FindByIdAsync(userId);
+                var mlt = await _userManager.FindByIdAsync(mltId);
 
-                if (user == null) {
-                    return NotFound($"User with username '{userId}' not found.");
+                if (mlt == null) {
+                    return NotFound($"User with username '{mltId}' not found.");
                 }
 
-                if (user.LabID == null) {
-                    return NotFound($"User with username '{userId}' have a Lab assigned.");
+                if (mlt.LabID == null) {
+                    return NotFound($"User with username '{mltId}' have a Lab assigned.");
                 }
                  
-                var mohArea = await _context.MOHAreas.Where(m => m.LabID == user.LabID).ToListAsync();
+                var mohArea = await _context.MOHAreas.Where(m => m.LabID == mlt.LabID).ToListAsync();
 
                 if (mohArea == null) {
-                    return NotFound($"No MOHArea found for the Lab assigned to user '{userId}'.");
+                    return NotFound($"No MOHArea found for the Lab assigned to user '{mltId}'.");
                 }
 
                 var mohAreaIds = mohArea.Select(m => m.MOHAreaID).ToList();
@@ -70,12 +70,85 @@ namespace Project_v1.Controllers {
                         sample.CatagoryOfSource,
                         sample.CollectingSource,
                         sample.phiAreaName,
-                        sample.Acceptance
+                        sample.Acceptance,
+                        sample.PHIArea.MOHArea.LabID
                     })
                     .ToListAsync();
 
                 return Ok(samples);
             } catch (Exception e) {
+                return StatusCode(StatusCodes.Status500InternalServerError, new Response { Status = "Error", Message = "An error occurred while processing your request." + e });
+            }
+        }
+
+        [HttpGet]
+        [Route("newreports")]
+        public async Task<IActionResult> GetNewReports(String mohId) {
+            try {
+                var moh = await _userManager.FindByIdAsync(mohId);
+
+                if (moh == null) {
+                    return NotFound($"User with username '{mohId}' not found.");
+                }
+
+                if (moh.MOHAreaId == null) {
+                    return NotFound($"User with username '{mohId}' have a MOH Area assigned.");
+                }
+
+                var mohArea = await _context.MOHAreas.Where(m => m.MOHAreaID == moh.MOHAreaId).ToListAsync();
+
+                if (mohArea == null) {
+                    return NotFound($"No MOHArea found for the Lab assigned to user '{mohId}'.");
+                }
+
+                var mohAreaIds = mohArea.Select(m => m.MOHAreaID).ToList();
+
+                var phiAreas = await _context.PHIAreas.Where(phi => mohAreaIds.Contains(phi.MOHAreaId)).ToListAsync();
+
+                if (phiAreas == null) {
+                    return NotFound($"No PHIArea found for the MOH Area assigned to user '{mohId}'.");
+                }
+
+                var phiAreaIds = phiAreas.Select(pa => pa.PHIAreaID).ToList();
+
+                var samples = await _context.Samples
+                    .Where(sample => phiAreaIds.Contains(sample.PHIAreaId))
+                    .Select(sample => new {
+                        sample.SampleId,
+                        sample.StateOfChlorination,
+                        sample.DateOfCollection,
+                        sample.CatagoryOfSource,
+                        sample.CollectingSource,
+                        sample.phiAreaName,
+                        sample.Acceptance
+                    })
+                    .ToListAsync();
+
+                var sampleIds = samples.Select(s => s.SampleId).ToList();
+
+                var reports = await _context.Reports
+                    .Where(report => sampleIds.Contains(report.SampleId))
+                    .Select(report => new {
+                        report.Sample.SampleId,
+                        report.Sample.StateOfChlorination,
+                        report.Sample.DateOfCollection,
+                        report.Sample.CatagoryOfSource,
+                        report.Sample.CollectingSource,
+                        report.Sample.phiAreaName,
+                        report.ReportRefId,
+                        report.PresumptiveColiformCount,    
+                        report.IssuedDate,
+                        report.EcoliCount,
+                        report.AppearanceOfSample,
+                        report.Results,
+                        report.Remarks,
+                        report.LabId,
+                        report.Sample.PHIArea.MOHArea.MOHArea_name
+                    })
+                    .ToListAsync();
+
+                return Ok(reports);
+            } catch (Exception e){
                 return StatusCode(StatusCodes.Status500InternalServerError, new Response { Status = "Error", Message = "An error occurred while processing your request." + e });
             }
         }
