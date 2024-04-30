@@ -8,8 +8,10 @@ namespace Project_v1.Models {
         public DateTime IssuedDate { get; set; }
         public string EcoliCount { get; set; }
         public string AppearanceOfSample { get; set; }
-        public string Results { get; set; }
+        public string PCResults { get; set; }
+        public string ECResults { get; set; }
         public string Remarks { get; set; }
+        public string MltId { get; set; }
         public string SampleId { get; set; }
         public string LabId { get; set; }
         public virtual Lab Lab { get; set; }

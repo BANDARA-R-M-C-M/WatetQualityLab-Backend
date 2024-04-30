@@ -5,7 +5,7 @@ namespace Project_v1.Models {
     public class PHIArea {
         [Key]
         public string PHIAreaID { get; set; }
-        public string PHIArea_name { get; set; }
+        public string PHIAreaName { get; set; }
         public string MOHAreaId { get; set; }
         /*public string LabID { get; set; }*/
         public virtual MOHArea MOHArea { get; set; }

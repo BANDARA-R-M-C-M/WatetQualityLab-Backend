@@ -36,6 +36,73 @@ namespace Project_v1.Controllers {
         }
 
         [HttpGet]
+        [Route("GetWCReports")]
+        public async Task<IActionResult> GetWCReports() {
+            try {
+                var reports = await _context.Reports.ToListAsync();
+                return Ok(reports);
+            } catch (Exception e) {
+                return StatusCode(StatusCodes.Status500InternalServerError, new Response { Status = "Error", Message = "An error occurred while processing your request." + e });
+            }
+        }
+
+        [HttpGet]
+        [Route("report-to-sample")]
+        public async Task<IActionResult> IsReportAvailable(String sampleId) {
+            try {
+                var sample = await _context.Samples.FindAsync(sampleId);
+
+                if (sample == null) {
+                    return NotFound($"Sample with ID '{sampleId}' not found.");
+                }
+
+                var report = await _context.Reports.Where(r => r.SampleId == sampleId).FirstOrDefaultAsync();
+
+                if (report == null) {
+                    return Ok(new { Available = false });
+                }
+
+                return Ok(new { Available = true });
+            } catch (Exception e) {
+                return StatusCode(StatusCodes.Status500InternalServerError, new Response { Status = "Error", Message = "An error occurred while processing your request." + e });
+            }
+        }
+
+        [HttpGet]
+        [Route("getAddedSamples")]
+        public async Task<IActionResult> GetAddedSamples(String phiId) {
+            try {
+                var phi = await _userManager.FindByIdAsync(phiId);
+
+                if (phi == null) {
+                    return NotFound($"User with username '{phiId}' not found.");
+                }
+
+                if (phi.PHIAreaId == null) {
+                    return NotFound($"User with username '{phiId}' have a PHI Area assigned.");
+                }
+
+                var samples = await _context.Samples
+                    .Where(sample => sample.PhiId == phiId)
+                    .Select(sample => new {
+                        sample.SampleId,
+                        sample.StateOfChlorination,
+                        sample.DateOfCollection,
+                        sample.CatagoryOfSource,
+                        sample.CollectingSource,
+                        sample.phiAreaName,
+                        sample.Acceptance,
+                        sample.Comments
+                    })
+                    .ToListAsync();
+
+                return Ok(samples);
+            } catch (Exception e) {
+                return StatusCode(StatusCodes.Status500InternalServerError, new Response { Status = "Error", Message = "An error occurred while processing your request." + e });
+            }
+        }
+
+        [HttpGet]
         [Route("newsamples")]
         public async Task<IActionResult> GetNewSamples(String mltId) {
             try {
@@ -140,10 +207,11 @@ namespace Project_v1.Controllers {
                         report.IssuedDate,
                         report.EcoliCount,
                         report.AppearanceOfSample,
-                        report.Results,
+                        report.PCResults,
+                        report.ECResults,
                         report.Remarks,
                         report.LabId,
-                        report.Sample.PHIArea.MOHArea.MOHArea_name
+                        report.Sample.PHIArea.MOHArea.MOHAreaName
                     })
                     .ToListAsync();
 
@@ -152,7 +220,27 @@ namespace Project_v1.Controllers {
                 return StatusCode(StatusCodes.Status500InternalServerError, new Response { Status = "Error", Message = "An error occurred while processing your request." + e });
             }
         }
-                                                                             
+
+        [HttpPost]
+        [Route("AddComment")]
+        public async Task<IActionResult> AddComment([FromBody] SampleComment sampleComment) {
+            try {
+                var sampleToUpdate = await _context.Samples.FindAsync(sampleComment.SampleId);
+
+                if (sampleToUpdate == null) {
+                    return NotFound(new Response { Status = "Error", Message = "Sample not found!" });
+                }
+
+                sampleToUpdate.Comments = sampleComment.Comments;
+
+                await _context.SaveChangesAsync();
+
+                return Ok(new Response { Status = "Success", Message = "Comment added successfully!" });
+            } catch (Exception e) {
+                return StatusCode(StatusCodes.Status500InternalServerError, new Response { Status = "Error", Message = "An error occurred while processing your request." + e });
+            }
+        }   
+
         [HttpPost]
         [Route("AddWCSample")]
         public async Task<IActionResult> AddWCSample([FromBody] Wc_sample wcsample) {
@@ -168,8 +256,10 @@ namespace Project_v1.Controllers {
                     CatagoryOfSource = wcsample.CatagoryOfSource,
                     CollectingSource = wcsample.CollectingSource,
                     Acceptance = "Pending",
+                    PhiId = wcsample.phiId,
                     phiAreaName = wcsample.phiAreaName,
-                    PHIAreaId = wcsample.PHIAreaID
+                    PHIAreaId = wcsample.PHIAreaID,
+                    Comments = ""
                 };
 
                 await _context.Samples.AddAsync(sample);
@@ -195,9 +285,11 @@ namespace Project_v1.Controllers {
                     IssuedDate = wcreport.IssuedDate,
                     EcoliCount = wcreport.EcoliCount,
                     AppearanceOfSample = wcreport.AppearanceOfSample,
-                    Results = wcreport.Results,
+                    PCResults = wcreport.PCResults,
+                    ECResults = wcreport.ECResults,
                     Remarks = wcreport.Remarks,
-                    SampleId = wcreport.SampleRefId,
+                    MltId = wcreport.MltId,
+                    SampleId = wcreport.SampleId,
                     LabId = wcreport.LabId
                 };
 

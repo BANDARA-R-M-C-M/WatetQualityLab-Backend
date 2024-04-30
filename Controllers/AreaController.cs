@@ -37,7 +37,7 @@ namespace Project_v1.Controllers {
                 var phiAreas = phiareas
                 .Select(phiarea => new {
                     phiarea.PHIAreaID,
-                    phiarea.PHIArea_name
+                    phiarea.PHIAreaName
                 })
                 .ToList();
 
@@ -69,7 +69,7 @@ namespace Project_v1.Controllers {
 
                 var moharea = new MOHArea {
                     MOHAreaID = moh_area.MOHAreaID,
-                    MOHArea_name = moh_area.MOHArea_name,
+                    MOHAreaName = moh_area.MOHAreaName,
                     LabID = moh_area.LabID
                 };
 
@@ -98,7 +98,7 @@ namespace Project_v1.Controllers {
 
                 var phiaArea = new PHIArea {
                     PHIAreaID = phia_area.PHIAreaID,
-                    PHIArea_name = phia_area.PHIArea_name,
+                    PHIAreaName = phia_area.PHIAreaName,
                     MOHAreaId = phia_area.MOHAreaId,
                 };
 
