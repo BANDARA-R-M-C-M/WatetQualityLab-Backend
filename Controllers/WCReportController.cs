@@ -47,28 +47,6 @@ namespace Project_v1.Controllers {
         }
 
         [HttpGet]
-        [Route("report-to-sample")]
-        public async Task<IActionResult> IsReportAvailable(String sampleId) {
-            try {
-                var sample = await _context.Samples.FindAsync(sampleId);
-
-                if (sample == null) {
-                    return NotFound($"Sample with ID '{sampleId}' not found.");
-                }
-
-                var report = await _context.Reports.Where(r => r.SampleId == sampleId).FirstOrDefaultAsync();
-
-                if (report == null) {
-                    return Ok(new { Available = false });
-                }
-
-                return Ok(new { Available = true });
-            } catch (Exception e) {
-                return StatusCode(StatusCodes.Status500InternalServerError, new Response { Status = "Error", Message = "An error occurred while processing your request." + e });
-            }
-        }
-
-        [HttpGet]
         [Route("getAddedSamples")]
         public async Task<IActionResult> GetAddedSamples(String phiId) {
             try {
@@ -138,7 +116,8 @@ namespace Project_v1.Controllers {
                         sample.CollectingSource,
                         sample.phiAreaName,
                         sample.Acceptance,
-                        sample.PHIArea.MOHArea.LabID
+                        sample.PHIArea.MOHArea.LabID,
+                        ReportAvailable = _context.Reports.Any(r => r.SampleId == sample.SampleId)
                     })
                     .ToListAsync();
 
@@ -222,26 +201,6 @@ namespace Project_v1.Controllers {
         }
 
         [HttpPost]
-        [Route("AddComment")]
-        public async Task<IActionResult> AddComment([FromBody] SampleComment sampleComment) {
-            try {
-                var sampleToUpdate = await _context.Samples.FindAsync(sampleComment.SampleId);
-
-                if (sampleToUpdate == null) {
-                    return NotFound(new Response { Status = "Error", Message = "Sample not found!" });
-                }
-
-                sampleToUpdate.Comments = sampleComment.Comments;
-
-                await _context.SaveChangesAsync();
-
-                return Ok(new Response { Status = "Success", Message = "Comment added successfully!" });
-            } catch (Exception e) {
-                return StatusCode(StatusCodes.Status500InternalServerError, new Response { Status = "Error", Message = "An error occurred while processing your request." + e });
-            }
-        }   
-
-        [HttpPost]
         [Route("AddWCSample")]
         public async Task<IActionResult> AddWCSample([FromBody] Wc_sample wcsample) {
             try {
@@ -303,6 +262,34 @@ namespace Project_v1.Controllers {
         }
 
         [HttpPut]
+        [Route("updateWCSample/{id}")]
+        public async Task<IActionResult> UpdateWCSample([FromRoute] String id, [FromBody] Wc_updatedSample updatedSample) {
+            try {
+                var sample = await _context.Samples.FindAsync(id);
+
+                if (sample == null) {
+                    return NotFound(new Response { Status = "Error", Message = "Sample not found!" });
+                }
+
+                if (updatedSample == null || !ModelState.IsValid) {
+                    return BadRequest(new Response { Status = "Error", Message = "Invalid sample data!" });
+                }
+
+                sample.SampleId = updatedSample.SampleId;
+                sample.StateOfChlorination = updatedSample.StateOfChlorination;
+                sample.DateOfCollection = updatedSample.DateOfCollection;
+                sample.CatagoryOfSource = updatedSample.CatagoryOfSource;
+                sample.CollectingSource = updatedSample.CollectingSource;
+
+                await _context.SaveChangesAsync();
+
+                return Ok(new Response { Status = "Success", Message = "Sample updated successfully!" });
+            } catch (Exception e) {
+                return StatusCode(StatusCodes.Status500InternalServerError, new Response { Status = "Error", Message = "An error occurred while processing your request." + e });
+            }
+        }   
+
+        [HttpPut]
         [Route("updateSampleStatus")]
         public async Task<IActionResult> UpdateSampleStatus([FromBody] SampleStatus sampleStatus) {
             try {
@@ -313,10 +300,30 @@ namespace Project_v1.Controllers {
                 }
 
                 sampleToUpdate.Acceptance = sampleStatus.Status;
+                sampleToUpdate.Comments = sampleStatus.Comment;
 
                 await _context.SaveChangesAsync();
 
-                return Ok(new Response { Status = "Success", Message = "Sample acceptance updated successfully!" });
+                return Ok(new Response { Status = "Success", Message = "Sample status updated successfully!" });
+            } catch (Exception e) {
+                return StatusCode(StatusCodes.Status500InternalServerError, new Response { Status = "Error", Message = "An error occurred while processing your request." + e });
+            }
+        }
+
+        [HttpDelete]
+        [Route("deleteWCSample/{id}")]
+        public async Task<IActionResult> DeleteWCSample([FromRoute] String id) {
+            try {
+                var sample = await _context.Samples.FindAsync(id);
+
+                if (sample == null) {
+                    return NotFound(new Response { Status = "Error", Message = "Sample not found!" });
+                }
+
+                _context.Samples.Remove(sample);
+                await _context.SaveChangesAsync();
+
+                return Ok(new Response { Status = "Success", Message = "Sample deleted successfully!" });
             } catch (Exception e) {
                 return StatusCode(StatusCodes.Status500InternalServerError, new Response { Status = "Error", Message = "An error occurred while processing your request." + e });
             }

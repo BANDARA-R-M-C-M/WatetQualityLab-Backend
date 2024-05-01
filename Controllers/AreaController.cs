@@ -1,10 +1,12 @@
 ﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Project_v1.Data;
 using Project_v1.Models;
 using Project_v1.Models.Areas;
 using Project_v1.Models.Response;
+using Project_v1.Models.Users;
 
 namespace Project_v1.Controllers {
     [Route("api/[controller]")]
@@ -12,9 +14,11 @@ namespace Project_v1.Controllers {
     public class AreaController : ControllerBase {
 
         private readonly ApplicationDBContext _context;
+        private readonly UserManager<SystemUser> _userManager;
 
-        public AreaController(ApplicationDBContext context) {
+        public AreaController(ApplicationDBContext context, UserManager<SystemUser> userManager) {
             _context = context;
+            _userManager = userManager;
         }
 
         [HttpGet]
@@ -29,19 +33,25 @@ namespace Project_v1.Controllers {
         }
 
         [HttpGet]
-        [Route("GetPHIAreas")]
-        public async Task<IActionResult> GetPHIAreas() {
+        [Route("GetPHIDetails")]
+        public async Task<IActionResult> GetPHIAreas(String phiId) {
             try {
-                var phiareas = await _context.PHIAreas.ToListAsync();
+                var phi = await _userManager.FindByIdAsync(phiId);
 
-                var phiAreas = phiareas
-                .Select(phiarea => new {
-                    phiarea.PHIAreaID,
-                    phiarea.PHIAreaName
-                })
-                .ToList();
+                if (phi == null) {
+                    return NotFound(new Response { Status = "Error", Message = "PHI not found!" });
+                }
 
-                return Ok(phiAreas);
+                var phiArea = await _context.PHIAreas.Where(p => p.PHIAreaID == phi.PHIAreaId).FirstOrDefaultAsync();
+
+                if (phiArea == null) {
+                    return NotFound(new Response { Status = "Error", Message = "PHI Area not found!" });
+                }
+
+                return Ok(new {
+                    phiAreaId = phi.PHIAreaId,
+                    phiAreaName = phiArea.PHIAreaName,
+                });
             } catch (Exception e) {
                 return StatusCode(StatusCodes.Status500InternalServerError, new Response { Status = "Error", Message = "An error occurred while processing your request." + e });
             }

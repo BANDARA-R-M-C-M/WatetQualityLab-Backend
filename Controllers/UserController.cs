@@ -49,10 +49,11 @@ namespace Project_v1.Controllers {
 
                 var role = await _userManager.GetRolesAsync(existingUser);
 
-                return Ok(new { Username = existingUser.UserName,
-                                UserId = existingUser.Id,
-                                Role = role[0],
-                                Token = _tokenService.CreateToken(existingUser) 
+                return Ok(new { 
+                    Username = existingUser.UserName,
+                    UserId = existingUser.Id,
+                    Role = role[0],
+                    Token = _tokenService.CreateToken(existingUser) 
                 });
             } catch (Exception e) {
                 return StatusCode(StatusCodes.Status500InternalServerError, new Response { Status = "Error", Message = "An error occurred while processing your request." + e });
