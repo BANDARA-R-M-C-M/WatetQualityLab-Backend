@@ -6,9 +6,10 @@ using Project_v1.Models.Login;
 using Project_v1.Models.Response;
 using Project_v1.Models.Signup;
 using Project_v1.Models.Users;
-using Project_v1.TokenService;
+using Project_v1.Services.TokenService;
 
-namespace Project_v1.Controllers {
+namespace Project_v1.Controllers
+{
     [Route("api/[controller]")]
     [ApiController]
     public class UserController : ControllerBase {
@@ -70,6 +71,7 @@ namespace Project_v1.Controllers {
 
                 var existingUser = await _context.Users.FirstOrDefaultAsync(u => u.UserName == registeredUser.UserName);
                 var existingEmail = await _context.Users.FirstOrDefaultAsync(u => u.Email == registeredUser.Email);
+
                 if (existingUser != null) {
                     return StatusCode(StatusCodes.Status403Forbidden, new Response { Status = "Error", Message = "UserName already exists!" });
                 } else if(existingEmail != null) {
@@ -100,43 +102,82 @@ namespace Project_v1.Controllers {
         }
 
         [HttpGet]
-        [Route("getmlts")]
+        [Route("getMLTs")]
         public async Task<IActionResult> GetMLTs() {
             try {
                 var mlts = await _userManager.GetUsersInRoleAsync("MLT");
-                var usernames = mlts.Select(m => m.UserName);
-                return Ok(usernames);
+
+                var mltIds = mlts.Select(m => m.Id);
+
+                var userDetails = await _context.Users
+                    .Where(m => mltIds
+                    .Contains(m.Id))
+                    .Select(m => new {
+                        m.Id,
+                        m.UserName, 
+                        m.Email, 
+                        m.PhoneNumber,
+                        LabName = m.Lab.LabName ?? "No Lab Assigned"
+                }).ToListAsync();
+
+                return Ok(userDetails);
             } catch (Exception e) {
                 return StatusCode(StatusCodes.Status500InternalServerError, new Response { Status = "Error", Message = "An error occurred while processing your request." + e });
             }
         }
 
         [HttpGet]
-        [Route("getphis")]
+        [Route("getPHIs")]
         public async Task<IActionResult> GetPHIs() {
             try {
                 var phis = await _userManager.GetUsersInRoleAsync("PHI");
-                var usernames = phis.Select(p => p.UserName);
-                return Ok(usernames);
+                
+                var phiIds = phis.Select(p => p.Id);
+
+                var userDetails = await _context.Users
+                    .Where(p => phiIds
+                    .Contains(p.Id))
+                    .Select(p => new {
+                        p.Id,
+                        p.UserName, 
+                        p.Email, 
+                        p.PhoneNumber,
+                        PHIName = p.PHIArea.PHIAreaName ?? "No PHI Area Assigned"
+                }).ToListAsync();
+
+                return Ok(userDetails);
             } catch (Exception e) {
                 return StatusCode(StatusCodes.Status500InternalServerError, new Response { Status = "Error", Message = "An error occurred while processing your request." + e });
             }
         }
 
         [HttpGet]
-        [Route("getmohsupervisors")]
+        [Route("getMOHSupervisors")]
         public async Task<IActionResult> GetMOHSupervisors() {
             try {
                 var mohsupervisors = await _userManager.GetUsersInRoleAsync("MOH_Supervisor");
-                var usernames = mohsupervisors.Select(m => m.UserName);
-                return Ok(usernames);
+                
+                var mohids = mohsupervisors.Select(m => m.Id);
+
+                var userDetails = await _context.Users
+                    .Where(m => mohids
+                    .Contains(m.Id))
+                    .Select(m => new {
+                        m.Id,
+                        m.UserName, 
+                        m.Email, 
+                        m.PhoneNumber,
+                        MOHAreaName = m.MOHArea.MOHAreaName ?? "No MOH Area Assigned"
+                }).ToListAsync();
+
+                return Ok(userDetails);
             } catch (Exception e) {
                 return StatusCode(StatusCodes.Status500InternalServerError, new Response { Status = "Error", Message = "An error occurred while processing your request." + e });
             }
         }
 
         [HttpPut]
-        [Route("updateuser/{id}")]
+        [Route("updateUser/{id}")]
         public async Task<IActionResult> UpdateUser([FromRoute] String id,[FromBody]SystemUser updatedUser) {
             try {
                 var user = await _userManager.FindByIdAsync(id);
@@ -163,7 +204,7 @@ namespace Project_v1.Controllers {
         }
 
         [HttpDelete]
-        [Route("deleteuser/{id}")]
+        [Route("deleteUser/{id}")]
         public async Task<IActionResult> DeleteUser([FromRoute] String id) {
             try {
                 var user = await _userManager.FindByIdAsync(id);

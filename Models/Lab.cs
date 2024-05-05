@@ -5,9 +5,9 @@ namespace Project_v1.Models {
     public class Lab {
         [Key]
         public string LabID { get; set; }
-        public string Lab_name { get; set; }
-        public string Lab_location { get; set; }
-        public string Lab_telephone { get; set; }
+        public string LabName { get; set; }
+        public string LabLocation { get; set; }
+        public string LabTelephone { get; set; }
         /*public virtual ICollection<Mlt> Mlts { get; set; } = new List<Mlt>();*/
         public virtual ICollection<SystemUser> Mlts { get; set; } = new List<SystemUser>();
         public virtual ICollection<Report> Reports { get; set; } = new List<Report>();

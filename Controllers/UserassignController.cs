@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Project_v1.Data;
+using Project_v1.Models.Assigns;
 using Project_v1.Models.Response;
 using Project_v1.Models.Users;
 
@@ -20,20 +21,20 @@ namespace Project_v1.Controllers {
         }
 
         [HttpPost]
-        [Route("mlt-to-lab")]
-        public async Task<IActionResult> Assign_mlt_to_lab(String mlt_id, String labId) {
+        [Route("assignMLTtoLabs")]
+        public async Task<IActionResult> assignMLTtoLabs([FromBody]mltLab mltlab) {
             try {
-                var mlt = await _userManager.FindByIdAsync(mlt_id);
+                var mlt = await _userManager.FindByIdAsync(mltlab.mltId);
 
                 if (mlt == null) {
                     return StatusCode(StatusCodes.Status404NotFound, new Response { Status = "Error", Message = "User not found!" });
                 }
 
-                if(labId == null) {
+                if(mltlab.labId == null) {
                     return StatusCode(StatusCodes.Status403Forbidden, new Response { Status = "Error", Message = "Lab not found" });
                 }
 
-                mlt.LabID = labId;
+                mlt.LabID = mltlab.labId;
                 await _context.SaveChangesAsync();
 
                 return Ok(new Response { Status = "Success", Message = "Lab assigned successfully!" });
@@ -43,20 +44,20 @@ namespace Project_v1.Controllers {
         }
 
         [HttpPost]
-        [Route("phi-to-phiarea")]
-        public async Task<IActionResult> Assign_phi_to_phiarea(String phi_id, String phiarea_id) {
+        [Route("assignPHItoPHIAreas")]
+        public async Task<IActionResult> AssignPHItoPHIArea([FromBody]phiPhiarea phi_phiarea) {
             try {
-                var phi = await _userManager.FindByIdAsync(phi_id);
+                var phi = await _userManager.FindByIdAsync(phi_phiarea.phiId);
 
                 if (phi == null) {
                     return StatusCode(StatusCodes.Status404NotFound, new Response { Status = "Error", Message = "User not found!" });
                 }
 
-                if (phiarea_id == null) {
+                if (phi_phiarea.phiAreaId == null) {
                     return StatusCode(StatusCodes.Status403Forbidden, new Response { Status = "Error", Message = "PHI Area not found" });
                 }
 
-                phi.PHIAreaId = phiarea_id;
+                phi.PHIAreaId = phi_phiarea.phiAreaId;
                 await _context.SaveChangesAsync();
                 return Ok(new Response { Status = "Success", Message = "PHI Area assigned successfully!" });
             } catch (Exception e) {
@@ -65,20 +66,20 @@ namespace Project_v1.Controllers {
         }
 
         [HttpPost]
-        [Route("moh-to-moharea")]
-        public async Task<IActionResult> Assign_moh_to_moharea(String moh_id, String moharea_id) {
+        [Route("assignMOHSupervisortoMOHAreas")]
+        public async Task<IActionResult> assignMOHSupervisortoMOHArea([FromBody]mohMoharea moh_moharea) {
             try {
-                var moh = await _userManager.FindByIdAsync(moh_id);
+                var moh = await _userManager.FindByIdAsync(moh_moharea.mohSupervisorId);
 
                 if (moh == null) {
                     return StatusCode(StatusCodes.Status404NotFound, new Response { Status = "Error", Message = "User not found!" });
                 }
 
-                if (moharea_id == null) {
+                if (moh_moharea.mohAreaId == null) {
                     return StatusCode(StatusCodes.Status403Forbidden, new Response { Status = "Error", Message = "MOH Area not found" });
                 }
 
-                moh.MOHAreaId = moharea_id;
+                moh.MOHAreaId = moh_moharea.mohAreaId;
                 await _context.SaveChangesAsync();
                 return Ok(new Response { Status = "Success", Message = "MOH Area assigned successfully!" });
             } catch (Exception e) {

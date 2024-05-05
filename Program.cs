@@ -5,8 +5,10 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Project_v1.Data;
 using Project_v1.Models.Users;
-using Project_v1.TokenService;
+using Project_v1.Services.TokenService;
 using System.Text;
+using Project_v1.Services.ReportService;
+using Project_v1.Services.IdGeneratorService;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -84,6 +86,8 @@ builder.Services.AddControllers().AddNewtonsoftJson(options =>{
 });
 
 builder.Services.AddScoped<ITokenService, TokenService>();
+builder.Services.AddScoped<IReportService, ReportService>();
+builder.Services.AddScoped<IIdGenerator, IdGenerator>();
 
 var app = builder.Build();
 

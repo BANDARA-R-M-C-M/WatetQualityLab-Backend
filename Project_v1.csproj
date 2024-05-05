@@ -7,6 +7,13 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="C:\Users\chamo\.nuget\packages\libwkhtmltox-32\0.12.6.1\contentFiles\any\any\libwkhtmltox.dll" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="BouncyCastle" Version="1.8.9" />
+    <PackageReference Include="itext.bouncy-castle-adapter" Version="8.0.4" />
+    <PackageReference Include="itext7" Version="8.0.4" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.4" />
     <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="8.0.4" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="8.0.4" />
@@ -18,6 +25,7 @@
     <PackageReference Include="Microsoft.Extensions.Identity.Core" Version="8.0.4" />
     <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="8.0.2" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.4.0" />
+    <PackageReference Include="System.Text.Encoding.CodePages" Version="8.0.0" />
   </ItemGroup>
 
 </Project>

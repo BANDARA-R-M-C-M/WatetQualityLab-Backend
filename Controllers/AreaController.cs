@@ -25,8 +25,15 @@ namespace Project_v1.Controllers {
         [Route("GetMOHAreas")]
         public async Task<IActionResult> GetMOHAreas() {
             try {
-                var mohareas = await _context.MOHAreas.Include(MOHArea => MOHArea.PHIAreas).ToListAsync();
-                return Ok(mohareas);
+                var mohareas = await _context.MOHAreas.ToListAsync();
+
+                var mohareasList = mohareas.Select(moharea => new {
+                    mohAreaId = moharea.MOHAreaID,
+                    mohAreaName = moharea.MOHAreaName,
+                    labId = moharea.LabID
+                });
+
+                return Ok(mohareasList);
             } catch (Exception e) {
                 return StatusCode(StatusCodes.Status500InternalServerError, new Response { Status = "Error", Message = "An error occurred while processing your request." + e });
             }
@@ -34,7 +41,7 @@ namespace Project_v1.Controllers {
 
         [HttpGet]
         [Route("GetPHIDetails")]
-        public async Task<IActionResult> GetPHIAreas(String phiId) {
+        public async Task<IActionResult> GetPHIDetails(String phiId) {
             try {
                 var phi = await _userManager.FindByIdAsync(phiId);
 
@@ -58,12 +65,37 @@ namespace Project_v1.Controllers {
         }
 
         [HttpGet]
+        [Route("GetPHIAreas")]
+        public async Task<IActionResult> GetPHIAreas() {
+            try {
+                var phiaAreas = await _context.PHIAreas.ToListAsync();
+
+                var phiaAreasList = phiaAreas.Select(phiaArea => new {
+                    phiAreaId = phiaArea.PHIAreaID,
+                    phiAreaName = phiaArea.PHIAreaName,
+                    mohAreaId = phiaArea.MOHAreaId
+                });
+
+                return Ok(phiaAreasList);
+            } catch (Exception e) {
+                return StatusCode(StatusCodes.Status500InternalServerError, new Response { Status = "Error", Message = "An error occurred while processing your request." + e });
+            }
+        }
+
+        [HttpGet]
         [Route("GetLabs")]
         public async Task<IActionResult> GetLabs() {
             try {
                 var labs = await _context.Labs.ToListAsync();
 
-                return Ok(labs);
+                var labsList = labs.Select(lab => new {
+                    labId = lab.LabID,
+                    labName = lab.LabName,
+                    labLocation = lab.LabLocation,
+                    labTelephone = lab.LabTelephone
+                });
+
+                return Ok(labsList);
             } catch (Exception e) {
                 return StatusCode(StatusCodes.Status500InternalServerError, new Response { Status = "Error", Message = "An error occurred while processing your request." + e });
             }
@@ -136,9 +168,9 @@ namespace Project_v1.Controllers {
 
                 var newLab = new Lab {
                     LabID = lab.LabID,
-                    Lab_name = lab.Lab_name,
-                    Lab_location = lab.Lab_location,
-                    Lab_telephone = lab.Lab_telephone
+                    LabName = lab.LabName,
+                    LabLocation = lab.LabLocation,
+                    LabTelephone = lab.LabTelephone
                 };
 
                 await _context.Labs.AddAsync(newLab);

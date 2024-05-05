@@ -4,6 +4,7 @@ namespace Project_v1.Models {
     public class Sample {
         [Key]
         public string SampleId { get; set; }
+        public string YourRefNo { get; set; }
         public string StateOfChlorination { get; set; }
         public DateTime DateOfCollection { get; set; }
         public string CatagoryOfSource { get; set; }
