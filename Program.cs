@@ -9,12 +9,18 @@ using Project_v1.Services.TokenService;
 using System.Text;
 using Project_v1.Services.ReportService;
 using Project_v1.Services.IdGeneratorService;
+using FirebaseAdmin;
+using Google.Apis.Auth.OAuth2;
+using Project_v1.Services.FirebaseStrorage;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddDbContext<ApplicationDBContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+// Obtain an access token
+/*var accessToken = await GoogleCredential.GetApplicationDefaultAsync().Result.GetAccessTokenForRequestAsync();*/
 
 builder.Services.AddIdentity<SystemUser, IdentityRole>(options => {
     options.Password.RequireDigit = false;
@@ -88,6 +94,7 @@ builder.Services.AddControllers().AddNewtonsoftJson(options =>{
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IReportService, ReportService>();
 builder.Services.AddScoped<IIdGenerator, IdGenerator>();
+builder.Services.AddScoped<IStorageService, StorageService>();
 
 var app = builder.Build();
 

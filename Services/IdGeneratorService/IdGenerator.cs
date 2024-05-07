@@ -14,7 +14,7 @@ namespace Project_v1.Services.IdGeneratorService {
                 newSampleId = "SMP-" + Guid.NewGuid().ToString();
             } while (!(_context.Samples.Any(s => s.SampleId == newSampleId)));*/
 
-            return ("SMP-" + Guid.NewGuid().ToString());
+            return ("SAMPLE-" + Guid.NewGuid().ToString());
         }     
 
         public string GenerateReportId() {
@@ -23,7 +23,19 @@ namespace Project_v1.Services.IdGeneratorService {
              *                           newReportId = "RPT-" + Guid.NewGuid().ToString();
              *                                      } while (!(_context.Reports.Any(r => r.ReportId == newReportId)));*/
 
-            return ("RPT-" + Guid.NewGuid().ToString());
+            return ("REPORT-" + Guid.NewGuid().ToString());
+        }
+
+        public string GenerateLabId() {
+            return ("LAB-" + Guid.NewGuid().ToString());
+        }
+
+        public string GeneratePHIAreaId() {
+            return ("PHIAREA-" + Guid.NewGuid().ToString());
+        }
+
+        public string GenerateMOHAreaId() {
+            return ("MOHAREA-" + Guid.NewGuid().ToString());
         }
     }
 }

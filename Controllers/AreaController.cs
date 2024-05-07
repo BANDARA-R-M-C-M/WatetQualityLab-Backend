@@ -7,6 +7,7 @@ using Project_v1.Models;
 using Project_v1.Models.Areas;
 using Project_v1.Models.Response;
 using Project_v1.Models.Users;
+using Project_v1.Services.IdGeneratorService;
 
 namespace Project_v1.Controllers {
     [Route("api/[controller]")]
@@ -15,10 +16,14 @@ namespace Project_v1.Controllers {
 
         private readonly ApplicationDBContext _context;
         private readonly UserManager<SystemUser> _userManager;
+        private readonly IIdGenerator _idGenerator;
 
-        public AreaController(ApplicationDBContext context, UserManager<SystemUser> userManager) {
+        public AreaController(ApplicationDBContext context,
+                              UserManager<SystemUser> userManager,
+                              IIdGenerator idGenerator) {
             _context = context;
             _userManager = userManager;
+            _idGenerator = idGenerator;
         }
 
         [HttpGet]
@@ -110,9 +115,9 @@ namespace Project_v1.Controllers {
                 }
 
                 var moharea = new MOHArea {
-                    MOHAreaID = moh_area.MOHAreaID,
+                    MOHAreaID = _idGenerator.GenerateMOHAreaId(),
                     MOHAreaName = moh_area.MOHAreaName,
-                    LabID = moh_area.LabID
+                    LabID = moh_area.LabId
                 };
 
                 await _context.MOHAreas.AddAsync(moharea);
@@ -139,7 +144,7 @@ namespace Project_v1.Controllers {
                 }
 
                 var phiaArea = new PHIArea {
-                    PHIAreaID = phia_area.PHIAreaID,
+                    PHIAreaID = _idGenerator.GeneratePHIAreaId(),
                     PHIAreaName = phia_area.PHIAreaName,
                     MOHAreaId = phia_area.MOHAreaId,
                 };
@@ -161,13 +166,13 @@ namespace Project_v1.Controllers {
                     return BadRequest(new Response { Status = "Error", Message = "Invalid data!" });
                 }
 
-                var labExists = await _context.Labs.AnyAsync(l => l.LabID == lab.LabID);
+                var labExists = await _context.Labs.AnyAsync(l => l.LabName == lab.LabName);
                 if (labExists) {
                     return BadRequest(new Response { Status = "Error", Message = "Lab already exists!" });
                 }
 
                 var newLab = new Lab {
-                    LabID = lab.LabID,
+                    LabID = _idGenerator.GenerateLabId(),
                     LabName = lab.LabName,
                     LabLocation = lab.LabLocation,
                     LabTelephone = lab.LabTelephone
@@ -177,23 +182,6 @@ namespace Project_v1.Controllers {
                 await _context.SaveChangesAsync();
 
                 return Ok(new Response { Status = "Success", Message = "Lab added successfully!" });
-            } catch (Exception e) {
-                return StatusCode(StatusCodes.Status500InternalServerError, new Response { Status = "Error", Message = "An error occurred while processing your request." + e });
-            }
-        }
-
-        [HttpPut]
-        [Route("UpdateMOHArea")]
-        public async Task<IActionResult> UpdateMOHArea([FromBody] MOHArea moharea) {
-            try {
-                if (moharea == null || !ModelState.IsValid) {
-                    return BadRequest(new Response { Status = "Error", Message = "Invalid data!" });
-                }
-
-                _context.MOHAreas.Update(moharea);
-                await _context.SaveChangesAsync();
-
-                return Ok(new Response { Status = "Success", Message = "MOH Area updated successfully!" });
             } catch (Exception e) {
                 return StatusCode(StatusCodes.Status500InternalServerError, new Response { Status = "Error", Message = "An error occurred while processing your request." + e });
             }
@@ -218,6 +206,30 @@ namespace Project_v1.Controllers {
                 await _context.SaveChangesAsync();
 
                 return Ok(new Response { Status = "Success", Message = "PHI Area updated successfully!" });
+            } catch (Exception e) {
+                return StatusCode(StatusCodes.Status500InternalServerError, new Response { Status = "Error", Message = "An error occurred while processing your request." + e });
+            }
+        }
+
+        [HttpPut]
+        [Route("UpdateMOHArea/{id}")]
+        public async Task<IActionResult> UpdateMOHArea([FromRoute] String id, [FromBody] MOHArea mohArea) {
+            try {
+
+                var moharea = await _context.MOHAreas.FindAsync(id);
+
+                if (moharea == null) {
+                    return StatusCode(StatusCodes.Status404NotFound, new Response { Status = "Error", Message = "MOH Area not found!" });
+                }
+
+                if (mohArea == null || !ModelState.IsValid) {
+                    return BadRequest(new Response { Status = "Error", Message = "Invalid data!" });
+                }
+
+                _context.MOHAreas.Update(mohArea);
+                await _context.SaveChangesAsync();
+
+                return Ok(new Response { Status = "Success", Message = "MOH Area updated successfully!" });
             } catch (Exception e) {
                 return StatusCode(StatusCodes.Status500InternalServerError, new Response { Status = "Error", Message = "An error occurred while processing your request." + e });
             }
@@ -254,6 +266,24 @@ namespace Project_v1.Controllers {
                 await _context.SaveChangesAsync();
 
                 return Ok(new Response { Status = "Success", Message = "PHI Area deleted successfully!" });
+            } catch (Exception e) {
+                return StatusCode(StatusCodes.Status500InternalServerError, new Response { Status = "Error", Message = "An error occurred while processing your request." + e });
+            }
+        }
+
+        [HttpDelete]
+        [Route("DeleteLab/{id}")]
+        public async Task<IActionResult> DeleteLab([FromRoute]string id) {
+            try {
+                var lab = await _context.Labs.FindAsync(id);
+                if (lab == null) {
+                    return NotFound(new Response { Status = "Error", Message = "Lab not found!" });
+                }
+
+                _context.Labs.Remove(lab);
+                await _context.SaveChangesAsync();
+
+                return Ok(new Response { Status = "Success", Message = "Lab deleted successfully!" });
             } catch (Exception e) {
                 return StatusCode(StatusCodes.Status500InternalServerError, new Response { Status = "Error", Message = "An error occurred while processing your request." + e });
             }

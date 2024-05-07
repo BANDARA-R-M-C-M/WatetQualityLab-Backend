@@ -2,5 +2,8 @@
     public interface IIdGenerator {
         public string GenerateSampleId();
         public string GenerateReportId();
+        public string GenerateLabId();
+        public string GeneratePHIAreaId();
+        public string GenerateMOHAreaId();
     }
 }

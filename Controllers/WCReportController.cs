@@ -438,7 +438,7 @@ namespace Project_v1.Controllers {
             }
         }
             
-        [HttpPost]
+        /*[HttpPost]
         [Route("generatePdf")]
         public async Task<IActionResult> GeneratePdf([FromBody] FullReport fullReport) {
             try {
@@ -449,6 +449,6 @@ namespace Project_v1.Controllers {
                 // Handle any exceptions
                 return StatusCode(500, "An error occurred while generating the PDF." + ex);
             }
-        }
+        }*/
     }
 }
