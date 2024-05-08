@@ -28,15 +28,15 @@ namespace Project_v1.Services.ReportService {
                 .SetBold();
             document.Add(address);
 
-            Paragraph telephone = new Paragraph($"{wcreport.LabTelephone}")
+            Paragraph telephone = new Paragraph("T:P " + $"{wcreport.LabTelephone}")
               .SetTextAlignment(TextAlignment.CENTER)
               .SetFontSize(15);
             document.Add(telephone);
 
             Paragraph header = new Paragraph(
                 "Date                :   " + $"{wcreport.DateOfCollection:dd/MM/yyyy}\n" +
-                "My Ref No       :   " + $"{wcreport.SampleId}\n" +
-                "Your Ref No    :   " + $"{wcreport.ReportRefId}"
+                "My Ref No       :   " + $"{wcreport.YourRefNo}\n" +
+                "Your Ref No    :   " + $"{wcreport.MyRefNo}"
                )
               .SetFontSize(10)
               .SetRelativePosition(320, 8, 0, 0);

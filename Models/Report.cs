@@ -10,6 +10,7 @@ namespace Project_v1.Models {
         public string EcoliCount { get; set; }
         public string AppearanceOfSample { get; set; }
         public string Remarks { get; set; }
+        public string ReportUrl { get; set; }
         public string MltId { get; set; }
         public string SampleId { get; set; }
         public string LabId { get; set; }

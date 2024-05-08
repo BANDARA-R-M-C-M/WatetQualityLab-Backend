@@ -12,8 +12,31 @@ using Google.Cloud.Storage.V1;
 
 namespace Project_v1.Services.FirebaseStrorage {
     public class StorageService : IStorageService {
+        private readonly IConfiguration _configuration;
+
+        public StorageService(IConfiguration configuration) {
+            _configuration = configuration;
+        }
+
+        public async Task<bool> DeleteFile(string fileName) {
+            try {
+
+                var task = new FirebaseStorage(_configuration["Firebase:ProjectId"], new FirebaseStorageOptions {
+                    ThrowOnCancel = true
+                }).Child("Water Quality Reports").Child(fileName).DeleteAsync();
+
+                await task;
+
+                return true;
+            } catch (Exception e) {
+                Console.WriteLine("Error deleting file: " + e.Message);
+                throw;
+            }
+        }
+
         public async Task<string> UploadFile(Stream stream, string fileName) {
-            string projectId = "system-development-e2712.appspot.com";
+
+            /*string projectId = _configuration["Firebase:ProjectId"];*/
 
             try {
                 /*var credential = GoogleCredential.FromJson(@"
@@ -36,18 +59,18 @@ namespace Project_v1.Services.FirebaseStrorage {
 
                 var storage = StorageClient.Create(credential);*/
 
-                string nameNew = $"{fileName}_{DateTime.UtcNow.ToString("yyyyMMddHHmmss")}";
+                string nameNew = $"{fileName}";
 
-                var task = new FirebaseStorage(projectId, new FirebaseStorageOptions {
+                var task = new FirebaseStorage(_configuration["Firebase:ProjectId"], new FirebaseStorageOptions {
                     /*AuthTokenAsyncFactory = () => Task.FromResult(accessToken),*/
                     ThrowOnCancel = true
-                }).Child(nameNew).PutAsync(stream);
+                }).Child("Water Quality Reports").Child(nameNew).PutAsync(stream);
 
                 var downloadURL = await task;
 
                 return downloadURL;
             } catch (Exception e) {
-                Console.WriteLine("Error uploading image: " + e.Message);
+                Console.WriteLine("Error uploading file: " + e.Message);
                 throw;
             }
         }

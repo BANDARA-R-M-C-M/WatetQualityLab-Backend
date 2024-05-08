@@ -11,6 +11,7 @@ using Project_v1.Models;
 using Project_v1.Models.Response;
 using Project_v1.Models.Users;
 using Project_v1.Models.WCReport;
+using Project_v1.Services.FirebaseStrorage;
 using Project_v1.Services.IdGeneratorService;
 using Project_v1.Services.ReportService;
 using System.Linq;
@@ -24,26 +25,18 @@ namespace Project_v1.Controllers {
         private readonly UserManager<SystemUser> _userManager;
         private readonly IReportService _reportService;
         private readonly IIdGenerator _idGenerator;
+        private readonly IStorageService _storageService;
 
         public WCReportController(ApplicationDBContext context, 
                                   UserManager<SystemUser> userManager,
                                   IReportService reportService,
-                                  IIdGenerator idGenerator) {
+                                  IIdGenerator idGenerator,
+                                  IStorageService storageService) {
             _context = context;
             _userManager = userManager;
             _reportService = reportService;
             _idGenerator = idGenerator;
-        }
-
-        [HttpGet]
-        [Route("GetWCSamples")]
-        public async Task<IActionResult> GetWCSamples() {
-            try {
-                var samples = await _context.Samples.ToListAsync();
-                return Ok(samples);
-            } catch (Exception e) {
-                return StatusCode(StatusCodes.Status500InternalServerError, new Response { Status = "Error", Message = "An error occurred while processing your request." + e });
-            }
+            _storageService = storageService;
         }
 
         [HttpGet]
@@ -52,96 +45,6 @@ namespace Project_v1.Controllers {
             try {
                 var reports = await _context.Reports.ToListAsync();
                 return Ok(reports);
-            } catch (Exception e) {
-                return StatusCode(StatusCodes.Status500InternalServerError, new Response { Status = "Error", Message = "An error occurred while processing your request." + e });
-            }
-        }
-
-        [HttpGet]
-        [Route("getAddedSamples")]
-        public async Task<IActionResult> GetAddedSamples(String phiId) {
-            try {
-                var phi = await _userManager.FindByIdAsync(phiId);
-
-                if (phi == null) {
-                    return NotFound($"User with username '{phiId}' not found.");
-                }
-
-                if (phi.PHIAreaId == null) {
-                    return NotFound($"User with username '{phiId}' have a PHI Area assigned.");
-                }
-
-                var samples = await _context.Samples
-                    .Where(sample => sample.PhiId == phiId)
-                    .Select(sample => new {
-                        sample.SampleId,
-                        sample.YourRefNo,
-                        sample.StateOfChlorination,
-                        sample.DateOfCollection,
-                        sample.CatagoryOfSource,
-                        sample.CollectingSource,
-                        sample.phiAreaName,
-                        sample.Acceptance,
-                        sample.Comments
-                    })
-                    .ToListAsync();
-
-                return Ok(samples);
-            } catch (Exception e) {
-                return StatusCode(StatusCodes.Status500InternalServerError, new Response { Status = "Error", Message = "An error occurred while processing your request." + e });
-            }
-        }
-
-        [HttpGet]
-        [Route("newsamples")]
-        public async Task<IActionResult> GetNewSamples(String mltId) {
-            try {
-                var mlt = await _userManager.FindByIdAsync(mltId);
-
-                if (mlt == null) {
-                    return NotFound($"User with username '{mltId}' not found.");
-                }
-
-                if (mlt.LabID == null) {
-                    return NotFound($"User with username '{mltId}' have a Lab assigned.");
-                }
-                 
-                var mohArea = await _context.MOHAreas.Where(m => m.LabID == mlt.LabID).ToListAsync();
-
-                if (mohArea == null) {
-                    return NotFound($"No MOHArea found for the Lab assigned to user '{mltId}'.");
-                }
-
-                var mohAreaIds = mohArea.Select(m => m.MOHAreaID).ToList();
-
-                var phiAreas = await _context.PHIAreas.Where(phi => mohAreaIds
-                    .Contains(phi.MOHAreaId))
-                    .ToListAsync();
-
-                var phiAreaIds = phiAreas.Select(pa => pa.PHIAreaID).ToList();
-
-                var samples = await _context.Samples
-                    .Where(sample => phiAreaIds
-                    .Contains(sample.PHIAreaId))
-                    .Select(sample => new {
-                        sample.SampleId,
-                        sample.YourRefNo,
-                        sample.StateOfChlorination,
-                        sample.DateOfCollection,
-                        sample.AnalyzedDate,
-                        sample.CatagoryOfSource,
-                        sample.CollectingSource,
-                        sample.phiAreaName,
-                        sample.Acceptance,
-                        sample.PHIArea.MOHArea.LabID,
-                        sample.PHIArea.MOHArea.Lab.LabName,
-                        sample.PHIArea.MOHArea.Lab.LabLocation,
-                        sample.PHIArea.MOHArea.Lab.LabTelephone,
-                        ReportAvailable = _context.Reports.Any(r => r.SampleId == sample.SampleId)
-                    })
-                    .ToListAsync();
-
-                return Ok(samples);
             } catch (Exception e) {
                 return StatusCode(StatusCodes.Status500InternalServerError, new Response { Status = "Error", Message = "An error occurred while processing your request." + e });
             }
@@ -171,12 +74,14 @@ namespace Project_v1.Controllers {
                         report.Sample.CollectingSource,
                         report.Sample.phiAreaName,
                         report.ReportRefId,
+                        report.MyRefNo,
                         report.PresumptiveColiformCount,
                         report.IssuedDate,
                         report.EcoliCount,
                         report.AppearanceOfSample,
                         report.Remarks,
                         report.LabId,
+                        report.ReportUrl,
                         report.Sample.PHIArea.MOHArea.MOHAreaName
                     })
                     .ToListAsync();
@@ -248,43 +153,13 @@ namespace Project_v1.Controllers {
                         report.AppearanceOfSample,
                         report.Remarks,
                         report.LabId,
+                        report.ReportUrl,
                         report.Sample.PHIArea.MOHArea.MOHAreaName
                     })
                     .ToListAsync();
 
                 return Ok(reports);
             } catch (Exception e){
-                return StatusCode(StatusCodes.Status500InternalServerError, new Response { Status = "Error", Message = "An error occurred while processing your request." + e });
-            }
-        }
-
-        [HttpPost]
-        [Route("AddWCSample")]
-        public async Task<IActionResult> AddWCSample([FromBody] Wc_sample wcsample) {
-            try {
-                if (wcsample == null || !ModelState.IsValid) {
-                    return BadRequest(new Response { Status = "Error", Message = "Invalid data!" });
-                }
-
-                var sample = new Sample {
-                    SampleId = _idGenerator.GenerateSampleId(),
-                    YourRefNo = wcsample.YourRefNo,
-                    StateOfChlorination = wcsample.StateOfChlorination,
-                    DateOfCollection = wcsample.DateOfCollection,
-                    CatagoryOfSource = wcsample.CatagoryOfSource,
-                    CollectingSource = wcsample.CollectingSource,
-                    Acceptance = "Pending",
-                    PhiId = wcsample.phiId,
-                    phiAreaName = wcsample.phiAreaName,
-                    PHIAreaId = wcsample.PHIAreaID,
-                    Comments = ""
-                };
-
-                await _context.Samples.AddAsync(sample);
-                await _context.SaveChangesAsync();
-
-                return Ok(new Response { Status = "Success", Message = "WC Sample added successfully!" });
-            } catch (Exception e) {
                 return StatusCode(StatusCodes.Status500InternalServerError, new Response { Status = "Error", Message = "An error occurred while processing your request." + e });
             }
         }
@@ -298,17 +173,53 @@ namespace Project_v1.Controllers {
                 }
 
                 var sample = await _context.Samples.FindAsync(wcreport.SampleId);
+                var lab = await _context.Labs.FindAsync(wcreport.LabId);
 
-                sample.AnalyzedDate = wcreport.AnalyzedDate;
+                if (sample == null) {
+                    return NotFound(new Response { Status = "Error", Message = "Sample not found!" });
+                }
+
+                if (lab == null) {
+                    return NotFound(new Response { Status = "Error", Message = "Lab not found!" });
+                }
+
+                var reportId = _idGenerator.GenerateReportId();
+                var issuedDate = DateTime.Now;
+
+                var newReportData = new FullReport {
+                    MyRefNo = wcreport.MyRefNo,
+                    IssuedDate = issuedDate,
+                    AppearanceOfSample = wcreport.AppearanceOfSample,
+                    EcoliCount = wcreport.EcoliCount,
+                    PresumptiveColiformCount = wcreport.PresumptiveColiformCount,
+                    Results = wcreport.Remarks,
+                    YourRefNo = sample.YourRefNo,
+                    CollectingSource = sample.CollectingSource,
+                    DateOfCollection = sample.DateOfCollection,
+                    AnalyzedDate = sample.AnalyzedDate,
+                    StateOfChlorination = sample.StateOfChlorination,
+                    LabName = lab.LabName,
+                    LabLocation = lab.LabLocation,
+                    LabTelephone = lab.LabTelephone
+                };
+
+                byte[] pdf = _reportService.GenerateWaterQualityReport(newReportData);
+
+                var reportUrl = await _storageService.UploadFile(new MemoryStream(pdf), reportId);
+
+                if (reportUrl == null) {
+                    return StatusCode(StatusCodes.Status500InternalServerError, new Response { Status = "Error", Message = "An error occurred while processing your request." });
+                }
 
                 var report = new Report {
-                    ReportRefId = _idGenerator.GenerateReportId(),
+                    ReportRefId = reportId,
                     MyRefNo = wcreport.MyRefNo,
                     PresumptiveColiformCount = wcreport.PresumptiveColiformCount,
-                    IssuedDate = DateTime.Now,
+                    IssuedDate = issuedDate,
                     EcoliCount = wcreport.EcoliCount,
                     AppearanceOfSample = wcreport.AppearanceOfSample,
                     Remarks = wcreport.Remarks,
+                    ReportUrl = reportUrl,
                     MltId = wcreport.MltId,
                     SampleId = wcreport.SampleId,
                     LabId = wcreport.LabId
@@ -318,34 +229,6 @@ namespace Project_v1.Controllers {
                 await _context.SaveChangesAsync();
 
                 return Ok(new Response { Status = "Success", Message = "WC Report added successfully!" });
-            } catch (Exception e) {
-                return StatusCode(StatusCodes.Status500InternalServerError, new Response { Status = "Error", Message = "An error occurred while processing your request." + e });
-            }
-        }
-
-        [HttpPut]
-        [Route("updateWCSample/{id}")]
-        public async Task<IActionResult> UpdateWCSample([FromRoute] String id, [FromBody] Wc_updatedSample updatedSample) {
-            try {
-                var sample = await _context.Samples.FindAsync(id);
-
-                if (sample == null) {
-                    return NotFound(new Response { Status = "Error", Message = "Sample not found!" });
-                }
-
-                if (updatedSample == null || !ModelState.IsValid) {
-                    return BadRequest(new Response { Status = "Error", Message = "Invalid sample data!" });
-                }
-
-                sample.YourRefNo = updatedSample.YourRefNo;
-                sample.StateOfChlorination = updatedSample.StateOfChlorination;
-                sample.DateOfCollection = updatedSample.DateOfCollection;
-                sample.CatagoryOfSource = updatedSample.CatagoryOfSource;
-                sample.CollectingSource = updatedSample.CollectingSource;
-
-                await _context.SaveChangesAsync();
-
-                return Ok(new Response { Status = "Success", Message = "Sample updated successfully!" });
             } catch (Exception e) {
                 return StatusCode(StatusCodes.Status500InternalServerError, new Response { Status = "Error", Message = "An error occurred while processing your request." + e });
             }
@@ -365,55 +248,54 @@ namespace Project_v1.Controllers {
                     return BadRequest(new Response { Status = "Error", Message = "Invalid report data!" });
                 }
 
-                report.MyRefNo = updatedReport.MyRefNo;
-                report.AppearanceOfSample = updatedReport.AppearanceOfSample;
-                report.PresumptiveColiformCount = updatedReport.PresumptiveColiformCount;
-                report.EcoliCount = updatedReport.EcoliCount;
-                report.Remarks = updatedReport.Results;
+                var existingReportData = await _context.Reports.
+                    Where(report => report.ReportRefId == id)
+                    .Select(report => new {
+                        report.IssuedDate,
+                        report.Lab.LabName,
+                        report.Lab.LabLocation,
+                        report.Lab.LabTelephone,
+                        report.Sample.YourRefNo,
+                        report.Sample.CollectingSource,
+                        report.Sample.DateOfCollection,
+                        report.Sample.AnalyzedDate,
+                        report.Sample.StateOfChlorination
+                    })
+                    .FirstOrDefaultAsync();
 
-                await _context.SaveChangesAsync();
+                if (await _storageService.DeleteFile(id)) {
+                    var updatedReportData = new FullReport {
+                        MyRefNo = updatedReport.MyRefNo,
+                        IssuedDate = existingReportData.IssuedDate,
+                        AppearanceOfSample = updatedReport.AppearanceOfSample,
+                        EcoliCount = updatedReport.EcoliCount,
+                        PresumptiveColiformCount = updatedReport.PresumptiveColiformCount,
+                        Results = updatedReport.Remarks,
+                        YourRefNo = existingReportData.YourRefNo,
+                        CollectingSource = existingReportData.CollectingSource,
+                        DateOfCollection = existingReportData.DateOfCollection,
+                        AnalyzedDate = existingReportData.AnalyzedDate,
+                        StateOfChlorination = existingReportData.StateOfChlorination,
+                        LabName = existingReportData.LabName,
+                        LabLocation = existingReportData.LabLocation,
+                        LabTelephone = existingReportData.LabTelephone
+                    };
+
+                    byte[] reportPDF = _reportService.GenerateWaterQualityReport(updatedReportData);
+
+                    var reportUrl = await _storageService.UploadFile(new MemoryStream(reportPDF), id);
+
+                    report.MyRefNo = updatedReport.MyRefNo;
+                    report.AppearanceOfSample = updatedReport.AppearanceOfSample;
+                    report.PresumptiveColiformCount = updatedReport.PresumptiveColiformCount;
+                    report.EcoliCount = updatedReport.EcoliCount;
+                    report.Remarks = updatedReport.Remarks;
+                    report.ReportUrl = reportUrl;
+
+                    await _context.SaveChangesAsync();
+                }
 
                 return Ok(new Response { Status = "Success", Message = "Report updated successfully!" });
-            } catch (Exception e) {
-                return StatusCode(StatusCodes.Status500InternalServerError, new Response { Status = "Error", Message = "An error occurred while processing your request." + e });
-            }
-        }
-
-        [HttpPut]
-        [Route("updateSampleStatus")]
-        public async Task<IActionResult> UpdateSampleStatus([FromBody] SampleStatus sampleStatus) {
-            try {
-                var sampleToUpdate = await _context.Samples.FindAsync(sampleStatus.SampleId);
-
-                if (sampleToUpdate == null) {
-                    return NotFound(new Response { Status = "Error", Message = "Sample not found!" });
-                }
-
-                sampleToUpdate.Acceptance = sampleStatus.Status;
-                sampleToUpdate.Comments = sampleStatus.Comment;
-
-                await _context.SaveChangesAsync();
-
-                return Ok(new Response { Status = "Success", Message = "Sample status updated successfully!" });
-            } catch (Exception e) {
-                return StatusCode(StatusCodes.Status500InternalServerError, new Response { Status = "Error", Message = "An error occurred while processing your request." + e });
-            }
-        }
-
-        [HttpDelete]
-        [Route("deleteWCSample/{id}")]
-        public async Task<IActionResult> DeleteWCSample([FromRoute] String id) {
-            try {
-                var sample = await _context.Samples.FindAsync(id);
-
-                if (sample == null) {
-                    return NotFound(new Response { Status = "Error", Message = "Sample not found!" });
-                }
-
-                _context.Samples.Remove(sample);
-                await _context.SaveChangesAsync();
-
-                return Ok(new Response { Status = "Success", Message = "Sample deleted successfully!" });
             } catch (Exception e) {
                 return StatusCode(StatusCodes.Status500InternalServerError, new Response { Status = "Error", Message = "An error occurred while processing your request." + e });
             }
@@ -429,26 +311,15 @@ namespace Project_v1.Controllers {
                     return NotFound(new Response { Status = "Error", Message = "Report not found!" });
                 }
 
-                _context.Reports.Remove(report);
-                await _context.SaveChangesAsync();
+                if(await _storageService.DeleteFile(id)) {
+                    _context.Reports.Remove(report);
+                    await _context.SaveChangesAsync();
+                }
 
                 return Ok(new Response { Status = "Success", Message = "Report deleted successfully!" });
             } catch (Exception e) {
                 return StatusCode(StatusCodes.Status500InternalServerError, new Response { Status = "Error", Message = "An error occurred while processing your request." + e });
             }
         }
-            
-        /*[HttpPost]
-        [Route("generatePdf")]
-        public async Task<IActionResult> GeneratePdf([FromBody] FullReport fullReport) {
-            try {
-                byte[] pdf = _reportService.GenerateWaterQualityReport(fullReport);
-
-                return File(pdf, "application/pdf", "WaterQualityReport.pdf");
-            } catch (Exception ex) {
-                // Handle any exceptions
-                return StatusCode(500, "An error occurred while generating the PDF." + ex);
-            }
-        }*/
     }
 }

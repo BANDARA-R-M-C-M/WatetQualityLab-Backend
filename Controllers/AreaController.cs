@@ -189,12 +189,12 @@ namespace Project_v1.Controllers {
 
         [HttpPut]
         [Route("UpdatePHIArea/{id}")]
-        public async Task<IActionResult> UpdatePHIArea([FromRoute] String id ,[FromBody] PHIArea phiaArea) {
+        public async Task<IActionResult> UpdatePHIArea([FromRoute] String id ,[FromBody] UpdatedPHIArea phiaArea) {
             try {
 
-                var phiarea = await _context.PHIAreas.FindAsync(id);
+                var existingPhiArea = await _context.PHIAreas.FindAsync(id);
 
-                if (phiarea == null) {
+                if (existingPhiArea == null) {
                     return StatusCode(StatusCodes.Status404NotFound, new Response { Status = "Error", Message = "PHI Area not found!" });
                 }
 
@@ -202,7 +202,9 @@ namespace Project_v1.Controllers {
                     return BadRequest(new Response { Status = "Error", Message = "Invalid data!" });
                 }
 
-                _context.PHIAreas.Update(phiaArea);
+                existingPhiArea.PHIAreaName = phiaArea.phiAreaName;
+                existingPhiArea.MOHAreaId = phiaArea.mohAreaId;
+
                 await _context.SaveChangesAsync();
 
                 return Ok(new Response { Status = "Success", Message = "PHI Area updated successfully!" });
@@ -213,12 +215,12 @@ namespace Project_v1.Controllers {
 
         [HttpPut]
         [Route("UpdateMOHArea/{id}")]
-        public async Task<IActionResult> UpdateMOHArea([FromRoute] String id, [FromBody] MOHArea mohArea) {
+        public async Task<IActionResult> UpdateMOHArea([FromRoute] String id, [FromBody] UpdatedMOHArea mohArea) {
             try {
 
-                var moharea = await _context.MOHAreas.FindAsync(id);
+                var existingMohArea = await _context.MOHAreas.FindAsync(id);
 
-                if (moharea == null) {
+                if (existingMohArea == null) {
                     return StatusCode(StatusCodes.Status404NotFound, new Response { Status = "Error", Message = "MOH Area not found!" });
                 }
 
@@ -226,10 +228,39 @@ namespace Project_v1.Controllers {
                     return BadRequest(new Response { Status = "Error", Message = "Invalid data!" });
                 }
 
-                _context.MOHAreas.Update(mohArea);
+                existingMohArea.MOHAreaName = mohArea.mohAreaName;
+                existingMohArea.LabID = mohArea.LabId;
+
                 await _context.SaveChangesAsync();
 
                 return Ok(new Response { Status = "Success", Message = "MOH Area updated successfully!" });
+            } catch (Exception e) {
+                return StatusCode(StatusCodes.Status500InternalServerError, new Response { Status = "Error", Message = "An error occurred while processing your request." + e });
+            }
+        }
+
+        [HttpPut]
+        [Route("UpdateLab/{id}")]
+        public async Task<IActionResult> UpdateLab([FromRoute] String id, [FromBody] UpdatedLab lab) {
+            try {
+
+                var existingLab = await _context.Labs.FindAsync(id);
+
+                if (existingLab == null) {
+                    return StatusCode(StatusCodes.Status404NotFound, new Response { Status = "Error", Message = "Lab not found!" });
+                }
+
+                if (lab == null || !ModelState.IsValid) {
+                    return BadRequest(new Response { Status = "Error", Message = "Invalid data!" });
+                }
+
+                existingLab.LabName = lab.LabName;
+                existingLab.LabLocation = lab.LabLocation;
+                existingLab.LabTelephone = lab.LabTelephone;
+
+                await _context.SaveChangesAsync();
+
+                return Ok(new Response { Status = "Success", Message = "Lab updated successfully!" });
             } catch (Exception e) {
                 return StatusCode(StatusCodes.Status500InternalServerError, new Response { Status = "Error", Message = "An error occurred while processing your request." + e });
             }
