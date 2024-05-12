@@ -6,10 +6,10 @@ namespace Project_v1.Models {
         public string SampleId { get; set; }
         public string YourRefNo { get; set; }
         public string StateOfChlorination { get; set; }
-        public DateTime DateOfCollection { get; set; }
+        public DateOnly DateOfCollection { get; set; }
         public string CatagoryOfSource { get; set; }
         public string CollectingSource { get; set; }
-        public DateTime AnalyzedDate { get; set; }
+        public DateOnly AnalyzedDate { get; set; }
         public string phiAreaName { get; set; }
         public string Acceptance { get; set; }
         public string Comments { get; set; }

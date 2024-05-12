@@ -57,7 +57,7 @@ namespace Project_v1.Controllers
                     Token = _tokenService.CreateToken(existingUser) 
                 });
             } catch (Exception e) {
-                return StatusCode(StatusCodes.Status500InternalServerError, new Response { Status = "Error", Message = "An error occurred while processing your request." + e });
+                return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
             }
         }   
 
@@ -90,14 +90,14 @@ namespace Project_v1.Controllers
                         return StatusCode(StatusCodes.Status500InternalServerError, new Response { Status = "Error", Message = $"User creation failed: {createdUser.Errors.Select(e => e.Description)}" });
                     }
                 } else {
-                    return StatusCode(StatusCodes.Status500InternalServerError, new Response { Status = "Error", Message = "Role does not exist!" });
+                    return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
                 }
 
                 await _userManager.AddToRoleAsync(newUser, registeredUser.Role);
 
                 return StatusCode(StatusCodes.Status201Created, new Response { Status = "Success", Message = "User created successfully!" });
             } catch (Exception e) {
-                return StatusCode(StatusCodes.Status500InternalServerError, new Response { Status = "Error", Message = "An error occurred while processing your request." + e });
+                return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
             }
         }
 
@@ -122,7 +122,7 @@ namespace Project_v1.Controllers
 
                 return Ok(userDetails);
             } catch (Exception e) {
-                return StatusCode(StatusCodes.Status500InternalServerError, new Response { Status = "Error", Message = "An error occurred while processing your request." + e });
+                return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
             }
         }
 
@@ -147,7 +147,7 @@ namespace Project_v1.Controllers
 
                 return Ok(userDetails);
             } catch (Exception e) {
-                return StatusCode(StatusCodes.Status500InternalServerError, new Response { Status = "Error", Message = "An error occurred while processing your request." + e });
+                return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
             }
         }
 
@@ -172,7 +172,7 @@ namespace Project_v1.Controllers
 
                 return Ok(userDetails);
             } catch (Exception e) {
-                return StatusCode(StatusCodes.Status500InternalServerError, new Response { Status = "Error", Message = "An error occurred while processing your request." + e });
+                return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
             }
         }
 
@@ -199,7 +199,7 @@ namespace Project_v1.Controllers
 
                 return Ok(new Response { Status = "Success", Message = "User updated successfully!" });
             } catch (Exception e) {
-                return StatusCode(StatusCodes.Status500InternalServerError, new Response { Status = "Error", Message = "An error occurred while processing your request." + e });
+                return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
             }
         }
 
@@ -218,7 +218,7 @@ namespace Project_v1.Controllers
 
                 return Ok(new Response { Status = "Success", Message = "User deleted successfully!" });
             } catch (Exception e) {
-                return StatusCode(StatusCodes.Status500InternalServerError, new Response { Status = "Error", Message = "An error occurred while processing your request." + e });
+                return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
             }
         }
     }

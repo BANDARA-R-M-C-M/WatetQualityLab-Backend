@@ -36,7 +36,7 @@ namespace Project_v1.Controllers {
                 var samples = await _context.Samples.ToListAsync();
                 return Ok(samples);
             } catch (Exception e) {
-                return StatusCode(StatusCodes.Status500InternalServerError, new Response { Status = "Error", Message = "An error occurred while processing your request." + e });
+                return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
             }
         }
 
@@ -71,7 +71,7 @@ namespace Project_v1.Controllers {
 
                 return Ok(samples);
             } catch (Exception e) {
-                return StatusCode(StatusCodes.Status500InternalServerError, new Response { Status = "Error", Message = "An error occurred while processing your request." + e });
+                return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
             }
         }
 
@@ -126,7 +126,7 @@ namespace Project_v1.Controllers {
 
                 return Ok(samples);
             } catch (Exception e) {
-                return StatusCode(StatusCodes.Status500InternalServerError, new Response { Status = "Error", Message = "An error occurred while processing your request." + e });
+                return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
             }
         }
 
@@ -157,7 +157,7 @@ namespace Project_v1.Controllers {
 
                 return Ok(new Response { Status = "Success", Message = "WC Sample added successfully!" });
             } catch (Exception e) {
-                return StatusCode(StatusCodes.Status500InternalServerError, new Response { Status = "Error", Message = "An error occurred while processing your request." + e });
+                return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
             }
         }
 
@@ -185,7 +185,7 @@ namespace Project_v1.Controllers {
 
                 return Ok(new Response { Status = "Success", Message = "Sample updated successfully!" });
             } catch (Exception e) {
-                return StatusCode(StatusCodes.Status500InternalServerError, new Response { Status = "Error", Message = "An error occurred while processing your request." + e });
+                return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
             }
         }
 
@@ -206,7 +206,7 @@ namespace Project_v1.Controllers {
 
                 return Ok(new Response { Status = "Success", Message = "Sample status updated successfully!" });
             } catch (Exception e) {
-                return StatusCode(StatusCodes.Status500InternalServerError, new Response { Status = "Error", Message = "An error occurred while processing your request." + e });
+                return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
             }
         }
 
@@ -225,7 +225,7 @@ namespace Project_v1.Controllers {
 
                 return Ok(new Response { Status = "Success", Message = "Sample deleted successfully!" });
             } catch (Exception e) {
-                return StatusCode(StatusCodes.Status500InternalServerError, new Response { Status = "Error", Message = "An error occurred while processing your request." + e });
+                return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
             }
         }
     }

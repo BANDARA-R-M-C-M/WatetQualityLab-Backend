@@ -2,7 +2,7 @@
     public class Wc_report {
         public string MyRefNo { get; set; }
         public string PresumptiveColiformCount { get; set; }
-        public DateTime AnalyzedDate { get; set; }
+        public DateOnly AnalyzedDate { get; set; }
         public string EcoliCount { get; set; }
         public string AppearanceOfSample { get; set; }
         public string Remarks { get; set; }

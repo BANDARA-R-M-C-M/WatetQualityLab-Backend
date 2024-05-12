@@ -5,5 +5,6 @@
         public string GenerateLabId();
         public string GeneratePHIAreaId();
         public string GenerateMOHAreaId();
+        public string GenerateGeneralInventoryId();
     }
 }

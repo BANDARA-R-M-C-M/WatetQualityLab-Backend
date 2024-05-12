@@ -2,12 +2,12 @@
     public class FullReport {
         public string YourRefNo { get; set; }   //sampleId
         public string StateOfChlorination { get; set; }
-        public DateTime DateOfCollection { get; set; }
+        public DateOnly DateOfCollection { get; set; }
         public string CollectingSource { get; set; }
-        public DateTime AnalyzedDate { get; set; }
+        public DateOnly AnalyzedDate { get; set; }
         public string MyRefNo { get; set; }
         public string PresumptiveColiformCount { get; set; }
-        public DateTime IssuedDate { get; set; }
+        public DateOnly IssuedDate { get; set; }
         public string LabName { get; set; }
         public string LabLocation { get; set; }
         public string LabTelephone { get; set; }

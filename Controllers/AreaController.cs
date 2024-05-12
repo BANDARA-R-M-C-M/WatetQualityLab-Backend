@@ -40,7 +40,7 @@ namespace Project_v1.Controllers {
 
                 return Ok(mohareasList);
             } catch (Exception e) {
-                return StatusCode(StatusCodes.Status500InternalServerError, new Response { Status = "Error", Message = "An error occurred while processing your request." + e });
+                return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
             }
         }
 
@@ -65,7 +65,7 @@ namespace Project_v1.Controllers {
                     phiAreaName = phiArea.PHIAreaName,
                 });
             } catch (Exception e) {
-                return StatusCode(StatusCodes.Status500InternalServerError, new Response { Status = "Error", Message = "An error occurred while processing your request." + e });
+                return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
             }
         }
 
@@ -83,7 +83,7 @@ namespace Project_v1.Controllers {
 
                 return Ok(phiaAreasList);
             } catch (Exception e) {
-                return StatusCode(StatusCodes.Status500InternalServerError, new Response { Status = "Error", Message = "An error occurred while processing your request." + e });
+                return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
             }
         }
 
@@ -102,7 +102,7 @@ namespace Project_v1.Controllers {
 
                 return Ok(labsList);
             } catch (Exception e) {
-                return StatusCode(StatusCodes.Status500InternalServerError, new Response { Status = "Error", Message = "An error occurred while processing your request." + e });
+                return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
             }
         }
 
@@ -125,7 +125,7 @@ namespace Project_v1.Controllers {
 
                 return Ok(new Response { Status = "Success", Message = "MOH Area added successfully!" });
             } catch (Exception e) {
-                return StatusCode(StatusCodes.Status500InternalServerError, new Response { Status = "Error", Message = "An error occurred while processing your request." + e });
+                return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
             }
         }
 
@@ -154,7 +154,7 @@ namespace Project_v1.Controllers {
 
                 return Ok(new Response { Status = "Success", Message = "PHI Area added successfully!" });
             } catch (Exception e) {
-                return StatusCode(StatusCodes.Status500InternalServerError, new Response { Status = "Error", Message = "An error occurred while processing your request." + e });
+                return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
             }
         }
 
@@ -183,7 +183,7 @@ namespace Project_v1.Controllers {
 
                 return Ok(new Response { Status = "Success", Message = "Lab added successfully!" });
             } catch (Exception e) {
-                return StatusCode(StatusCodes.Status500InternalServerError, new Response { Status = "Error", Message = "An error occurred while processing your request." + e });
+                return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
             }
         }
 
@@ -209,7 +209,7 @@ namespace Project_v1.Controllers {
 
                 return Ok(new Response { Status = "Success", Message = "PHI Area updated successfully!" });
             } catch (Exception e) {
-                return StatusCode(StatusCodes.Status500InternalServerError, new Response { Status = "Error", Message = "An error occurred while processing your request." + e });
+                return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
             }
         }
 
@@ -235,7 +235,7 @@ namespace Project_v1.Controllers {
 
                 return Ok(new Response { Status = "Success", Message = "MOH Area updated successfully!" });
             } catch (Exception e) {
-                return StatusCode(StatusCodes.Status500InternalServerError, new Response { Status = "Error", Message = "An error occurred while processing your request." + e });
+                return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
             }
         }
 
@@ -262,7 +262,7 @@ namespace Project_v1.Controllers {
 
                 return Ok(new Response { Status = "Success", Message = "Lab updated successfully!" });
             } catch (Exception e) {
-                return StatusCode(StatusCodes.Status500InternalServerError, new Response { Status = "Error", Message = "An error occurred while processing your request." + e });
+                return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
             }
         }
 
@@ -280,7 +280,7 @@ namespace Project_v1.Controllers {
 
                 return Ok(new Response { Status = "Success", Message = "MOH Area deleted successfully!" });
             } catch (Exception e) {
-                return StatusCode(StatusCodes.Status500InternalServerError, new Response { Status = "Error", Message = "An error occurred while processing your request." + e });
+                return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
             }
         }
 
@@ -298,7 +298,7 @@ namespace Project_v1.Controllers {
 
                 return Ok(new Response { Status = "Success", Message = "PHI Area deleted successfully!" });
             } catch (Exception e) {
-                return StatusCode(StatusCodes.Status500InternalServerError, new Response { Status = "Error", Message = "An error occurred while processing your request." + e });
+                return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
             }
         }
 
@@ -316,7 +316,7 @@ namespace Project_v1.Controllers {
 
                 return Ok(new Response { Status = "Success", Message = "Lab deleted successfully!" });
             } catch (Exception e) {
-                return StatusCode(StatusCodes.Status500InternalServerError, new Response { Status = "Error", Message = "An error occurred while processing your request." + e });
+                return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
             }
         }
     }

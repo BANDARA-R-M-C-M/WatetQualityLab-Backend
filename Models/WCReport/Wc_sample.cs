@@ -2,7 +2,7 @@
     public class Wc_sample {
         public string YourRefNo { get; set; }
         public string StateOfChlorination { get; set; }
-        public DateTime DateOfCollection { get; set; }
+        public DateOnly DateOfCollection { get; set; }
         public string CatagoryOfSource { get; set; }
         public string CollectingSource { get; set; }
         public string phiId { get; set; }

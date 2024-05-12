@@ -46,7 +46,7 @@ namespace Project_v1.Controllers {
                 var reports = await _context.Reports.ToListAsync();
                 return Ok(reports);
             } catch (Exception e) {
-                return StatusCode(StatusCodes.Status500InternalServerError, new Response { Status = "Error", Message = "An error occurred while processing your request." + e });
+                return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
             }
         }
 
@@ -88,7 +88,7 @@ namespace Project_v1.Controllers {
 
                 return Ok(reports);
             } catch (Exception e) {
-                return StatusCode(StatusCodes.Status500InternalServerError, new Response { Status = "Error", Message = "An error occurred while processing your request." + e });
+                return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
             }
         }
 
@@ -160,7 +160,7 @@ namespace Project_v1.Controllers {
 
                 return Ok(reports);
             } catch (Exception e){
-                return StatusCode(StatusCodes.Status500InternalServerError, new Response { Status = "Error", Message = "An error occurred while processing your request." + e });
+                return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
             }
         }
 
@@ -184,7 +184,7 @@ namespace Project_v1.Controllers {
                 }
 
                 var reportId = _idGenerator.GenerateReportId();
-                var issuedDate = DateTime.Now;
+                var issuedDate = DateOnly.FromDateTime(DateTime.Now);
 
                 var newReportData = new FullReport {
                     MyRefNo = wcreport.MyRefNo,
@@ -208,7 +208,7 @@ namespace Project_v1.Controllers {
                 var reportUrl = await _storageService.UploadFile(new MemoryStream(pdf), reportId);
 
                 if (reportUrl == null) {
-                    return StatusCode(StatusCodes.Status500InternalServerError, new Response { Status = "Error", Message = "An error occurred while processing your request." });
+                    return StatusCode(StatusCodes.Status500InternalServerError, new Response { Status = "Error", Message = "An error occurred while processing URL." });
                 }
 
                 var report = new Report {
@@ -230,7 +230,7 @@ namespace Project_v1.Controllers {
 
                 return Ok(new Response { Status = "Success", Message = "WC Report added successfully!" });
             } catch (Exception e) {
-                return StatusCode(StatusCodes.Status500InternalServerError, new Response { Status = "Error", Message = "An error occurred while processing your request." + e });
+                return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
             }
         }
 
@@ -297,7 +297,7 @@ namespace Project_v1.Controllers {
 
                 return Ok(new Response { Status = "Success", Message = "Report updated successfully!" });
             } catch (Exception e) {
-                return StatusCode(StatusCodes.Status500InternalServerError, new Response { Status = "Error", Message = "An error occurred while processing your request." + e });
+                return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
             }
         }
 
@@ -318,7 +318,7 @@ namespace Project_v1.Controllers {
 
                 return Ok(new Response { Status = "Success", Message = "Report deleted successfully!" });
             } catch (Exception e) {
-                return StatusCode(StatusCodes.Status500InternalServerError, new Response { Status = "Error", Message = "An error occurred while processing your request." + e });
+                return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
             }
         }
     }

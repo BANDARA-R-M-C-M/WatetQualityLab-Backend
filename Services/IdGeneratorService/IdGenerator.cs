@@ -37,5 +37,9 @@ namespace Project_v1.Services.IdGeneratorService {
         public string GenerateMOHAreaId() {
             return ("MOHAREA-" + Guid.NewGuid().ToString());
         }
+
+        public string GenerateGeneralInventoryId() {
+            return ("GENERALINVENTORY-" + Guid.NewGuid().ToString());
+        }
     }
 }

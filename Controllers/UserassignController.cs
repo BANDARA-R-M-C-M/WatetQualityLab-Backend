@@ -39,7 +39,7 @@ namespace Project_v1.Controllers {
 
                 return Ok(new Response { Status = "Success", Message = "Lab assigned successfully!" });
             } catch (Exception e) {
-                return StatusCode(StatusCodes.Status500InternalServerError, new Response { Status = "Error", Message = "An error occurred while processing your request." + e });
+                return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
             }
         }
 
@@ -61,7 +61,7 @@ namespace Project_v1.Controllers {
                 await _context.SaveChangesAsync();
                 return Ok(new Response { Status = "Success", Message = "PHI Area assigned successfully!" });
             } catch (Exception e) {
-                return StatusCode(StatusCodes.Status500InternalServerError, new Response { Status = "Error", Message = "An error occurred while processing your request." + e });
+                return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
             }
         }
 
@@ -83,7 +83,7 @@ namespace Project_v1.Controllers {
                 await _context.SaveChangesAsync();
                 return Ok(new Response { Status = "Success", Message = "MOH Area assigned successfully!" });
             } catch (Exception e) {
-                return StatusCode(StatusCodes.Status500InternalServerError, new Response { Status = "Error", Message = "An error occurred while processing your request." + e });
+                return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
             }
         }
     }

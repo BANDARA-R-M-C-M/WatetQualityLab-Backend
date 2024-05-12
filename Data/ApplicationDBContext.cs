@@ -10,15 +10,12 @@ namespace Project_v1.Data {
 
         private readonly IConfiguration _configuration = configuration;
 
-        /*public DbSet<Admin> Admins { get; set; }
-        public DbSet<Mlt> Mlts { get; set; }
-        public DbSet<Phi> Phis { get; set; }
-        public DbSet<Moh_supervisor> Moh_supervisors { get; set; }*/
         public DbSet<Lab> Labs { get; set; }
         public DbSet<PHIArea> PHIAreas { get; set; }
         public DbSet<MOHArea> MOHAreas { get; set; }
         public DbSet<Sample> Samples { get; set; }
         public DbSet<Report> Reports { get; set; }
+        public DbSet<GeneralInventory> GeneralInventory { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder) {
             optionsBuilder.UseSqlServer(_configuration.GetConnectionString("DefaultConnection"));

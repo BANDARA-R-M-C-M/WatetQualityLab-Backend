@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Project_v1.Data;
 
@@ -11,9 +12,11 @@ using Project_v1.Data;
 namespace Project_v1.Migrations
 {
     [DbContext(typeof(ApplicationDBContext))]
-    partial class ApplicationDBContextModelSnapshot : ModelSnapshot
+    [Migration("20240511153708_M9")]
+    partial class M9
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -210,7 +213,8 @@ namespace Project_v1.Migrations
 
                     b.HasKey("GeneralInventoryID");
 
-                    b.HasIndex("LabId");
+                    b.HasIndex("LabId")
+                        .IsUnique();
 
                     b.ToTable("GeneralInventory");
                 });
@@ -290,8 +294,8 @@ namespace Project_v1.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<DateOnly>("IssuedDate")
-                        .HasColumnType("date");
+                    b.Property<DateTime>("IssuedDate")
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("LabId")
                         .IsRequired()
@@ -339,8 +343,8 @@ namespace Project_v1.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<DateOnly>("AnalyzedDate")
-                        .HasColumnType("date");
+                    b.Property<DateTime>("AnalyzedDate")
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("CatagoryOfSource")
                         .IsRequired()
@@ -354,8 +358,8 @@ namespace Project_v1.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<DateOnly>("DateOfCollection")
-                        .HasColumnType("date");
+                    b.Property<DateTime>("DateOfCollection")
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("PHIAreaId")
                         .IsRequired()
@@ -518,8 +522,8 @@ namespace Project_v1.Migrations
             modelBuilder.Entity("Project_v1.Models.GeneralInventory", b =>
                 {
                     b.HasOne("Project_v1.Models.Lab", "Lab")
-                        .WithMany("GeneralInventory")
-                        .HasForeignKey("LabId")
+                        .WithOne("GeneralInventory")
+                        .HasForeignKey("Project_v1.Models.GeneralInventory", "LabId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -601,7 +605,8 @@ namespace Project_v1.Migrations
 
             modelBuilder.Entity("Project_v1.Models.Lab", b =>
                 {
-                    b.Navigation("GeneralInventory");
+                    b.Navigation("GeneralInventory")
+                        .IsRequired();
 
                     b.Navigation("MOHAreas");
 
