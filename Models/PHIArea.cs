@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using Project_v1.Models.Users;
 
-namespace Project_v1.Models {
+namespace Project_v1.Models
+{
     public class PHIArea {
         [Key]
         public string PHIAreaID { get; set; }

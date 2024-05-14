@@ -2,9 +2,9 @@
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Project_v1.Models;
-using Project_v1.Models.Users;
 
-namespace Project_v1.Data {
+namespace Project_v1.Data
+{
     public class ApplicationDBContext(DbContextOptions<ApplicationDBContext> options, IConfiguration configuration) 
         : IdentityDbContext<SystemUser>(options) {
 

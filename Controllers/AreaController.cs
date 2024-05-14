@@ -4,12 +4,12 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Project_v1.Data;
 using Project_v1.Models;
-using Project_v1.Models.Areas;
-using Project_v1.Models.Response;
-using Project_v1.Models.Users;
+using Project_v1.Models.DTOs.Areas;
+using Project_v1.Models.DTOs.Response;
 using Project_v1.Services.IdGeneratorService;
 
-namespace Project_v1.Controllers {
+namespace Project_v1.Controllers
+{
     [Route("api/[controller]")]
     [ApiController]
     public class AreaController : ControllerBase {

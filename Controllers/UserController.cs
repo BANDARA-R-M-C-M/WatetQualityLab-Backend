@@ -2,10 +2,10 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Project_v1.Data;
-using Project_v1.Models.Login;
-using Project_v1.Models.Response;
-using Project_v1.Models.Signup;
-using Project_v1.Models.Users;
+using Project_v1.Models;
+using Project_v1.Models.DTOs.Login;
+using Project_v1.Models.DTOs.Response;
+using Project_v1.Models.DTOs.Signup;
 using Project_v1.Services.TokenService;
 
 namespace Project_v1.Controllers

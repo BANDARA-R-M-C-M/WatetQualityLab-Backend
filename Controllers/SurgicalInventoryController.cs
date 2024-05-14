@@ -3,14 +3,13 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Project_v1.Data;
-using Project_v1.Models.GeneralInventoryItems;
 using Project_v1.Models;
-using Project_v1.Models.Response;
-using Project_v1.Models.Users;
 using Project_v1.Services.IdGeneratorService;
-using Project_v1.Models.SurgicalInventoryItems;
+using Project_v1.Models.DTOs.SurgicalInventoryItems;
+using Project_v1.Models.DTOs.Response;
 
-namespace Project_v1.Controllers {
+namespace Project_v1.Controllers
+{
     [Route("api/[controller]")]
     [ApiController]
     public class SurgicalInventoryController : ControllerBase {
@@ -180,6 +179,42 @@ namespace Project_v1.Controllers {
                 await _context.SaveChangesAsync();
 
                 return Ok(new Response { Status = "Success", Message = "Item Added Successfully!" });
+            } catch (Exception e) {
+                return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
+            }
+        }
+
+        [HttpPost]
+        [Route("IssueItem")]
+        public async Task<IActionResult> IssueItem([FromBody] IssueItem issueItem) {
+            try {
+                var item = await _context.SurgicalInventory.FindAsync(issueItem.ItemId);
+
+                if (item == null) {
+                    return NotFound();
+                }
+
+                if (item.Quantity < issueItem.Quantity) {
+                    return BadRequest(new Response { Status = "Error", Message = "Not enough quantity available!" });
+                }
+
+                var today = DateOnly.FromDateTime(DateTime.Now);
+
+                item.Quantity -= issueItem.Quantity;
+
+                var issuedItem = new IssuedItem {
+                    IssuedItemID = _idGenerator.GenerateIssuedItemId(),
+                    IssuedQuantity = issueItem.Quantity,
+                    IssuedBy = issueItem.IssuedBy,
+                    IssuedDate = today,
+                    Remarks = issueItem.Remarks,
+                    SurgicalInventoryID = issueItem.ItemId
+                };
+
+                _context.IssuedItems.Add(issuedItem);
+                await _context.SaveChangesAsync();
+
+                return Ok(new Response { Status = "Success", Message = "Item Issued Successfully!" });
             } catch (Exception e) {
                 return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
             }

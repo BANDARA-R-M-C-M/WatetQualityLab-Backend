@@ -4,7 +4,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Project_v1.Data;
-using Project_v1.Models.Users;
 using Project_v1.Services.TokenService;
 using System.Text;
 using Project_v1.Services.ReportService;
@@ -12,6 +11,7 @@ using Project_v1.Services.IdGeneratorService;
 using FirebaseAdmin;
 using Google.Apis.Auth.OAuth2;
 using Project_v1.Services.FirebaseStrorage;
+using Project_v1.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 

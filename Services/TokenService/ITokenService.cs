@@ -1,4 +1,4 @@
-﻿using Project_v1.Models.Users;
+﻿using Project_v1.Models;
 
 namespace Project_v1.Services.TokenService
 {

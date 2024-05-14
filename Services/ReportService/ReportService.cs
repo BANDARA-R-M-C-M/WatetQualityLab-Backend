@@ -3,9 +3,10 @@ using iText.Layout;
 using iText.Layout.Borders;
 using iText.Layout.Element;
 using iText.Layout.Properties;
-using Project_v1.Models.WCReport;
+using Project_v1.Models.DTOs.WCReport;
 
-namespace Project_v1.Services.ReportService {
+namespace Project_v1.Services.ReportService
+{
     public class ReportService : IReportService {
         public byte[] GenerateWaterQualityReport(FullReport wcreport) {
             using MemoryStream stream = new MemoryStream();
