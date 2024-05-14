@@ -90,7 +90,7 @@ namespace Project_v1.Controllers
                         return StatusCode(StatusCodes.Status500InternalServerError, new Response { Status = "Error", Message = $"User creation failed: {createdUser.Errors.Select(e => e.Description)}" });
                     }
                 } else {
-                    return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
+                    return StatusCode(StatusCodes.Status201Created, new Response { Status = "Success", Message = "Role Does Not Exist!" });
                 }
 
                 await _userManager.AddToRoleAsync(newUser, registeredUser.Role);

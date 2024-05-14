@@ -12,6 +12,7 @@ namespace Project_v1.Models {
         public virtual ICollection<SystemUser> Mlts { get; set; } = new List<SystemUser>();
         public virtual ICollection<Report> Reports { get; set; } = new List<Report>();
         public virtual ICollection<MOHArea> MOHAreas { get; set; } = new List<MOHArea>();
-        public virtual ICollection<GeneralInventory> GeneralInventory { get; set; } = new List<GeneralInventory>();
+        /*public virtual ICollection<GeneralInventory> GeneralInventory { get; set; } = new List<GeneralInventory>();*/
+        public virtual ICollection<GeneralCategory> GeneralCategories { get; set; } = new List<GeneralCategory>();
     }
 }

@@ -3,22 +3,23 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Project_v1.Data;
-using Project_v1.Models;
 using Project_v1.Models.GeneralInventoryItems;
+using Project_v1.Models;
 using Project_v1.Models.Response;
 using Project_v1.Models.Users;
 using Project_v1.Services.IdGeneratorService;
+using Project_v1.Models.SurgicalInventoryItems;
 
 namespace Project_v1.Controllers {
     [Route("api/[controller]")]
     [ApiController]
-    public class GeneralInventoryController : ControllerBase {
+    public class SurgicalInventoryController : ControllerBase {
 
         private readonly ApplicationDBContext _context;
         private readonly UserManager<SystemUser> _userManager;
         private readonly IIdGenerator _idGenerator;
 
-        public GeneralInventoryController(ApplicationDBContext context,
+        public SurgicalInventoryController(ApplicationDBContext context,
                                           IIdGenerator idGenerator,
                                           UserManager<SystemUser> userManager) {
             _context = context;
@@ -27,8 +28,8 @@ namespace Project_v1.Controllers {
         }
 
         [HttpGet]
-        [Route("GetGeneralCategories")]
-        public async Task<ActionResult> GetGeneralCategories(String mltId) {
+        [Route("GetSurgicalCategories")]
+        public async Task<IActionResult> GetSurgicalCategories(String mltId) {
             try {
                 var mlt = await _userManager.FindByIdAsync(mltId);
 
@@ -44,24 +45,24 @@ namespace Project_v1.Controllers {
                     return NotFound();
                 }
 
-                var generalCategories = await _context.GeneralCategory
+                var surgicalCategories = await _context.SurgicalCategory
                     .Where(c => c.LabId == labId)
                     .Select(c => new {
-                        c.GeneralCategoryID,
+                        c.SurgicalCategoryID,
                         c.CategoryName,
                         c.LabId
                     })
                     .ToListAsync();
 
-                return Ok(generalCategories);
+                return Ok(surgicalCategories);
             } catch (Exception e) {
                 return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
             }
         }
 
         [HttpGet]
-        [Route("GetGeneralInventoryItems")]
-        public async Task<ActionResult> GetGeneralInventoryItems(String mltId, String categoryId) {
+        [Route("GetSurgicalInventoryItems")]
+        public async Task<IActionResult> GetSurgicalInventoryItems(String mltId, String categoryId) {
             try {
                 var mlt = await _userManager.FindByIdAsync(mltId);
 
@@ -77,65 +78,66 @@ namespace Project_v1.Controllers {
                     return NotFound();
                 }
 
-                var category = await _context.GeneralCategory.FindAsync(categoryId);
+                var category = await _context.SurgicalCategory.FindAsync(categoryId);
 
                 if (category == null) {
                     return NotFound();
                 }
 
-                var categoryList = await _context.GeneralCategory
+                var categoryList = await _context.SurgicalCategory
                     .Where(c => c.LabId == labId)
                     .Select(c => new {
-                        c.GeneralCategoryID
+                        c.SurgicalCategoryID
                     })
                     .ToListAsync();
 
                 var today = DateOnly.FromDateTime(DateTime.Now);
 
-                if (!categoryList.Any(c => c.GeneralCategoryID == categoryId)) {
+                if (!categoryList.Any(c => c.SurgicalCategoryID == categoryId)) {
                     return BadRequest(new Response { Status = "Error", Message = "Category does not belong to the lab!" });
                 }
 
-                var generalInventoryItems = await _context.GeneralInventory
-                        .Where(items => items.GeneralCategoryID == categoryId)
-                        .Select(items => new {
-                            items.GeneralInventoryID,
-                            items.ItemName,
-                            items.IssuedDate,
-                            items.IssuedBy,
-                            items.GeneralCategory.GeneralCategoryID,
-                            items.GeneralCategory.CategoryName,
-                            DurationOfInventory = (today.DayNumber - items.IssuedDate.DayNumber),
-                            items.Remarks,
-                            items.GeneralCategory.LabId
-                        })
-                        .ToListAsync();
+                var surgicalItems = await _context.SurgicalInventory
+                    .Where(items => items.SurgicalCategoryID == categoryId)
+                    .Select(items => new {
+                        items.SurgicalInventoryID,
+                        items.ItemName,
+                        items.IssuedDate,
+                        items.IssuedBy,
+                        items.Quantity,
+                        items.SurgicalCategory.SurgicalCategoryID,
+                        items.SurgicalCategory.CategoryName,
+                        DurationOfInventory = (today.DayNumber - items.IssuedDate.DayNumber),
+                        items.Remarks,
+                        items.SurgicalCategory.LabId
+                    })
+                    .ToListAsync();
 
-                return Ok(generalInventoryItems);
+                return Ok(surgicalItems);
             } catch (Exception e) {
                 return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
             }
         }
 
         [HttpPost]
-        [Route("AddGeneralCategory")]
-        public async Task<IActionResult> AddGeneralCategory([FromBody] AddGeneralCategory category) {
+        [Route("AddSurgicalCategory")]
+        public async Task<IActionResult> AddSurgicalCategory([FromBody] AddSurgicalCategory category) {
             try {
                 if (category == null || !ModelState.IsValid) {
                     return BadRequest(ModelState);
                 }
 
-                if(await _context.GeneralCategory.AnyAsync(c => c.CategoryName == category.CategoryName)) {
+                if (await _context.SurgicalCategory.AnyAsync(c => c.CategoryName == category.CategoryName)) {
                     return BadRequest(new Response { Status = "Error", Message = "Category already exists!" });
                 }
 
-                var newCategory = new GeneralCategory {
-                    GeneralCategoryID = _idGenerator.GenerateGeneralInventoryId(),
+                var newCategory = new SurgicalCategory {
+                    SurgicalCategoryID = _idGenerator.GenerateSurgicalInventoryId(),
                     CategoryName = category.CategoryName,
                     LabId = category.LabId
                 };
 
-                _context.GeneralCategory.Add(newCategory);
+                _context.SurgicalCategory.Add(newCategory);
                 await _context.SaveChangesAsync();
 
                 return Ok(new Response { Status = "Success", Message = "Catagory Added Successfully!" });
@@ -145,36 +147,36 @@ namespace Project_v1.Controllers {
         }
 
         [HttpPost]
-        [Route("AddGeneralInventoryItem")]
-        public async Task<IActionResult> AddGeneralInventoryItem([FromBody] NewGeneralItem newGeneralItem) {
+        [Route("AddSurgicalInventoryItem")]
+        public async Task<IActionResult> AddSurgicalInventoryItem([FromBody] NewSurgicalItem newSurgicalItem) {
             try {
-
-                if (!ModelState.IsValid) {
+                if (newSurgicalItem == null || !ModelState.IsValid) {
                     return BadRequest(ModelState);
                 }
 
-                if (newGeneralItem.IssuedDate > DateOnly.FromDateTime(DateTime.Now)) {
+                if (newSurgicalItem.IssuedDate > DateOnly.FromDateTime(DateTime.Now)) {
                     return BadRequest(new Response { Status = "Error", Message = "Issued Date cannot be in the future!" });
                 }
 
-                if (newGeneralItem.GeneralCategoryID == null) {
+                if (newSurgicalItem.SurgicalCategoryID == null) {
                     return BadRequest(new Response { Status = "Error", Message = "Category ID cannot be null!" });
                 }
 
-                if (newGeneralItem.LabId == null) {
+                if (newSurgicalItem.LabId == null) {
                     return BadRequest(new Response { Status = "Error", Message = "Lab ID cannot be null!" });
                 }
 
-                var generalInventoryItem = new GeneralInventory {
-                    GeneralInventoryID = _idGenerator.GenerateGeneralInventoryId(),
-                    ItemName = newGeneralItem.ItemName,
-                    IssuedDate = newGeneralItem.IssuedDate,
-                    IssuedBy = newGeneralItem.IssuedBy,
-                    Remarks = newGeneralItem.Remarks,
-                    GeneralCategoryID = newGeneralItem.GeneralCategoryID
+                var surgicalInventoryItem = new SurgicalInventory {
+                    SurgicalInventoryID = _idGenerator.GenerateSurgicalInventoryId(),
+                    ItemName = newSurgicalItem.ItemName,
+                    IssuedDate = newSurgicalItem.IssuedDate,
+                    IssuedBy = newSurgicalItem.IssuedBy,
+                    Quantity = newSurgicalItem.Quantity,
+                    Remarks = newSurgicalItem.Remarks,
+                    SurgicalCategoryID = newSurgicalItem.SurgicalCategoryID
                 };
 
-                _context.GeneralInventory.Add(generalInventoryItem);
+                _context.SurgicalInventory.Add(surgicalInventoryItem);
                 await _context.SaveChangesAsync();
 
                 return Ok(new Response { Status = "Success", Message = "Item Added Successfully!" });
@@ -184,16 +186,16 @@ namespace Project_v1.Controllers {
         }
 
         [HttpPut]
-        [Route("UpdateGeneralCategory/{id}")]
-        public async Task<IActionResult> UpdateGeneralCategory([FromRoute] string id, [FromBody] UpdateGeneralCategory updatedCategory) {
+        [Route("UpdateSurgicalCategory/{id}")]
+        public async Task<IActionResult> UpdateGeneralCategory([FromRoute] string id, [FromBody] UpdateSurgicalCategory updatedCategory) {
             try {
-                var generalCategory = await _context.GeneralCategory.FindAsync(id);
+                var surgicalCategory = await _context.SurgicalCategory.FindAsync(id);
 
-                if (generalCategory == null) {
+                if (surgicalCategory == null) {
                     return NotFound();
                 }
 
-                generalCategory.CategoryName = updatedCategory.CategoryName;
+                surgicalCategory.CategoryName = updatedCategory.CategoryName;
 
                 await _context.SaveChangesAsync();
 
@@ -204,20 +206,21 @@ namespace Project_v1.Controllers {
         }
 
         [HttpPut]
-        [Route("UpdateGeneralInventoryItem/{id}")]
-        public async Task<IActionResult> UpdateGeneralInventoryItem([FromRoute] string id, [FromBody] UpdateGeneralItem newGeneralItem) {
+        [Route("UpdateSurgicalInventoryItem/{id}")]
+        public async Task<IActionResult> UpdateSurgicalInventoryItem([FromRoute] string id, [FromBody] UpdateSurgicalItem updatedItem) {
             try {
-                var generalInventoryItem = await _context.GeneralInventory.FindAsync(id);
+                var surgicalInventoryItem = await _context.SurgicalInventory.FindAsync(id);
 
-                if (generalInventoryItem == null) {
+                if (surgicalInventoryItem == null) {
                     return NotFound();
                 }
 
-                generalInventoryItem.ItemName = newGeneralItem.ItemName;
-                generalInventoryItem.IssuedDate = newGeneralItem.IssuedDate;
-                generalInventoryItem.IssuedBy = newGeneralItem.IssuedBy;
-                generalInventoryItem.Remarks = newGeneralItem.Remarks;
-                generalInventoryItem.GeneralCategoryID = newGeneralItem.GeneralCategoryID;
+                surgicalInventoryItem.ItemName = updatedItem.ItemName;
+                surgicalInventoryItem.IssuedDate = updatedItem.IssuedDate;
+                surgicalInventoryItem.IssuedBy = updatedItem.IssuedBy;
+                surgicalInventoryItem.Quantity = updatedItem.Quantity;
+                surgicalInventoryItem.Remarks = updatedItem.Remarks;
+                surgicalInventoryItem.SurgicalCategoryID = updatedItem.SurgicalCategoryID;
 
                 await _context.SaveChangesAsync();
 
@@ -228,16 +231,16 @@ namespace Project_v1.Controllers {
         }
 
         [HttpDelete]
-        [Route("DeleteGeneralCategory/{id}")]
-        public async Task<IActionResult> DeleteGeneralCategory([FromRoute] string id) {
+        [Route("DeleteSurgicalCategory/{id}")]
+        public async Task<IActionResult> DeleteSurgicalCategory([FromRoute] string id) {
             try {
-                var generalCategory = await _context.GeneralCategory.FindAsync(id);
+                var surgicalCategory = await _context.SurgicalCategory.FindAsync(id);
 
-                if (generalCategory == null) {
+                if (surgicalCategory == null) {
                     return NotFound();
                 }
 
-                _context.GeneralCategory.Remove(generalCategory);
+                _context.SurgicalCategory.Remove(surgicalCategory);
                 await _context.SaveChangesAsync();
 
                 return Ok(new Response { Status = "Success", Message = "Category Deleted Successfully!" });
@@ -247,16 +250,16 @@ namespace Project_v1.Controllers {
         }
 
         [HttpDelete]
-        [Route("DeleteGeneralInventoryItem/{id}")]
-        public async Task<IActionResult> DeleteGeneralInventoryItem([FromRoute] string id) {
+        [Route("DeleteSurgicalInventoryItem/{id}")]
+        public async Task<IActionResult> DeleteSurgicalInventoryItem([FromRoute] string id) {
             try {
-                var generalInventoryItem = await _context.GeneralInventory.FindAsync(id);
+                var surgicalInventoryItem = await _context.SurgicalInventory.FindAsync(id);
 
-                if (generalInventoryItem == null) {
+                if (surgicalInventoryItem == null) {
                     return NotFound();
                 }
 
-                _context.GeneralInventory.Remove(generalInventoryItem);
+                _context.SurgicalInventory.Remove(surgicalInventoryItem);
                 await _context.SaveChangesAsync();
 
                 return Ok(new Response { Status = "Success", Message = "Item Deleted Successfully!" });

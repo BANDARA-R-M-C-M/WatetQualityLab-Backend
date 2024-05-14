@@ -16,6 +16,10 @@ namespace Project_v1.Data {
         public DbSet<Sample> Samples { get; set; }
         public DbSet<Report> Reports { get; set; }
         public DbSet<GeneralInventory> GeneralInventory { get; set; }
+        public DbSet<GeneralCategory> GeneralCategory { get; set; }
+        public DbSet<SurgicalInventory> SurgicalInventory { get; set; }
+        public DbSet<SurgicalCategory> SurgicalCategory { get; set; }
+        public DbSet<IssuedItem> IssuedItems { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder) {
             optionsBuilder.UseSqlServer(_configuration.GetConnectionString("DefaultConnection"));

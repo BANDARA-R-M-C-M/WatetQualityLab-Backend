@@ -41,5 +41,21 @@ namespace Project_v1.Services.IdGeneratorService {
         public string GenerateGeneralInventoryId() {
             return ("GENERALINVENTORY-" + Guid.NewGuid().ToString());
         }
+
+        public string GenerateGeneralCatagoryId() {
+            return ("GENERALCATEGORY-" + Guid.NewGuid().ToString());
+        }
+
+        public string GenerateSurgicalInventoryId() {
+            return ("SURGICALINVENTORY-" + Guid.NewGuid().ToString());
+        }
+
+        public string GenerateSurgicalCatagoryId() {
+            return ("SURGICALCATEGORY-" + Guid.NewGuid().ToString());
+        }
+
+        public string GenerateIssuedItemId() {
+            return ("ISSUEDITEM-" + Guid.NewGuid().ToString());
+        }
     }
 }

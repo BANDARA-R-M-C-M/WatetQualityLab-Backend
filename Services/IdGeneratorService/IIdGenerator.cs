@@ -6,5 +6,9 @@
         public string GeneratePHIAreaId();
         public string GenerateMOHAreaId();
         public string GenerateGeneralInventoryId();
+        public string GenerateGeneralCatagoryId();
+        public string GenerateSurgicalInventoryId();
+        public string GenerateSurgicalCatagoryId();
+        public string GenerateIssuedItemId();
     }
 }

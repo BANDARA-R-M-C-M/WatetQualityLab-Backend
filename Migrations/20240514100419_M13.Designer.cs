@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Project_v1.Data;
 
@@ -11,9 +12,11 @@ using Project_v1.Data;
 namespace Project_v1.Migrations
 {
     [DbContext(typeof(ApplicationDBContext))]
-    partial class ApplicationDBContextModelSnapshot : ModelSnapshot
+    [Migration("20240514100419_M13")]
+    partial class M13
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -232,37 +235,6 @@ namespace Project_v1.Migrations
                     b.ToTable("GeneralInventory");
                 });
 
-            modelBuilder.Entity("Project_v1.Models.IssuedItem", b =>
-                {
-                    b.Property<string>("IssuedItemID")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<string>("IssuedBy")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateOnly>("IssuedDate")
-                        .HasColumnType("date");
-
-                    b.Property<string>("IssuedQuantity")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Remarks")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("SurgicalInventoryID")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
-                    b.HasKey("IssuedItemID");
-
-                    b.HasIndex("SurgicalInventoryID");
-
-                    b.ToTable("IssuedItems");
-                });
-
             modelBuilder.Entity("Project_v1.Models.Lab", b =>
                 {
                     b.Property<string>("LabID")
@@ -432,61 +404,6 @@ namespace Project_v1.Migrations
                     b.ToTable("Samples");
                 });
 
-            modelBuilder.Entity("Project_v1.Models.SurgicalCategory", b =>
-                {
-                    b.Property<string>("SurgicalCategoryID")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<string>("CategoryName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("LabId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
-                    b.HasKey("SurgicalCategoryID");
-
-                    b.HasIndex("LabId");
-
-                    b.ToTable("SurgicalCategory");
-                });
-
-            modelBuilder.Entity("Project_v1.Models.SurgicalInventory", b =>
-                {
-                    b.Property<string>("SurgicalInventoryID")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<string>("IssuedBy")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateOnly>("IssuedDate")
-                        .HasColumnType("date");
-
-                    b.Property<string>("ItemName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Quantity")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Remarks")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("SurgicalCategoryID")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
-                    b.HasKey("SurgicalInventoryID");
-
-                    b.HasIndex("SurgicalCategoryID");
-
-                    b.ToTable("SurgicalInventory");
-                });
-
             modelBuilder.Entity("Project_v1.Models.Users.SystemUser", b =>
                 {
                     b.Property<string>("Id")
@@ -640,17 +557,6 @@ namespace Project_v1.Migrations
                     b.Navigation("GeneralCategory");
                 });
 
-            modelBuilder.Entity("Project_v1.Models.IssuedItem", b =>
-                {
-                    b.HasOne("Project_v1.Models.SurgicalInventory", "SurgicalInventory")
-                        .WithMany("IssuedItems")
-                        .HasForeignKey("SurgicalInventoryID")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("SurgicalInventory");
-                });
-
             modelBuilder.Entity("Project_v1.Models.MOHArea", b =>
                 {
                     b.HasOne("Project_v1.Models.Lab", "Lab")
@@ -701,28 +607,6 @@ namespace Project_v1.Migrations
                         .IsRequired();
 
                     b.Navigation("PHIArea");
-                });
-
-            modelBuilder.Entity("Project_v1.Models.SurgicalCategory", b =>
-                {
-                    b.HasOne("Project_v1.Models.Lab", "Lab")
-                        .WithMany()
-                        .HasForeignKey("LabId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Lab");
-                });
-
-            modelBuilder.Entity("Project_v1.Models.SurgicalInventory", b =>
-                {
-                    b.HasOne("Project_v1.Models.SurgicalCategory", "SurgicalCategory")
-                        .WithMany("SurgicalInventories")
-                        .HasForeignKey("SurgicalCategoryID")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("SurgicalCategory");
                 });
 
             modelBuilder.Entity("Project_v1.Models.Users.SystemUser", b =>
@@ -779,16 +663,6 @@ namespace Project_v1.Migrations
             modelBuilder.Entity("Project_v1.Models.Sample", b =>
                 {
                     b.Navigation("Reports");
-                });
-
-            modelBuilder.Entity("Project_v1.Models.SurgicalCategory", b =>
-                {
-                    b.Navigation("SurgicalInventories");
-                });
-
-            modelBuilder.Entity("Project_v1.Models.SurgicalInventory", b =>
-                {
-                    b.Navigation("IssuedItems");
                 });
 #pragma warning restore 612, 618
         }
