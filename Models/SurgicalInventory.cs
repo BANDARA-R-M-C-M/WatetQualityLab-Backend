@@ -9,6 +9,7 @@ namespace Project_v1.Models {
         public string IssuedBy { get; set; }
         public int Quantity { get; set; }
         public string Remarks { get; set; }
+        public string ItemQR { get; set; }
         public string SurgicalCategoryID { get; set; }
         public virtual SurgicalCategory SurgicalCategory { get; set; }
         public virtual ICollection<IssuedItem> IssuedItems { get; set; } = new List<IssuedItem>();

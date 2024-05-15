@@ -20,7 +20,6 @@ namespace Project_v1.Services.FirebaseStrorage {
 
         public async Task<bool> DeleteFile(string fileName) {
             try {
-
                 var task = new FirebaseStorage(_configuration["Firebase:ProjectId"], new FirebaseStorageOptions {
                     ThrowOnCancel = true
                 }).Child("Water Quality Reports").Child(fileName).DeleteAsync();
@@ -34,10 +33,22 @@ namespace Project_v1.Services.FirebaseStrorage {
             }
         }
 
-        public async Task<string> UploadFile(Stream stream, string fileName) {
+        public async Task<bool> DeleteQRCode(string fileName) {
+            try {
+                var task = new FirebaseStorage(_configuration["Firebase:ProjectId"], new FirebaseStorageOptions {
+                    ThrowOnCancel = true
+                }).Child("QR Codes").Child(fileName).DeleteAsync();
 
-            /*string projectId = _configuration["Firebase:ProjectId"];*/
+                await task;
 
+                return true;
+            } catch (Exception e) {
+                Console.WriteLine("Error deleting file: " + e.Message);
+                throw;
+            }
+        }
+
+        public async Task<string> UploadFile(Stream File, string fileName) {
             try {
                 /*var credential = GoogleCredential.FromJson(@"
                     {
@@ -59,12 +70,29 @@ namespace Project_v1.Services.FirebaseStrorage {
 
                 var storage = StorageClient.Create(credential);*/
 
-                string nameNew = $"{fileName}";
+                String nameNew = $"{fileName}";
 
                 var task = new FirebaseStorage(_configuration["Firebase:ProjectId"], new FirebaseStorageOptions {
                     /*AuthTokenAsyncFactory = () => Task.FromResult(accessToken),*/
                     ThrowOnCancel = true
-                }).Child("Water Quality Reports").Child(nameNew).PutAsync(stream);
+                }).Child("Water Quality Reports").Child(nameNew).PutAsync(File);
+
+                var downloadURL = await task;
+
+                return downloadURL;
+            } catch (Exception e) {
+                Console.WriteLine("Error uploading file: " + e.Message);
+                throw;
+            }
+        }
+
+        public async Task<string> UploadQRCode(Stream QRCode, string fileName) {
+            try {
+                String nameNew = $"{fileName}";
+
+                var task = new FirebaseStorage(_configuration["Firebase:ProjectId"], new FirebaseStorageOptions {
+                    ThrowOnCancel = true
+                }).Child("QR Codes").Child(nameNew).PutAsync(QRCode);
 
                 var downloadURL = await task;
 

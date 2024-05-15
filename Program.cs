@@ -12,6 +12,7 @@ using FirebaseAdmin;
 using Google.Apis.Auth.OAuth2;
 using Project_v1.Services.FirebaseStrorage;
 using Project_v1.Models;
+using Project_v1.Services.QRGeneratorService;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -95,6 +96,7 @@ builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IReportService, ReportService>();
 builder.Services.AddScoped<IIdGenerator, IdGenerator>();
 builder.Services.AddScoped<IStorageService, StorageService>();
+builder.Services.AddScoped<IQRGenerator, QRGenetator>();
 
 var app = builder.Build();
 

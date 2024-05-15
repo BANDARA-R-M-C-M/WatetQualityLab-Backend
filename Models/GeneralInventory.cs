@@ -9,6 +9,7 @@ namespace Project_v1.Models {
         public DateOnly IssuedDate { get; set; }
         public string IssuedBy { get; set;}
         public string Remarks { get; set; }
+        public string ItemQR { get; set; }
         public string GeneralCategoryID { get; set; }
         public virtual GeneralCategory GeneralCategory { get; set; }
         /*public string LabId { get; set; }

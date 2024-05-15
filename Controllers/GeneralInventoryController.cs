@@ -6,7 +6,11 @@ using Project_v1.Data;
 using Project_v1.Models;
 using Project_v1.Models.DTOs.GeneralInventoryItems;
 using Project_v1.Models.DTOs.Response;
+using Project_v1.Services.FirebaseStrorage;
 using Project_v1.Services.IdGeneratorService;
+using Project_v1.Services.QRGeneratorService;
+using QRCoder;
+using System.Drawing;
 
 namespace Project_v1.Controllers
 {
@@ -17,13 +21,19 @@ namespace Project_v1.Controllers
         private readonly ApplicationDBContext _context;
         private readonly UserManager<SystemUser> _userManager;
         private readonly IIdGenerator _idGenerator;
+        private readonly IQRGenerator _qrGenerator;
+        private readonly IStorageService _storageService;
 
         public GeneralInventoryController(ApplicationDBContext context,
                                           IIdGenerator idGenerator,
-                                          UserManager<SystemUser> userManager) {
+                                          UserManager<SystemUser> userManager,
+                                          IQRGenerator qRGenerator,
+                                          IStorageService storageService) {
             _context = context;
             _idGenerator = idGenerator;
             _userManager = userManager;
+            _qrGenerator = qRGenerator;
+            _storageService = storageService;
         }
 
         [HttpGet]
@@ -54,6 +64,34 @@ namespace Project_v1.Controllers
                     .ToListAsync();
 
                 return Ok(generalCategories);
+            } catch (Exception e) {
+                return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
+            }
+        }
+
+        [HttpGet]
+        [Route("GetGeneralInventoryItem")]
+        public async Task<ActionResult> GetGeneralInventoryItem(String itemId) {
+            try {
+                var today = DateOnly.FromDateTime(DateTime.Now);
+
+                var generalInventoryItem = await _context.GeneralInventory
+                    .Where(item => item.GeneralInventoryID == itemId)
+                    .Select(item => new {
+                        item.ItemName,
+                        item.IssuedDate,
+                        DurationOfInventory = (today.DayNumber - item.IssuedDate.DayNumber),
+                        item.IssuedBy,
+                        item.GeneralCategory.CategoryName,
+                        item.Remarks
+                    })
+                    .FirstOrDefaultAsync();
+
+                if (generalInventoryItem == null) {
+                    return NotFound();
+                }
+
+                return Ok(generalInventoryItem);
             } catch (Exception e) {
                 return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
             }
@@ -107,6 +145,7 @@ namespace Project_v1.Controllers
                             items.GeneralCategory.CategoryName,
                             DurationOfInventory = (today.DayNumber - items.IssuedDate.DayNumber),
                             items.Remarks,
+                            items.ItemQR,
                             items.GeneralCategory.LabId
                         })
                         .ToListAsync();
@@ -165,15 +204,26 @@ namespace Project_v1.Controllers
                     return BadRequest(new Response { Status = "Error", Message = "Lab ID cannot be null!" });
                 }
 
+                var generalInventoryId = _idGenerator.GenerateGeneralInventoryId();
+
+                byte[] QRCode = _qrGenerator.GenerateGeneralInventoryQRCode(newGeneralItem.GeneralCategoryID, generalInventoryId);
+
+                var QRurl = await _storageService.UploadQRCode(new MemoryStream(QRCode), generalInventoryId);
+
+                if (QRurl == null) {
+                    return StatusCode(StatusCodes.Status500InternalServerError, "Error uploading QR Code!");
+                }
+
                 var generalInventoryItem = new GeneralInventory {
-                    GeneralInventoryID = _idGenerator.GenerateGeneralInventoryId(),
+                    GeneralInventoryID = generalInventoryId,
                     ItemName = newGeneralItem.ItemName,
                     IssuedDate = newGeneralItem.IssuedDate,
                     IssuedBy = newGeneralItem.IssuedBy,
                     Remarks = newGeneralItem.Remarks,
+                    ItemQR = QRurl,
                     GeneralCategoryID = newGeneralItem.GeneralCategoryID
                 };
-
+            
                 _context.GeneralInventory.Add(generalInventoryItem);
                 await _context.SaveChangesAsync();
 
@@ -213,10 +263,19 @@ namespace Project_v1.Controllers
                     return NotFound();
                 }
 
+                if (!await _storageService.DeleteQRCode(id)) {
+                    return StatusCode(StatusCodes.Status500InternalServerError, "Error deleting QR Code!");
+                }
+
+                byte[] updatedQRCode = _qrGenerator.GenerateGeneralInventoryQRCode(newGeneralItem.GeneralCategoryID, id);
+
+                var updatedQRurl = await _storageService.UploadQRCode(new MemoryStream(updatedQRCode), id);
+
                 generalInventoryItem.ItemName = newGeneralItem.ItemName;
                 generalInventoryItem.IssuedDate = newGeneralItem.IssuedDate;
                 generalInventoryItem.IssuedBy = newGeneralItem.IssuedBy;
                 generalInventoryItem.Remarks = newGeneralItem.Remarks;
+                generalInventoryItem.ItemQR = updatedQRurl;
                 generalInventoryItem.GeneralCategoryID = newGeneralItem.GeneralCategoryID;
 
                 await _context.SaveChangesAsync();
@@ -256,8 +315,10 @@ namespace Project_v1.Controllers
                     return NotFound();
                 }
 
-                _context.GeneralInventory.Remove(generalInventoryItem);
-                await _context.SaveChangesAsync();
+                if (await _storageService.DeleteQRCode(id)) {
+                    _context.GeneralInventory.Remove(generalInventoryItem);
+                    await _context.SaveChangesAsync();
+                }
 
                 return Ok(new Response { Status = "Success", Message = "Item Deleted Successfully!" });
             } catch (Exception e) {

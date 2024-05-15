@@ -7,6 +7,9 @@ using Project_v1.Models;
 using Project_v1.Services.IdGeneratorService;
 using Project_v1.Models.DTOs.SurgicalInventoryItems;
 using Project_v1.Models.DTOs.Response;
+using Project_v1.Services.FirebaseStrorage;
+using Project_v1.Services.QRGeneratorService;
+using Project_v1.Models.DTOs.GeneralInventoryItems;
 
 namespace Project_v1.Controllers
 {
@@ -17,13 +20,19 @@ namespace Project_v1.Controllers
         private readonly ApplicationDBContext _context;
         private readonly UserManager<SystemUser> _userManager;
         private readonly IIdGenerator _idGenerator;
+        private readonly IQRGenerator _qrGenerator;
+        private readonly IStorageService _storageService;
 
         public SurgicalInventoryController(ApplicationDBContext context,
                                           IIdGenerator idGenerator,
-                                          UserManager<SystemUser> userManager) {
+                                          UserManager<SystemUser> userManager,
+                                          IQRGenerator qRGenerator,
+                                          IStorageService storageService) {
             _context = context;
             _idGenerator = idGenerator;
             _userManager = userManager;
+            _qrGenerator = qRGenerator;
+            _storageService = storageService;
         }
 
         [HttpGet]
@@ -54,6 +63,35 @@ namespace Project_v1.Controllers
                     .ToListAsync();
 
                 return Ok(surgicalCategories);
+            } catch (Exception e) {
+                return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
+            }
+        }
+
+        [HttpGet]
+        [Route("GetSurgicalInventoryItem")]
+        public async Task<IActionResult> GetSurgicalInventoryItem(String itemId) {
+            try {
+                var today = DateOnly.FromDateTime(DateTime.Now);
+
+                var item = await _context.SurgicalInventory
+                    .Where(item => item.SurgicalInventoryID == itemId)
+                    .Select(item => new {
+                        item.ItemName,
+                        item.IssuedDate,
+                        DurationOfInventory = (today.DayNumber - item.IssuedDate.DayNumber),
+                        item.IssuedBy,
+                        item.Quantity,
+                        item.SurgicalCategory.CategoryName,
+                        item.Remarks
+                    })
+                    .FirstOrDefaultAsync();
+
+                if (item == null) {
+                    return NotFound();
+                }
+
+                return Ok(item);
             } catch (Exception e) {
                 return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
             }
@@ -108,6 +146,7 @@ namespace Project_v1.Controllers
                         items.SurgicalCategory.CategoryName,
                         DurationOfInventory = (today.DayNumber - items.IssuedDate.DayNumber),
                         items.Remarks,
+                        items.ItemQR,
                         items.SurgicalCategory.LabId
                     })
                     .ToListAsync();
@@ -165,13 +204,20 @@ namespace Project_v1.Controllers
                     return BadRequest(new Response { Status = "Error", Message = "Lab ID cannot be null!" });
                 }
 
+                var surgicalInventoryId = _idGenerator.GenerateSurgicalInventoryId();
+
+                byte[] QRCode = _qrGenerator.GenerateSurgicalInventoryQRCode(newSurgicalItem.SurgicalCategoryID, surgicalInventoryId);
+
+                var QRurl = await _storageService.UploadQRCode(new MemoryStream(QRCode), surgicalInventoryId);
+
                 var surgicalInventoryItem = new SurgicalInventory {
-                    SurgicalInventoryID = _idGenerator.GenerateSurgicalInventoryId(),
+                    SurgicalInventoryID = surgicalInventoryId,
                     ItemName = newSurgicalItem.ItemName,
                     IssuedDate = newSurgicalItem.IssuedDate,
                     IssuedBy = newSurgicalItem.IssuedBy,
                     Quantity = newSurgicalItem.Quantity,
                     Remarks = newSurgicalItem.Remarks,
+                    ItemQR = QRurl,
                     SurgicalCategoryID = newSurgicalItem.SurgicalCategoryID
                 };
 
@@ -250,11 +296,20 @@ namespace Project_v1.Controllers
                     return NotFound();
                 }
 
+                if (!await _storageService.DeleteQRCode(id)) {
+                    return StatusCode(StatusCodes.Status500InternalServerError, "Error deleting QR Code!");
+                }
+
+                byte[] QRCode = _qrGenerator.GenerateSurgicalInventoryQRCode(updatedItem.SurgicalCategoryID, id);
+
+                var QRurl = await _storageService.UploadQRCode(new MemoryStream(QRCode), id);
+
                 surgicalInventoryItem.ItemName = updatedItem.ItemName;
                 surgicalInventoryItem.IssuedDate = updatedItem.IssuedDate;
                 surgicalInventoryItem.IssuedBy = updatedItem.IssuedBy;
                 surgicalInventoryItem.Quantity = updatedItem.Quantity;
                 surgicalInventoryItem.Remarks = updatedItem.Remarks;
+                surgicalInventoryItem.ItemQR = QRurl;
                 surgicalInventoryItem.SurgicalCategoryID = updatedItem.SurgicalCategoryID;
 
                 await _context.SaveChangesAsync();
@@ -294,9 +349,11 @@ namespace Project_v1.Controllers
                     return NotFound();
                 }
 
-                _context.SurgicalInventory.Remove(surgicalInventoryItem);
-                await _context.SaveChangesAsync();
-
+                if (await _storageService.DeleteQRCode(id)) {
+                    _context.SurgicalInventory.Remove(surgicalInventoryItem);
+                    await _context.SaveChangesAsync();
+                }
+                
                 return Ok(new Response { Status = "Success", Message = "Item Deleted Successfully!" });
             } catch (Exception e) {
                 return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
