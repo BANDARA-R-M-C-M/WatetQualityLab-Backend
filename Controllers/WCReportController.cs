@@ -164,6 +164,27 @@ namespace Project_v1.Controllers
             }
         }
 
+        [HttpGet]
+        [Route("GetReportPDF")]
+        public async Task<IActionResult> GetReportPDF(String reportId) {
+            try {
+                var item = await _context.Reports.FindAsync(reportId);
+
+                if (item == null) {
+                    return NotFound();
+                }
+
+                var url = item.ReportUrl;
+
+                byte[] fileBytes = await _storageService.DownloadFile(url, reportId);
+
+                return File(fileBytes, "application/pdf", reportId);
+            } catch (Exception e) {
+                return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
+            }
+        }
+
+
         [HttpPost]
         [Route("AddWCReport")]
         public async Task<IActionResult> AddWCReport([FromBody] Wc_report wcreport) {

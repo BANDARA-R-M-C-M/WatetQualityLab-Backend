@@ -10,6 +10,8 @@ using Project_v1.Models.DTOs.Response;
 using Project_v1.Services.FirebaseStrorage;
 using Project_v1.Services.QRGeneratorService;
 using Project_v1.Models.DTOs.GeneralInventoryItems;
+using System.Diagnostics;
+using System.Net;
 
 namespace Project_v1.Controllers
 {
@@ -152,6 +154,26 @@ namespace Project_v1.Controllers
                     .ToListAsync();
 
                 return Ok(surgicalItems);
+            } catch (Exception e) {
+                return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
+            }
+        }
+
+        [HttpGet]
+        [Route("GetSurgicalInventoryQR")]
+        public async Task<IActionResult> GetSurgicalInventoryQR(String itemId) {
+            try {
+                var item = await _context.SurgicalInventory.FindAsync(itemId);
+
+                if (item == null) {
+                    return NotFound();
+                }
+
+                var url = item.ItemQR;
+
+                byte[] fileBytes = await _storageService.DownloadFile(url, itemId);
+
+                return File(fileBytes, "application/pdf", itemId);
             } catch (Exception e) {
                 return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
             }

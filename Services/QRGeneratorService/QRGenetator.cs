@@ -4,6 +4,9 @@ using QRCoder;
 using System.Drawing.Imaging;
 using System.Drawing;
 using System.IO;
+using iText.Kernel.Pdf;
+using iText.Layout;
+using iText.Kernel.Geom;
 
 
 namespace Project_v1.Services.QRGeneratorService {
@@ -19,17 +22,30 @@ namespace Project_v1.Services.QRGeneratorService {
             var url = $"{_configuration["BaseURL:Frontend"]}/mlt/inventory-general/{categoryId}/{itemId}";
 
             QRCodeGenerator qrGenerator = new QRCodeGenerator();
-            QRCodeData qrCodeData = qrGenerator.CreateQrCode(url, QRCodeGenerator.ECCLevel.L);
+            QRCodeData qrCodeData = qrGenerator.CreateQrCode(url, QRCodeGenerator.ECCLevel.H);
             BitmapByteQRCode bitMap = new BitmapByteQRCode(qrCodeData);
             var QRCodeBytes = bitMap.GetGraphic(5);
 
-            MemoryStream memoryStream = new MemoryStream(QRCodeBytes);
+            using var memoryStream = new MemoryStream();
 
-            using (var bitmap = new Bitmap(memoryStream))
-            using (var pngStream = new MemoryStream()) {
-                bitmap.Save(pngStream, ImageFormat.Png);
-                return pngStream.ToArray();
-            }
+            var image = Image.FromStream(new MemoryStream(QRCodeBytes));
+
+            var width = image.Width;
+            var height = image.Height;
+
+            var pageSize = new PageSize(width, height);
+
+            var pdfWriter = new PdfWriter(memoryStream);
+            var pdfDocument = new PdfDocument(pdfWriter);
+            var document = new Document(pdfDocument, pageSize);
+
+            var imageData = new iText.Layout.Element.Image(iText.IO.Image.ImageDataFactory.Create(QRCodeBytes));
+
+            document.Add(imageData);
+
+            document.Close();
+
+            return memoryStream.ToArray();
         }
 
         public byte[] GenerateSurgicalInventoryQRCode(string categoryId, string itemId) {
@@ -37,17 +53,30 @@ namespace Project_v1.Services.QRGeneratorService {
             var url = $"{_configuration["BaseURL:Frontend"]}/mlt/inventory-surgical/{categoryId}/{itemId}";
 
             QRCodeGenerator qrGenerator = new QRCodeGenerator();
-            QRCodeData qrCodeData = qrGenerator.CreateQrCode(url, QRCodeGenerator.ECCLevel.L);
+            QRCodeData qrCodeData = qrGenerator.CreateQrCode(url, QRCodeGenerator.ECCLevel.H);
             BitmapByteQRCode bitMap = new BitmapByteQRCode(qrCodeData);
             var QRCodeBytes = bitMap.GetGraphic(5);
 
-            MemoryStream memoryStream = new MemoryStream(QRCodeBytes);
+            using var memoryStream = new MemoryStream();
 
-            using (var bitmap = new Bitmap(memoryStream))
-            using (var pngStream = new MemoryStream()) {
-                bitmap.Save(pngStream, ImageFormat.Png);
-                return pngStream.ToArray();
-            }
+            var image = Image.FromStream(new MemoryStream(QRCodeBytes));
+
+            var width = image.Width;
+            var height = image.Height;
+
+            var pageSize = new PageSize(width, height);
+
+            var pdfWriter = new PdfWriter(memoryStream);
+            var pdfDocument = new PdfDocument(pdfWriter);
+            var document = new Document(pdfDocument, pageSize);
+
+            var imageData = new iText.Layout.Element.Image(iText.IO.Image.ImageDataFactory.Create(QRCodeBytes));
+
+            document.Add(imageData);
+
+            document.Close();
+
+            return memoryStream.ToArray();
         }
     }
 }

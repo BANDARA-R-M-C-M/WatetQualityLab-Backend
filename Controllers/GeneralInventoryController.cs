@@ -156,6 +156,26 @@ namespace Project_v1.Controllers
             }
         }
 
+        [HttpGet]
+        [Route("GetGeneralInventoryQR")]
+        public async Task<IActionResult> GetSurgicalInventoryQR(String itemId) {
+            try {
+                var item = await _context.GeneralInventory.FindAsync(itemId);
+
+                if (item == null) {
+                    return NotFound();
+                }
+
+                var url = item.ItemQR;
+
+                byte[] fileBytes = await _storageService.DownloadFile(url, itemId);
+
+                return File(fileBytes, "application/pdf", itemId);
+            } catch (Exception e) {
+                return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
+            }
+        }
+
         [HttpPost]
         [Route("AddGeneralCategory")]
         public async Task<IActionResult> AddGeneralCategory([FromBody] AddGeneralCategory category) {

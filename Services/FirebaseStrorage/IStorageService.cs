@@ -4,5 +4,6 @@
         Task<bool> DeleteFile(string fileName);
         Task<string> UploadQRCode(Stream QRCode, string fileName);
         Task<bool> DeleteQRCode(string fileName);
+        Task<byte[]> DownloadFile(string url, string fileName);
     }
 }
