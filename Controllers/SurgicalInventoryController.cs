@@ -288,6 +288,26 @@ namespace Project_v1.Controllers
             }
         }
 
+        [HttpPatch]
+        [Route("AddQuantity/{id}")]
+        public async Task<IActionResult> AddQuantity([FromRoute] string id, [FromBody] AddQuantity addQuantity) {
+            try {
+                var item = await _context.SurgicalInventory.FindAsync(id);
+
+                if (item == null) {
+                    return NotFound();
+                }
+
+                item.Quantity += addQuantity.Quantity;
+
+                await _context.SaveChangesAsync();
+
+                return Ok(new Response { Status = "Success", Message = "Quantity Added Successfully!" });
+            } catch (Exception e) {
+                return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
+            }
+        }
+
         [HttpPut]
         [Route("UpdateSurgicalCategory/{id}")]
         public async Task<IActionResult> UpdateGeneralCategory([FromRoute] string id, [FromBody] UpdateSurgicalCategory updatedCategory) {
