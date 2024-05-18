@@ -12,9 +12,9 @@ namespace Project_v1.Models {
         public string Remarks { get; set; }
         public string ReportUrl { get; set; }
         public string MltId { get; set; }
-        public string SampleId { get; set; }
         public string LabId { get; set; }
         public virtual Lab Lab { get; set; }
+        public string SampleId { get; set; }
         public virtual Sample Sample { get; set; }
     }
 }

@@ -16,7 +16,8 @@ namespace Project_v1.Controllers
         private readonly ApplicationDBContext _context;
         private readonly UserManager<SystemUser> _userManager;
 
-        public UserassignController(ApplicationDBContext context, UserManager<SystemUser> userManager) {
+        public UserassignController(ApplicationDBContext context,
+                                    UserManager<SystemUser> userManager) {
             _context = context;
             _userManager = userManager;
         }

@@ -197,7 +197,7 @@ namespace Project_v1.Controllers
                     LabId = category.LabId
                 };
 
-                _context.SurgicalCategory.Add(newCategory);
+                _context.SurgicalCategory.AddAsync(newCategory);
                 await _context.SaveChangesAsync();
 
                 return Ok(new Response { Status = "Success", Message = "Catagory Added Successfully!" });
@@ -243,7 +243,7 @@ namespace Project_v1.Controllers
                     SurgicalCategoryID = newSurgicalItem.SurgicalCategoryID
                 };
 
-                _context.SurgicalInventory.Add(surgicalInventoryItem);
+                _context.SurgicalInventory.AddAsync(surgicalInventoryItem);
                 await _context.SaveChangesAsync();
 
                 return Ok(new Response { Status = "Success", Message = "Item Added Successfully!" });
@@ -279,7 +279,7 @@ namespace Project_v1.Controllers
                     SurgicalInventoryID = issueItem.ItemId
                 };
 
-                _context.IssuedItems.Add(issuedItem);
+                _context.IssuedItems.AddAsync(issuedItem);
                 await _context.SaveChangesAsync();
 
                 return Ok(new Response { Status = "Success", Message = "Item Issued Successfully!" });

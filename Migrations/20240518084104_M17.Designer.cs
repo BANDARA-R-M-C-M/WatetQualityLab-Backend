@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Project_v1.Data;
 
@@ -11,9 +12,11 @@ using Project_v1.Data;
 namespace Project_v1.Migrations
 {
     [DbContext(typeof(ApplicationDBContext))]
-    partial class ApplicationDBContextModelSnapshot : ModelSnapshot
+    [Migration("20240518084104_M17")]
+    partial class M17
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -252,10 +255,6 @@ namespace Project_v1.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
-                    b.Property<string>("MltId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<double>("PressureGradient")
                         .HasColumnType("float");
 
@@ -282,7 +281,7 @@ namespace Project_v1.Migrations
 
                     b.HasIndex("LabId");
 
-                    b.ToTable("InstrumentalQualityControls");
+                    b.ToTable("InstrumentalQualityControl");
                 });
 
             modelBuilder.Entity("Project_v1.Models.IssuedItem", b =>
@@ -373,10 +372,6 @@ namespace Project_v1.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("MltId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<string>("Remarks")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -397,7 +392,7 @@ namespace Project_v1.Migrations
 
                     b.HasIndex("LabId");
 
-                    b.ToTable("MediaQualityControls");
+                    b.ToTable("MediaQualityControl");
                 });
 
             modelBuilder.Entity("Project_v1.Models.PHIArea", b =>

@@ -12,7 +12,5 @@ namespace Project_v1.Models {
         public string ItemQR { get; set; }
         public string GeneralCategoryID { get; set; }
         public virtual GeneralCategory GeneralCategory { get; set; }
-        /*public string LabId { get; set; }
-        public virtual Lab Lab { get; set; }*/
     }
 }

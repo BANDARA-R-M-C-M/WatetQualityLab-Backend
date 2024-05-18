@@ -10,5 +10,7 @@
         public string GenerateSurgicalInventoryId();
         public string GenerateSurgicalCatagoryId();
         public string GenerateIssuedItemId();
+        public string GenerateInstrumentalQualityControlId();
+        public string GenerateMediaQualityControlId();
     }
 }

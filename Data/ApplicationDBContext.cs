@@ -20,6 +20,8 @@ namespace Project_v1.Data
         public DbSet<SurgicalInventory> SurgicalInventory { get; set; }
         public DbSet<SurgicalCategory> SurgicalCategory { get; set; }
         public DbSet<IssuedItem> IssuedItems { get; set; }
+        public DbSet<InstrumentalQualityControl> InstrumentalQualityControls { get; set; }
+        public DbSet<MediaQualityControl> MediaQualityControls { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder) {
             optionsBuilder.UseSqlServer(_configuration.GetConnectionString("DefaultConnection"));

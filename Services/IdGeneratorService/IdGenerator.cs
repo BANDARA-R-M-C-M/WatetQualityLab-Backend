@@ -57,5 +57,13 @@ namespace Project_v1.Services.IdGeneratorService {
         public string GenerateIssuedItemId() {
             return ("ISSUEDITEM-" + Guid.NewGuid().ToString());
         }
+
+        public string GenerateInstrumentalQualityControlId() {
+            return ("INSTRUMENTALQC-" + Guid.NewGuid().ToString());
+        }
+
+        public string GenerateMediaQualityControlId() {
+            return ("MEDIAQC-" + Guid.NewGuid().ToString());
+        }
     }
 }
