@@ -13,6 +13,7 @@ using Google.Apis.Auth.OAuth2;
 using Project_v1.Services.FirebaseStrorage;
 using Project_v1.Models;
 using Project_v1.Services.QRGeneratorService;
+using Project_v1.Services.Filtering;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -97,6 +98,7 @@ builder.Services.AddScoped<IReportService, ReportService>();
 builder.Services.AddScoped<IIdGenerator, IdGenerator>();
 builder.Services.AddScoped<IStorageService, StorageService>();
 builder.Services.AddScoped<IQRGenerator, QRGenetator>();
+builder.Services.AddScoped<IFilter, Filter>();
 
 var app = builder.Build();
 

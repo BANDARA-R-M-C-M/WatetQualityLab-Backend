@@ -1,16 +1,16 @@
 ﻿namespace Project_v1.Services.IdGeneratorService {
     public interface IIdGenerator {
-        public string GenerateSampleId();
-        public string GenerateReportId();
-        public string GenerateLabId();
-        public string GeneratePHIAreaId();
-        public string GenerateMOHAreaId();
-        public string GenerateGeneralInventoryId();
-        public string GenerateGeneralCatagoryId();
-        public string GenerateSurgicalInventoryId();
-        public string GenerateSurgicalCatagoryId();
-        public string GenerateIssuedItemId();
-        public string GenerateInstrumentalQualityControlId();
-        public string GenerateMediaQualityControlId();
+        string GenerateSampleId();
+        string GenerateReportId();
+        string GenerateLabId();
+        string GeneratePHIAreaId();
+        string GenerateMOHAreaId();
+        string GenerateGeneralInventoryId();
+        string GenerateGeneralCatagoryId();
+        string GenerateSurgicalInventoryId();
+        string GenerateSurgicalCatagoryId();
+        string GenerateIssuedItemId();
+        string GenerateInstrumentalQualityControlId();
+        string GenerateMediaQualityControlId();
     }
 }

@@ -43,6 +43,16 @@ namespace Project_v1.Controllers {
 
                 var mediaQualityControlRecords = await _context.MediaQualityControls
                     .Where(mqcr => mqcr.LabId == lab.LabID)
+                    .Select(mqcr => new {
+                        mqcr.MediaQualityControlID,
+                        mqcr.MediaId,
+                        mqcr.DateTime,
+                        mqcr.Sterility,
+                        mqcr.Stability,
+                        mqcr.Sensitivity,
+                        mqcr.Remarks,
+                        mqcr.LabId
+                    })
                     .ToListAsync();
 
                 return Ok(mediaQualityControlRecords);
@@ -63,7 +73,7 @@ namespace Project_v1.Controllers {
 
                 var mediaQualityControlRecord = new MediaQualityControl {
                     MediaQualityControlID = _idGenerator.GenerateMediaQualityControlId(),
-                    Media = newRecord.Media,
+                    MediaId = newRecord.MediaId,
                     DateTime = newRecord.DateTime,
                     Sterility = newRecord.Sterility,
                     Stability = newRecord.Stability,
@@ -85,7 +95,7 @@ namespace Project_v1.Controllers {
 
         [HttpPut]
         [Route("UpdateMediaQualityControlRecord/{id}")]
-        public async Task<IActionResult> UpdateMediaQualityControlRecord(string id, [FromBody] MediaQualityRecord updatedRecord) {
+        public async Task<IActionResult> UpdateMediaQualityControlRecord(string id, [FromBody] UpdateMediaQC updatedRecord) {
             try {
                 var mediaQualityControlRecord = await _context.MediaQualityControls.FindAsync(id);
 
@@ -93,13 +103,12 @@ namespace Project_v1.Controllers {
                     return NotFound();
                 }
 
-                mediaQualityControlRecord.Media = updatedRecord.Media;
+                mediaQualityControlRecord.MediaId = updatedRecord.MediaId;
                 mediaQualityControlRecord.DateTime = updatedRecord.DateTime;
                 mediaQualityControlRecord.Sterility = updatedRecord.Sterility;
                 mediaQualityControlRecord.Stability = updatedRecord.Stability;
                 mediaQualityControlRecord.Sensitivity = updatedRecord.Sensitivity;
                 mediaQualityControlRecord.Remarks = updatedRecord.Remarks;
-                mediaQualityControlRecord.MltId = updatedRecord.MltId;
 
                 await _context.SaveChangesAsync();
 

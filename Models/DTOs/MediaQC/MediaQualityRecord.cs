@@ -1,6 +1,6 @@
 ﻿namespace Project_v1.Models.DTOs.MediaQC {
     public class MediaQualityRecord {
-        public string Media { get; set; }
+        public string MediaId { get; set; }
         public DateTime DateTime { get; set; }
         public string Sterility { get; set; }
         public string Stability { get; set; }

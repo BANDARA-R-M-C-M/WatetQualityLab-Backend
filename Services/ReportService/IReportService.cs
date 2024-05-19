@@ -3,6 +3,6 @@
 namespace Project_v1.Services.ReportService
 {
     public interface IReportService {
-        public byte[] GenerateWaterQualityReport(FullReport wcreport);
+        byte[] GenerateWaterQualityReport(FullReport wcreport);
     }
 }

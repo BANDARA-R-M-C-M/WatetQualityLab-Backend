@@ -5,11 +5,14 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Project_v1.Data;
 using Project_v1.Models;
+using Project_v1.Models.DTOs.Helper;
 using Project_v1.Models.DTOs.InstrumentalQC;
 using Project_v1.Models.DTOs.Response;
+using Project_v1.Services.Filtering;
 using Project_v1.Services.IdGeneratorService;
 
-namespace Project_v1.Controllers {
+namespace Project_v1.Controllers
+{
     [Route("api/[controller]")]
     [ApiController]
     public class InstrumentalQualityControlController : ControllerBase {
@@ -17,16 +20,19 @@ namespace Project_v1.Controllers {
         private readonly ApplicationDBContext _context;
         private readonly UserManager<SystemUser> _userManager;
         private readonly IIdGenerator _idGenerator;
+        private readonly IFilter _filter;
 
         public InstrumentalQualityControlController(ApplicationDBContext context,
                                                     UserManager<SystemUser> userManager,
-                                                    IIdGenerator idGenerator) {
+                                                    IIdGenerator idGenerator,
+                                                    IFilter filter) {
             _context = context;
             _userManager = userManager;
             _idGenerator = idGenerator;
+            _filter = filter;
         }
 
-        [HttpGet]
+        /*[HttpGet]
         [Route("GetInstrumentalQualityControlRecords")]
         public async Task<IActionResult> GetInstrumentalQualityControlRecords(String mltId) {
             try {
@@ -44,9 +50,60 @@ namespace Project_v1.Controllers {
 
                 var instrumentalQualityControlRecords = await _context.InstrumentalQualityControls
                     .Where(iqcr => iqcr.LabId == lab.LabID)
+                    .Select(iqcr => new {
+                        iqcr.InstrumentalQualityControlID,
+                        iqcr.DateTime,
+                        iqcr.InstrumentId,
+                        iqcr.TemperatureFluctuation,
+                        iqcr.PressureGradient,
+                        iqcr.Timer,
+                        iqcr.Sterility,
+                        iqcr.Stability,
+                        iqcr.Remarks,
+                        iqcr.LabId
+                    })
                     .ToListAsync();
 
                 return Ok(instrumentalQualityControlRecords);
+            } catch (Exception e) {
+                return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
+            }
+        }*/
+
+        [HttpGet]
+        [Route("GetInstrumentalQualityControlRecords")]
+        public async Task<IActionResult> GetInstrumentalQualityControlRecords(String mltId, [FromQuery] QueryObject query) {
+            try {
+                var mlt = await _userManager.FindByIdAsync(mltId);
+
+                if (mlt == null) {
+                    return NotFound();
+                }
+
+                var lab = await _context.Labs.FindAsync(mlt.LabID);
+
+                if (lab == null) {
+                    return NotFound();
+                }
+
+                var instrumentalQualityControlRecords = _context.InstrumentalQualityControls
+                    .Where(iqcr => iqcr.LabId == lab.LabID)
+                    .Select(iqcr => new {
+                        iqcr.InstrumentalQualityControlID,
+                        iqcr.DateTime,
+                        iqcr.InstrumentId,
+                        iqcr.TemperatureFluctuation,
+                        iqcr.PressureGradient,
+                        iqcr.Timer,
+                        iqcr.Sterility,
+                        iqcr.Stability,
+                        iqcr.Remarks,
+                        iqcr.LabId
+                    });
+
+                var result = await _filter.SearchItemsAsync(instrumentalQualityControlRecords, query);
+
+                return Ok(result);
             } catch (Exception e) {
                 return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
             }
@@ -65,7 +122,7 @@ namespace Project_v1.Controllers {
                 var newQCRecord = new InstrumentalQualityControl {
                     InstrumentalQualityControlID = _idGenerator.GenerateInstrumentalQualityControlId(),
                     DateTime = newRecord.DateTime,
-                    Instrument = newRecord.Instrument,
+                    InstrumentId = newRecord.InstrumentId,
                     TemperatureFluctuation = newRecord.TemperatureFluctuation,
                     PressureGradient = newRecord.PressureGradient,
                     Timer = newRecord.Timer,
@@ -73,7 +130,7 @@ namespace Project_v1.Controllers {
                     Stability = newRecord.Stability,
                     Remarks = newRecord.Remarks,
                     MltId = newRecord.MltId,
-                    LabId = lab.LabID
+                    LabId = newRecord.LabId
                 };
 
                 await _context.InstrumentalQualityControls.AddAsync(newQCRecord);
@@ -97,7 +154,7 @@ namespace Project_v1.Controllers {
                 }
 
                 qcRecord.DateTime = instrumentalQC.DateTime;
-                qcRecord.Instrument = instrumentalQC.Instrument;
+                qcRecord.InstrumentId = instrumentalQC.InstrumentId;
                 qcRecord.TemperatureFluctuation = instrumentalQC.TemperatureFluctuation;
                 qcRecord.PressureGradient = instrumentalQC.PressureGradient;
                 qcRecord.Timer = instrumentalQC.Timer;
