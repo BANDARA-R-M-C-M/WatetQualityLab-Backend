@@ -2,7 +2,7 @@
 {
     public class AddGeneralCategory
     {
-        public string CategoryName { get; set; }
+        public string GeneralCategoryName { get; set; }
         public string LabId { get; set; }
     }
 }

@@ -4,8 +4,10 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Project_v1.Data;
 using Project_v1.Models;
+using Project_v1.Models.DTOs.Helper;
 using Project_v1.Models.DTOs.Response;
 using Project_v1.Models.DTOs.WCReport;
+using Project_v1.Services.Filtering;
 using Project_v1.Services.IdGeneratorService;
 using Project_v1.Services.ReportService;
 
@@ -18,15 +20,18 @@ namespace Project_v1.Controllers
         private readonly UserManager<SystemUser> _userManager;
         private readonly IReportService _reportService;
         private readonly IIdGenerator _idGenerator;
+        private readonly IFilter _filter;
 
         public WCSampleController(ApplicationDBContext context,
                                   UserManager<SystemUser> userManager,
                                   IReportService reportService,
-                                  IIdGenerator idGenerator) {
+                                  IIdGenerator idGenerator,
+                                  IFilter filter) {
             _context = context;
             _userManager = userManager;
             _reportService = reportService;
             _idGenerator = idGenerator;
+            _filter = filter;
         }
 
         [HttpGet]
@@ -77,22 +82,26 @@ namespace Project_v1.Controllers
 
         [HttpGet]
         [Route("newsamples")]
-        public async Task<IActionResult> GetNewSamples(String mltId) {
+        public async Task<IActionResult> GetNewSamples([FromQuery] QueryObject query) {
             try {
-                var mlt = await _userManager.FindByIdAsync(mltId);
+                if (query.UserId == null) {
+                    return NotFound();
+                }
+
+                var mlt = await _userManager.FindByIdAsync(query.UserId);
 
                 if (mlt == null) {
-                    return NotFound($"User with username '{mltId}' not found.");
+                    return NotFound($"User with username '{query.UserId}' not found.");
                 }
 
                 if (mlt.LabID == null) {
-                    return NotFound($"User with username '{mltId}' have a Lab assigned.");
+                    return NotFound($"User with username '{query.UserId}' have a Lab assigned.");
                 }
 
                 var mohArea = await _context.MOHAreas.Where(m => m.LabID == mlt.LabID).ToListAsync();
 
                 if (mohArea == null) {
-                    return NotFound($"No MOHArea found for the Lab assigned to user '{mltId}'.");
+                    return NotFound($"No MOHArea found for the Lab assigned to user '{query.UserId}'.");
                 }
 
                 var mohAreaIds = mohArea.Select(m => m.MOHAreaID).ToList();
@@ -103,7 +112,7 @@ namespace Project_v1.Controllers
 
                 var phiAreaIds = phiAreas.Select(pa => pa.PHIAreaID).ToList();
 
-                var samples = await _context.Samples
+                var samples = _context.Samples
                     .Where(sample => phiAreaIds
                     .Contains(sample.PHIAreaId))
                     .Select(sample => new {
@@ -121,10 +130,13 @@ namespace Project_v1.Controllers
                         sample.PHIArea.MOHArea.Lab.LabLocation,
                         sample.PHIArea.MOHArea.Lab.LabTelephone,
                         ReportAvailable = _context.Reports.Any(r => r.SampleId == sample.SampleId)
-                    })
-                    .ToListAsync();
+                    });
 
-                return Ok(samples);
+                var searchResults = _filter.Search(samples, query.YourRefNo, "YourRefNo");
+                var sortedResult = _filter.Sort(searchResults, query);
+                var result = await _filter.Paginate(sortedResult, query.PageNumber, query.PageSize);
+
+                return Ok(result);
             } catch (Exception e) {
                 return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
             }

@@ -2,6 +2,6 @@
 {
     public class UpdateSurgicalCategory
     {
-        public string CategoryName { get; set; }
+        public string SurgicalCategoryName { get; set; }
     }
 }

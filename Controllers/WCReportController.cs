@@ -8,8 +8,10 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Project_v1.Data;
 using Project_v1.Models;
+using Project_v1.Models.DTOs.Helper;
 using Project_v1.Models.DTOs.Response;
 using Project_v1.Models.DTOs.WCReport;
+using Project_v1.Services.Filtering;
 using Project_v1.Services.FirebaseStrorage;
 using Project_v1.Services.IdGeneratorService;
 using Project_v1.Services.ReportService;
@@ -26,17 +28,20 @@ namespace Project_v1.Controllers
         private readonly IReportService _reportService;
         private readonly IIdGenerator _idGenerator;
         private readonly IStorageService _storageService;
+        private readonly IFilter _filter;
 
         public WCReportController(ApplicationDBContext context, 
                                   UserManager<SystemUser> userManager,
                                   IReportService reportService,
                                   IIdGenerator idGenerator,
-                                  IStorageService storageService) {
+                                  IStorageService storageService,
+                                  IFilter filter) {
             _context = context;
             _userManager = userManager;
             _reportService = reportService;
             _idGenerator = idGenerator;
             _storageService = storageService;
+            _filter = filter;
         }
 
         [HttpGet]
@@ -52,19 +57,23 @@ namespace Project_v1.Controllers
 
         [HttpGet]
         [Route("getAddedReports")]
-        public async Task<IActionResult> GetAddedReports(String mltId) {
+        public async Task<IActionResult> GetAddedReports([FromQuery] QueryObject query) {
             try {
-                var mlt = await _userManager.FindByIdAsync(mltId);
+                if (query.UserId == null) {
+                    return BadRequest(new Response { Status = "Error", Message = "User ID is required!" });
+                }
+
+                var mlt = await _userManager.FindByIdAsync(query.UserId);
 
                 if (mlt == null) {
-                    return NotFound($"User with username '{mltId}' not found.");
+                    return NotFound($"User with username '{query.UserId}' not found.");
                 }
 
                 if (mlt.LabID == null) {
-                    return NotFound($"User with username '{mltId}' have a Lab assigned.");
+                    return NotFound($"User with username '{query.UserId}' have a Lab assigned.");
                 }
 
-                var reports = await _context.Reports
+                var reports = _context.Reports
                     .Where(report => report.LabId == mlt.LabID)
                     .Select(report => new {
                         report.Sample.SampleId,
@@ -83,10 +92,13 @@ namespace Project_v1.Controllers
                         report.LabId,
                         report.ReportUrl,
                         report.Sample.PHIArea.MOHArea.MOHAreaName
-                    })
-                    .ToListAsync();
+                    });
 
-                return Ok(reports);
+                var searchResult = _filter.Search(reports, query.MyRefNo, "MyRefNo");
+                var sortedResult = _filter.Sort(searchResult, query);
+                var result = await _filter.Paginate(sortedResult, query.PageNumber, query.PageSize);
+
+                return Ok(result);
             } catch (Exception e) {
                 return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
             }

@@ -5,7 +5,9 @@ using Microsoft.EntityFrameworkCore;
 using Project_v1.Data;
 using Project_v1.Models;
 using Project_v1.Models.DTOs.GeneralInventoryItems;
+using Project_v1.Models.DTOs.Helper;
 using Project_v1.Models.DTOs.Response;
+using Project_v1.Services.Filtering;
 using Project_v1.Services.FirebaseStrorage;
 using Project_v1.Services.IdGeneratorService;
 using Project_v1.Services.QRGeneratorService;
@@ -23,24 +25,31 @@ namespace Project_v1.Controllers
         private readonly IIdGenerator _idGenerator;
         private readonly IQRGenerator _qrGenerator;
         private readonly IStorageService _storageService;
+        private readonly IFilter _filter;
 
         public GeneralInventoryController(ApplicationDBContext context,
                                           IIdGenerator idGenerator,
                                           UserManager<SystemUser> userManager,
                                           IQRGenerator qRGenerator,
-                                          IStorageService storageService) {
+                                          IStorageService storageService,
+                                          IFilter filter) {
             _context = context;
             _idGenerator = idGenerator;
             _userManager = userManager;
             _qrGenerator = qRGenerator;
             _storageService = storageService;
+            _filter = filter;
         }
 
         [HttpGet]
         [Route("GetGeneralCategories")]
-        public async Task<ActionResult> GetGeneralCategories(String mltId) {
+        public async Task<ActionResult> GetGeneralCategories([FromQuery] QueryObject query) {
             try {
-                var mlt = await _userManager.FindByIdAsync(mltId);
+                if (query.UserId == null) {
+                    return NotFound();
+                }
+
+                var mlt = await _userManager.FindByIdAsync(query.UserId);
 
                 if (mlt == null) {
                     return NotFound();
@@ -54,16 +63,19 @@ namespace Project_v1.Controllers
                     return NotFound();
                 }
 
-                var generalCategories = await _context.GeneralCategory
+                var generalCategories = _context.GeneralCategory
                     .Where(c => c.LabId == labId)
                     .Select(c => new {
                         c.GeneralCategoryID,
-                        c.CategoryName,
+                        c.GeneralCategoryName,
                         c.LabId
-                    })
-                    .ToListAsync();
+                    });
 
-                return Ok(generalCategories);
+                var searchResult = _filter.Search(generalCategories, query.GeneralCategoryName, "GeneralCategoryName");
+                var sortedResult = _filter.Sort(searchResult, query);
+                var result = await _filter.Paginate(sortedResult, query.PageNumber, query.PageSize);
+
+                return Ok(result);
             } catch (Exception e) {
                 return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
             }
@@ -82,7 +94,7 @@ namespace Project_v1.Controllers
                         item.IssuedDate,
                         DurationOfInventory = (today.DayNumber - item.IssuedDate.DayNumber),
                         item.IssuedBy,
-                        item.GeneralCategory.CategoryName,
+                        item.GeneralCategory.GeneralCategoryName,
                         item.Remarks
                     })
                     .FirstOrDefaultAsync();
@@ -99,9 +111,13 @@ namespace Project_v1.Controllers
 
         [HttpGet]
         [Route("GetGeneralInventoryItems")]
-        public async Task<ActionResult> GetGeneralInventoryItems(String mltId, String categoryId) {
+        public async Task<ActionResult> GetGeneralInventoryItems([FromQuery] QueryObject query) {
             try {
-                var mlt = await _userManager.FindByIdAsync(mltId);
+                if (query.UserId == null || query.CategoryId == null) {
+                    return NotFound();
+                }
+
+                var mlt = await _userManager.FindByIdAsync(query.UserId);
 
                 if (mlt == null) {
                     return NotFound();
@@ -115,7 +131,7 @@ namespace Project_v1.Controllers
                     return NotFound();
                 }
 
-                var category = await _context.GeneralCategory.FindAsync(categoryId);
+                var category = await _context.GeneralCategory.FindAsync(query.CategoryId);
 
                 if (category == null) {
                     return NotFound();
@@ -130,27 +146,30 @@ namespace Project_v1.Controllers
 
                 var today = DateOnly.FromDateTime(DateTime.Now);
 
-                if (!categoryList.Any(c => c.GeneralCategoryID == categoryId)) {
+                if (!categoryList.Any(c => c.GeneralCategoryID == query.CategoryId)) {
                     return BadRequest(new Response { Status = "Error", Message = "Category does not belong to the lab!" });
                 }
 
-                var generalInventoryItems = await _context.GeneralInventory
-                        .Where(items => items.GeneralCategoryID == categoryId)
+                var generalInventoryItems = _context.GeneralInventory
+                        .Where(items => items.GeneralCategoryID == query.CategoryId)
                         .Select(items => new {
                             items.GeneralInventoryID,
                             items.ItemName,
                             items.IssuedDate,
                             items.IssuedBy,
                             items.GeneralCategory.GeneralCategoryID,
-                            items.GeneralCategory.CategoryName,
+                            items.GeneralCategory.GeneralCategoryName,
                             DurationOfInventory = (today.DayNumber - items.IssuedDate.DayNumber),
                             items.Remarks,
                             items.ItemQR,
                             items.GeneralCategory.LabId
-                        })
-                        .ToListAsync();
+                        });
 
-                return Ok(generalInventoryItems);
+                var searchResult = _filter.Search(generalInventoryItems, query.GeneralItemName, "ItemName");
+                var sortedResult = _filter.Sort(searchResult, query);
+                var result = await _filter.Paginate(sortedResult, query.PageNumber, query.PageSize);
+
+                return Ok(result);
             } catch (Exception e) {
                 return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
             }
@@ -184,13 +203,13 @@ namespace Project_v1.Controllers
                     return BadRequest(ModelState);
                 }
 
-                if(await _context.GeneralCategory.AnyAsync(c => c.CategoryName == category.CategoryName)) {
+                if(await _context.GeneralCategory.AnyAsync(c => c.GeneralCategoryName == category.GeneralCategoryName)) {
                     return BadRequest(new Response { Status = "Error", Message = "Category already exists!" });
                 }
 
                 var newCategory = new GeneralCategory {
                     GeneralCategoryID = _idGenerator.GenerateGeneralInventoryId(),
-                    CategoryName = category.CategoryName,
+                    GeneralCategoryName = category.GeneralCategoryName,
                     LabId = category.LabId
                 };
 
@@ -263,7 +282,7 @@ namespace Project_v1.Controllers
                     return NotFound();
                 }
 
-                generalCategory.CategoryName = updatedCategory.CategoryName;
+                generalCategory.GeneralCategoryName = updatedCategory.GeneralCategoryName;
 
                 await _context.SaveChangesAsync();
 

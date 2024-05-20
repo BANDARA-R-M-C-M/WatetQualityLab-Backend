@@ -32,49 +32,15 @@ namespace Project_v1.Controllers
             _filter = filter;
         }
 
-        /*[HttpGet]
-        [Route("GetInstrumentalQualityControlRecords")]
-        public async Task<IActionResult> GetInstrumentalQualityControlRecords(String mltId) {
-            try {
-                var mlt = await _userManager.FindByIdAsync(mltId);
-
-                if (mlt == null) {
-                    return NotFound();
-                }
-
-                var lab = await _context.Labs.FindAsync(mlt.LabID);
-
-                if (lab == null) {
-                    return NotFound();
-                }
-
-                var instrumentalQualityControlRecords = await _context.InstrumentalQualityControls
-                    .Where(iqcr => iqcr.LabId == lab.LabID)
-                    .Select(iqcr => new {
-                        iqcr.InstrumentalQualityControlID,
-                        iqcr.DateTime,
-                        iqcr.InstrumentId,
-                        iqcr.TemperatureFluctuation,
-                        iqcr.PressureGradient,
-                        iqcr.Timer,
-                        iqcr.Sterility,
-                        iqcr.Stability,
-                        iqcr.Remarks,
-                        iqcr.LabId
-                    })
-                    .ToListAsync();
-
-                return Ok(instrumentalQualityControlRecords);
-            } catch (Exception e) {
-                return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
-            }
-        }*/
-
         [HttpGet]
         [Route("GetInstrumentalQualityControlRecords")]
-        public async Task<IActionResult> GetInstrumentalQualityControlRecords(String mltId, [FromQuery] QueryObject query) {
+        public async Task<IActionResult> GetInstrumentalQualityControlRecords([FromQuery] QueryObject query) {
             try {
-                var mlt = await _userManager.FindByIdAsync(mltId);
+                if (query.UserId == null) {
+                    return NotFound();
+                }
+
+                var mlt = await _userManager.FindByIdAsync(query.UserId);
 
                 if (mlt == null) {
                     return NotFound();
@@ -101,7 +67,9 @@ namespace Project_v1.Controllers
                         iqcr.LabId
                     });
 
-                var result = await _filter.SearchItemsAsync(instrumentalQualityControlRecords, query);
+                var searchResult = _filter.Search(instrumentalQualityControlRecords, query.InstrumentId, "InstrumentId");
+                var sortedResult = _filter.Sort(searchResult, query);
+                var result = await _filter.Paginate(sortedResult, query.PageNumber, query.PageSize);
 
                 return Ok(result);
             } catch (Exception e) {

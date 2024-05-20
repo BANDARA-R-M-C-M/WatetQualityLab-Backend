@@ -2,7 +2,7 @@
 {
     public class AddSurgicalCategory
     {
-        public string CategoryName { get; set; }
+        public string SurgicalCategoryName { get; set; }
         public string LabId { get; set; }
     }
 }

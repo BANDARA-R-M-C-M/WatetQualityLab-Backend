@@ -2,6 +2,6 @@
 {
     public class UpdateGeneralCategory
     {
-        public string CategoryName { get; set; }
+        public string GeneralCategoryName { get; set; }
     }
 }

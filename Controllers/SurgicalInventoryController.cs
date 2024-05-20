@@ -12,6 +12,8 @@ using Project_v1.Services.QRGeneratorService;
 using Project_v1.Models.DTOs.GeneralInventoryItems;
 using System.Diagnostics;
 using System.Net;
+using Project_v1.Services.Filtering;
+using Project_v1.Models.DTOs.Helper;
 
 namespace Project_v1.Controllers
 {
@@ -24,24 +26,30 @@ namespace Project_v1.Controllers
         private readonly IIdGenerator _idGenerator;
         private readonly IQRGenerator _qrGenerator;
         private readonly IStorageService _storageService;
+        private readonly IFilter _filter;
 
         public SurgicalInventoryController(ApplicationDBContext context,
                                           IIdGenerator idGenerator,
                                           UserManager<SystemUser> userManager,
                                           IQRGenerator qRGenerator,
-                                          IStorageService storageService) {
+                                          IStorageService storageService,
+                                          IFilter filter) {
             _context = context;
             _idGenerator = idGenerator;
             _userManager = userManager;
             _qrGenerator = qRGenerator;
             _storageService = storageService;
+            _filter = filter;
         }
 
         [HttpGet]
         [Route("GetSurgicalCategories")]
-        public async Task<IActionResult> GetSurgicalCategories(String mltId) {
+        public async Task<IActionResult> GetSurgicalCategories([FromQuery] QueryObject query) {
             try {
-                var mlt = await _userManager.FindByIdAsync(mltId);
+                if (query.UserId == null) {
+                    return BadRequest(new Response { Status = "Error", Message = "Query Object cannot be null!" });
+                }
+                var mlt = await _userManager.FindByIdAsync(query.UserId);
 
                 if (mlt == null) {
                     return NotFound();
@@ -55,16 +63,19 @@ namespace Project_v1.Controllers
                     return NotFound();
                 }
 
-                var surgicalCategories = await _context.SurgicalCategory
+                var surgicalCategories = _context.SurgicalCategory
                     .Where(c => c.LabId == labId)
                     .Select(c => new {
                         c.SurgicalCategoryID,
-                        c.CategoryName,
+                        c.SurgicalCategoryName,
                         c.LabId
-                    })
-                    .ToListAsync();
+                    });
 
-                return Ok(surgicalCategories);
+                var seachResult = _filter.Search(surgicalCategories, query.SurgicalCategoryName, "SurgicalCategoryName");
+                var sortedResult = _filter.Sort(seachResult, query);
+                var result = await _filter.Paginate(sortedResult, query.PageNumber, query.PageSize);
+
+                return Ok(result);
             } catch (Exception e) {
                 return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
             }
@@ -84,7 +95,7 @@ namespace Project_v1.Controllers
                         DurationOfInventory = (today.DayNumber - item.IssuedDate.DayNumber),
                         item.IssuedBy,
                         item.Quantity,
-                        item.SurgicalCategory.CategoryName,
+                        item.SurgicalCategory.SurgicalCategoryName,
                         item.Remarks
                     })
                     .FirstOrDefaultAsync();
@@ -101,9 +112,13 @@ namespace Project_v1.Controllers
 
         [HttpGet]
         [Route("GetSurgicalInventoryItems")]
-        public async Task<IActionResult> GetSurgicalInventoryItems(String mltId, String categoryId) {
+        public async Task<IActionResult> GetSurgicalInventoryItems([FromQuery] QueryObject query) {
             try {
-                var mlt = await _userManager.FindByIdAsync(mltId);
+                if (query.UserId == null) {
+                    return BadRequest(new Response { Status = "Error", Message = "Query Object cannot be null!" });
+                }
+
+                var mlt = await _userManager.FindByIdAsync(query.UserId);
 
                 if (mlt == null) {
                     return NotFound();
@@ -117,7 +132,7 @@ namespace Project_v1.Controllers
                     return NotFound();
                 }
 
-                var category = await _context.SurgicalCategory.FindAsync(categoryId);
+                var category = await _context.SurgicalCategory.FindAsync(query.CategoryId);
 
                 if (category == null) {
                     return NotFound();
@@ -132,12 +147,12 @@ namespace Project_v1.Controllers
 
                 var today = DateOnly.FromDateTime(DateTime.Now);
 
-                if (!categoryList.Any(c => c.SurgicalCategoryID == categoryId)) {
+                if (!categoryList.Any(c => c.SurgicalCategoryID == query.CategoryId)) {
                     return BadRequest(new Response { Status = "Error", Message = "Category does not belong to the lab!" });
                 }
 
-                var surgicalItems = await _context.SurgicalInventory
-                    .Where(items => items.SurgicalCategoryID == categoryId)
+                var surgicalItems = _context.SurgicalInventory
+                    .Where(items => items.SurgicalCategoryID == query.CategoryId)
                     .Select(items => new {
                         items.SurgicalInventoryID,
                         items.ItemName,
@@ -145,15 +160,18 @@ namespace Project_v1.Controllers
                         items.IssuedBy,
                         items.Quantity,
                         items.SurgicalCategory.SurgicalCategoryID,
-                        items.SurgicalCategory.CategoryName,
+                        items.SurgicalCategory.SurgicalCategoryName,
                         DurationOfInventory = (today.DayNumber - items.IssuedDate.DayNumber),
                         items.Remarks,
                         items.ItemQR,
                         items.SurgicalCategory.LabId
-                    })
-                    .ToListAsync();
+                    });
 
-                return Ok(surgicalItems);
+                var searchResult = _filter.Search(surgicalItems, query.SurgicalItemName, "SurgicalItemName");
+                var sortedResult = _filter.Sort(searchResult, query);
+                var result = await _filter.Paginate(sortedResult, query.PageNumber, query.PageSize);
+
+                return Ok(result);
             } catch (Exception e) {
                 return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
             }
@@ -187,13 +205,13 @@ namespace Project_v1.Controllers
                     return BadRequest(ModelState);
                 }
 
-                if (await _context.SurgicalCategory.AnyAsync(c => c.CategoryName == category.CategoryName)) {
+                if (await _context.SurgicalCategory.AnyAsync(c => c.SurgicalCategoryName == category.SurgicalCategoryName)) {
                     return BadRequest(new Response { Status = "Error", Message = "Category already exists!" });
                 }
 
                 var newCategory = new SurgicalCategory {
                     SurgicalCategoryID = _idGenerator.GenerateSurgicalInventoryId(),
-                    CategoryName = category.CategoryName,
+                    SurgicalCategoryName = category.SurgicalCategoryName,
                     LabId = category.LabId
                 };
 
@@ -318,7 +336,7 @@ namespace Project_v1.Controllers
                     return NotFound();
                 }
 
-                surgicalCategory.CategoryName = updatedCategory.CategoryName;
+                surgicalCategory.SurgicalCategoryName = updatedCategory.SurgicalCategoryName;
 
                 await _context.SaveChangesAsync();
 

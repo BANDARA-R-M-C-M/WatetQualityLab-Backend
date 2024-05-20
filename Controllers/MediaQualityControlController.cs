@@ -4,8 +4,10 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Project_v1.Data;
 using Project_v1.Models;
+using Project_v1.Models.DTOs.Helper;
 using Project_v1.Models.DTOs.MediaQC;
 using Project_v1.Models.DTOs.Response;
+using Project_v1.Services.Filtering;
 using Project_v1.Services.IdGeneratorService;
 
 namespace Project_v1.Controllers {
@@ -16,20 +18,27 @@ namespace Project_v1.Controllers {
         private readonly ApplicationDBContext _context;
         private readonly UserManager<SystemUser> _userManager;
         private readonly IIdGenerator _idGenerator;
+        private readonly IFilter _filter;
 
         public MediaQualityControlController(ApplicationDBContext context,
                                              UserManager<SystemUser> userManager,
-                                             IIdGenerator idGenerator) {
+                                             IIdGenerator idGenerator,
+                                             IFilter filter) {
             _context = context;
             _userManager = userManager;
             _idGenerator = idGenerator;
+            _filter = filter;
         }
 
         [HttpGet]
         [Route("GetMediaQualityControlRecords")]
-        public async Task<IActionResult> GetMediaQualityControlRecords(String mltId) {
+        public async Task<IActionResult> GetMediaQualityControlRecords([FromQuery] QueryObject query) {
             try {
-                var mlt = await _userManager.FindByIdAsync(mltId);
+                if (query.UserId == null) {
+                    return NotFound();
+                }
+
+                var mlt = await _userManager.FindByIdAsync(query.UserId);
 
                 if (mlt == null) {
                     return NotFound();
@@ -41,7 +50,7 @@ namespace Project_v1.Controllers {
                     return NotFound();
                 }
 
-                var mediaQualityControlRecords = await _context.MediaQualityControls
+                var mediaQualityControlRecords = _context.MediaQualityControls
                     .Where(mqcr => mqcr.LabId == lab.LabID)
                     .Select(mqcr => new {
                         mqcr.MediaQualityControlID,
@@ -52,10 +61,13 @@ namespace Project_v1.Controllers {
                         mqcr.Sensitivity,
                         mqcr.Remarks,
                         mqcr.LabId
-                    })
-                    .ToListAsync();
+                    });
 
-                return Ok(mediaQualityControlRecords);
+                var searchResult = _filter.Search(mediaQualityControlRecords, query.MediaId, "MediaId");
+                var sortedResult = _filter.Sort(searchResult, query);
+                var result = await _filter.Paginate(sortedResult, query.PageNumber, query.PageSize);
+
+                return Ok(result);
             } catch (Exception e) {
                 return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
             }
