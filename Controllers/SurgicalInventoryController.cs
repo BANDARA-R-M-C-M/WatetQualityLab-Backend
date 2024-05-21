@@ -71,11 +71,13 @@ namespace Project_v1.Controllers
                         c.LabId
                     });
 
-                var seachResult = _filter.Search(surgicalCategories, query.SurgicalCategoryName, "SurgicalCategoryName");
+                /*var seachResult = _filter.Search(surgicalCategories, query.SurgicalCategoryName, "SurgicalCategoryName");
                 var sortedResult = _filter.Sort(seachResult, query);
-                var result = await _filter.Paginate(sortedResult, query.PageNumber, query.PageSize);
+                var result = await _filter.Paginate(sortedResult, query.PageNumber, query.PageSize);*/
 
-                return Ok(result);
+                var filteredResult = await _filter.Filtering(surgicalCategories, query);
+
+                return Ok(filteredResult);
             } catch (Exception e) {
                 return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
             }
@@ -167,11 +169,13 @@ namespace Project_v1.Controllers
                         items.SurgicalCategory.LabId
                     });
 
-                var searchResult = _filter.Search(surgicalItems, query.SurgicalItemName, "SurgicalItemName");
+                /*var searchResult = _filter.Search(surgicalItems, query.SurgicalItemName, "SurgicalItemName");
                 var sortedResult = _filter.Sort(searchResult, query);
-                var result = await _filter.Paginate(sortedResult, query.PageNumber, query.PageSize);
+                var result = await _filter.Paginate(sortedResult, query.PageNumber, query.PageSize);*/
 
-                return Ok(result);
+                var filteredResult = await _filter.Filtering(surgicalItems, query);
+
+                return Ok(filteredResult);
             } catch (Exception e) {
                 return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
             }

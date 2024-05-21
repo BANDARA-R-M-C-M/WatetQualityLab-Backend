@@ -71,11 +71,13 @@ namespace Project_v1.Controllers
                         c.LabId
                     });
 
-                var searchResult = _filter.Search(generalCategories, query.GeneralCategoryName, "GeneralCategoryName");
+                /*var searchResult = _filter.Search(generalCategories, query.GeneralCategoryName, "GeneralCategoryName");
                 var sortedResult = _filter.Sort(searchResult, query);
-                var result = await _filter.Paginate(sortedResult, query.PageNumber, query.PageSize);
+                var result = await _filter.Paginate(sortedResult, query.PageNumber, query.PageSize);*/
 
-                return Ok(result);
+                var filteredResult = await _filter.Filtering(generalCategories, query);
+
+                return Ok(filteredResult);
             } catch (Exception e) {
                 return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
             }
@@ -165,11 +167,13 @@ namespace Project_v1.Controllers
                             items.GeneralCategory.LabId
                         });
 
-                var searchResult = _filter.Search(generalInventoryItems, query.GeneralItemName, "ItemName");
+                /*var searchResult = _filter.Search(generalInventoryItems, query.GeneralItemName, "ItemName");
                 var sortedResult = _filter.Sort(searchResult, query);
-                var result = await _filter.Paginate(sortedResult, query.PageNumber, query.PageSize);
+                var result = await _filter.Paginate(sortedResult, query.PageNumber, query.PageSize);*/
 
-                return Ok(result);
+                var filteredResult = await _filter.Filtering(generalInventoryItems, query);
+
+                return Ok(filteredResult);
             } catch (Exception e) {
                 return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
             }

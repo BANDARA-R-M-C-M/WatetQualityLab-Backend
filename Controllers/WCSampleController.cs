@@ -47,20 +47,24 @@ namespace Project_v1.Controllers
 
         [HttpGet]
         [Route("getAddedSamples")]
-        public async Task<IActionResult> GetAddedSamples(String phiId) {
+        public async Task<IActionResult> GetAddedSamples([FromQuery] QueryObject query) {
             try {
-                var phi = await _userManager.FindByIdAsync(phiId);
+                if(query.UserId == null) {
+                    return NotFound();
+                }
+
+                var phi = await _userManager.FindByIdAsync(query.UserId);
 
                 if (phi == null) {
-                    return NotFound($"User with username '{phiId}' not found.");
+                    return NotFound($"User with username '{query.UserId}' not found.");
                 }
 
                 if (phi.PHIAreaId == null) {
-                    return NotFound($"User with username '{phiId}' have a PHI Area assigned.");
+                    return NotFound($"User with username '{query.UserId}' have a PHI Area assigned.");
                 }
 
-                var samples = await _context.Samples
-                    .Where(sample => sample.PhiId == phiId)
+                var samples = _context.Samples
+                    .Where(sample => sample.PhiId == query.UserId && sample.Acceptance == "Pending")
                     .Select(sample => new {
                         sample.SampleId,
                         sample.YourRefNo,
@@ -71,18 +75,67 @@ namespace Project_v1.Controllers
                         sample.phiAreaName,
                         sample.Acceptance,
                         sample.Comments
-                    })
-                    .ToListAsync();
+                    });
 
-                return Ok(samples);
+                /*var searchResults = _filter.Search(samples, query.YourRefNo, "YourRefNo");
+                var sortedResult = _filter.Sort(searchResults, query);
+                var result = await _filter.Paginate(sortedResult, query.PageNumber, query.PageSize);*/
+
+                var filteredResult = await _filter.Filtering(samples, query);
+
+                return Ok(filteredResult);
             } catch (Exception e) {
                 return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
             }
         }
 
         [HttpGet]
-        [Route("newsamples")]
-        public async Task<IActionResult> GetNewSamples([FromQuery] QueryObject query) {
+        [Route("GetHistory")]
+        public async Task<IActionResult> GetHistory([FromQuery] QueryObject query) {
+            try {
+                if(query.UserId == null) {
+                    return NotFound();
+                }
+
+                var phi = await _userManager.FindByIdAsync(query.UserId);
+
+                if (phi == null) {
+                    return NotFound($"User with username '{query.UserId}' not found.");
+                }
+
+                if (phi.PHIAreaId == null) {
+                    return NotFound($"User with username '{query.UserId}' have a PHI Area assigned.");
+                }
+
+                var samples = _context.Samples
+                    .Where(sample => sample.PhiId == query.UserId && (sample.Acceptance == "Accepted" || sample.Acceptance == "Rejected"))
+                    .Select(sample => new {
+                        sample.SampleId,
+                        sample.YourRefNo,
+                        sample.StateOfChlorination,
+                        sample.DateOfCollection,
+                        sample.CatagoryOfSource,
+                        sample.CollectingSource,
+                        sample.phiAreaName,
+                        sample.Acceptance,
+                        sample.Comments
+                    });
+
+                /*var searchResults = _filter.Search(samples, query.YourRefNo, "YourRefNo");
+                var sortedResult = _filter.Sort(searchResults, query);
+                var result = await _filter.Paginate(sortedResult, query.PageNumber, query.PageSize);*/
+
+                var filteredResult = await _filter.Filtering(samples, query);
+
+                return Ok(filteredResult);
+            } catch (Exception e) {
+                return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
+            }
+        }
+
+        [HttpGet]
+        [Route("GetPendingSamples")]
+        public async Task<IActionResult> GetPendingSamples([FromQuery] QueryObject query) {
             try {
                 if (query.UserId == null) {
                     return NotFound();
@@ -114,7 +167,7 @@ namespace Project_v1.Controllers
 
                 var samples = _context.Samples
                     .Where(sample => phiAreaIds
-                    .Contains(sample.PHIAreaId))
+                    .Contains(sample.PHIAreaId) && sample.Acceptance == "Pending")
                     .Select(sample => new {
                         sample.SampleId,
                         sample.YourRefNo,
@@ -132,11 +185,77 @@ namespace Project_v1.Controllers
                         ReportAvailable = _context.Reports.Any(r => r.SampleId == sample.SampleId)
                     });
 
-                var searchResults = _filter.Search(samples, query.YourRefNo, "YourRefNo");
+                /*var searchResults = _filter.Search(samples, query.YourRefNo, "YourRefNo");
                 var sortedResult = _filter.Sort(searchResults, query);
-                var result = await _filter.Paginate(sortedResult, query.PageNumber, query.PageSize);
+                var result = await _filter.Paginate(sortedResult, query.PageNumber, query.PageSize);*/
 
-                return Ok(result);
+                var filteredResult = await _filter.Filtering(samples, query);
+
+                return Ok(filteredResult);
+            } catch (Exception e) {
+                return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
+            }
+        }
+
+        [HttpGet]
+        [Route("GetAcceptedSamples")]
+        public async Task<IActionResult> GetAcceptedSamples([FromQuery] QueryObject query) {
+            try {
+                if (query.UserId == null) {
+                    return NotFound();
+                }
+
+                var mlt = await _userManager.FindByIdAsync(query.UserId);
+
+                if (mlt == null) {
+                    return NotFound($"User with username '{query.UserId}' not found.");
+                }
+
+                if (mlt.LabID == null) {
+                    return NotFound($"User with username '{query.UserId}' have a Lab assigned.");
+                }
+
+                var mohArea = await _context.MOHAreas.Where(m => m.LabID == mlt.LabID).ToListAsync();
+
+                if (mohArea == null) {
+                    return NotFound($"No MOHArea found for the Lab assigned to user '{query.UserId}'.");
+                }
+
+                var mohAreaIds = mohArea.Select(m => m.MOHAreaID).ToList();
+
+                var phiAreas = await _context.PHIAreas.Where(phi => mohAreaIds
+                    .Contains(phi.MOHAreaId))
+                    .ToListAsync();
+
+                var phiAreaIds = phiAreas.Select(pa => pa.PHIAreaID).ToList();
+
+                var samples = _context.Samples
+                    .Where(sample => phiAreaIds
+                    .Contains(sample.PHIAreaId) && sample.Acceptance == "Accepted")
+                    .Select(sample => new {
+                        sample.SampleId,
+                        sample.YourRefNo,
+                        sample.StateOfChlorination,
+                        sample.DateOfCollection,
+                        sample.AnalyzedDate,
+                        sample.CatagoryOfSource,
+                        sample.CollectingSource,
+                        sample.phiAreaName,
+                        sample.Acceptance,
+                        sample.PHIArea.MOHArea.LabID,
+                        sample.PHIArea.MOHArea.Lab.LabName,
+                        sample.PHIArea.MOHArea.Lab.LabLocation,
+                        sample.PHIArea.MOHArea.Lab.LabTelephone,
+                        ReportAvailable = _context.Reports.Any(r => r.SampleId == sample.SampleId)
+                    });
+
+                /*var searchResults = _filter.Search(samples, query.YourRefNo, "YourRefNo");
+                var sortedResult = _filter.Sort(searchResults, query);
+                var result = await _filter.Paginate(sortedResult, query.PageNumber, query.PageSize);*/
+
+                var filteredResult = await _filter.Filtering(samples, query);
+
+                return Ok(filteredResult);
             } catch (Exception e) {
                 return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
             }

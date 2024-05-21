@@ -11,6 +11,9 @@
         public string? SurgicalCategoryName { get; set; } = null;
         public string? GeneralItemName { get; set; } = null;
         public string? SurgicalItemName { get; set; } = null;
+        public string? SearchTerm { get; set;} = null;
+        public string? SearchParameter { get; set; } = null;
+        public string SearchParameterType { get; set; } = "string";
         public int PageNumber { get; set; } = 1;
         public int PageSize { get; set; } = 10;
         public string? SortBy { get; set; } = null;

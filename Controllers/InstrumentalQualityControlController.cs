@@ -67,11 +67,13 @@ namespace Project_v1.Controllers
                         iqcr.LabId
                     });
 
-                var searchResult = _filter.Search(instrumentalQualityControlRecords, query.InstrumentId, "InstrumentId");
+                /*var searchResult = _filter.Search(instrumentalQualityControlRecords, query.InstrumentId, "InstrumentId");
                 var sortedResult = _filter.Sort(searchResult, query);
-                var result = await _filter.Paginate(sortedResult, query.PageNumber, query.PageSize);
+                var result = await _filter.Paginate(sortedResult, query.PageNumber, query.PageSize);*/
 
-                return Ok(result);
+                var filteredResult = await _filter.Filtering(instrumentalQualityControlRecords, query);
+
+                return Ok(filteredResult);
             } catch (Exception e) {
                 return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
             }
