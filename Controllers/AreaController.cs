@@ -5,7 +5,9 @@ using Microsoft.EntityFrameworkCore;
 using Project_v1.Data;
 using Project_v1.Models;
 using Project_v1.Models.DTOs.Areas;
+using Project_v1.Models.DTOs.Helper;
 using Project_v1.Models.DTOs.Response;
+using Project_v1.Services.Filtering;
 using Project_v1.Services.IdGeneratorService;
 
 namespace Project_v1.Controllers
@@ -17,28 +19,35 @@ namespace Project_v1.Controllers
         private readonly ApplicationDBContext _context;
         private readonly UserManager<SystemUser> _userManager;
         private readonly IIdGenerator _idGenerator;
+        private readonly IFilter _filter;
 
         public AreaController(ApplicationDBContext context,
                               UserManager<SystemUser> userManager,
-                              IIdGenerator idGenerator) {
+                              IIdGenerator idGenerator,
+                              IFilter filter) {
             _context = context;
             _userManager = userManager;
             _idGenerator = idGenerator;
+            _filter = filter;
         }
 
         [HttpGet]
         [Route("GetMOHAreas")]
-        public async Task<IActionResult> GetMOHAreas() {
+        public async Task<IActionResult> GetMOHAreas([FromQuery] QueryObject query) {
             try {
-                var mohareas = await _context.MOHAreas.ToListAsync();
+                /*var mohareas = await _context.MOHAreas.ToListAsync();*/
 
-                var mohareasList = mohareas.Select(moharea => new {
+                var mohareasList = _context.MOHAreas
+                    .Select(moharea => new {
                     mohAreaId = moharea.MOHAreaID,
                     mohAreaName = moharea.MOHAreaName,
-                    labId = moharea.LabID
+                    labId = moharea.LabID,
+                    labName = moharea.Lab.LabName
                 });
 
-                return Ok(mohareasList);
+                var filteredResult = await _filter.Filtering(mohareasList, query);
+
+                return Ok(filteredResult);
             } catch (Exception e) {
                 return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
             }
@@ -71,17 +80,21 @@ namespace Project_v1.Controllers
 
         [HttpGet]
         [Route("GetPHIAreas")]
-        public async Task<IActionResult> GetPHIAreas() {
+        public async Task<IActionResult> GetPHIAreas([FromQuery] QueryObject query) {
             try {
-                var phiaAreas = await _context.PHIAreas.ToListAsync();
+                /*var phiaAreas = await _context.PHIAreas.ToListAsync();*/
 
-                var phiaAreasList = phiaAreas.Select(phiaArea => new {
+                var phiaAreasList = _context.PHIAreas
+                    .Select(phiaArea => new {
                     phiAreaId = phiaArea.PHIAreaID,
                     phiAreaName = phiaArea.PHIAreaName,
-                    mohAreaId = phiaArea.MOHAreaId
+                    mohAreaId = phiaArea.MOHAreaId,
+                    mohAreaName = phiaArea.MOHArea.MOHAreaName
                 });
 
-                return Ok(phiaAreasList);
+                var filteredResult = await _filter.Filtering(phiaAreasList, query);
+
+                return Ok(filteredResult);
             } catch (Exception e) {
                 return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
             }
@@ -89,18 +102,21 @@ namespace Project_v1.Controllers
 
         [HttpGet]
         [Route("GetLabs")]
-        public async Task<IActionResult> GetLabs() {
+        public async Task<IActionResult> GetLabs([FromQuery] QueryObject query) {
             try {
-                var labs = await _context.Labs.ToListAsync();
+                /*var labs = await _context.Labs.ToListAsync();*/
 
-                var labsList = labs.Select(lab => new {
+                var labsList = _context.Labs
+                    .Select(lab => new {
                     labId = lab.LabID,
                     labName = lab.LabName,
                     labLocation = lab.LabLocation,
                     labTelephone = lab.LabTelephone
                 });
 
-                return Ok(labsList);
+                var filteredResult = await _filter.Filtering(labsList, query);
+
+                return Ok(filteredResult);
             } catch (Exception e) {
                 return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
             }

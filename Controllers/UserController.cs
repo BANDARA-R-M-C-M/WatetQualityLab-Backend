@@ -3,9 +3,11 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Project_v1.Data;
 using Project_v1.Models;
+using Project_v1.Models.DTOs.Helper;
 using Project_v1.Models.DTOs.Login;
 using Project_v1.Models.DTOs.Response;
 using Project_v1.Models.DTOs.Signup;
+using Project_v1.Services.Filtering;
 using Project_v1.Services.TokenService;
 
 namespace Project_v1.Controllers
@@ -18,16 +20,19 @@ namespace Project_v1.Controllers
         private readonly UserManager<SystemUser> _userManager;
         private readonly RoleManager<IdentityRole> _roleManager;
         private readonly ITokenService _tokenService;
+        private readonly IFilter _filter;
 
         public UserController(ApplicationDBContext context,
                               UserManager<SystemUser> userManager,
                               RoleManager<IdentityRole> roleManager,
-                              ITokenService tokenService) {
+                              ITokenService tokenService,
+                              IFilter filter) {
 
             _context = context;
             _userManager = userManager;
             _roleManager = roleManager;
             _tokenService = tokenService;
+            _filter = filter;
         }
 
         [HttpPost]
@@ -79,6 +84,7 @@ namespace Project_v1.Controllers
                 }
 
                 var newUser = new SystemUser {
+                    Id = registeredUser.Id,
                     UserName = registeredUser.UserName,
                     Email = registeredUser.Email,
                     PhoneNumber = registeredUser.PhoneNumber
@@ -103,13 +109,13 @@ namespace Project_v1.Controllers
 
         [HttpGet]
         [Route("getMLTs")]
-        public async Task<IActionResult> GetMLTs() {
+        public async Task<IActionResult> GetMLTs([FromQuery] QueryObject query) {
             try {
                 var mlts = await _userManager.GetUsersInRoleAsync("MLT");
 
                 var mltIds = mlts.Select(m => m.Id);
 
-                var userDetails = await _context.Users
+                var userDetails = _context.Users
                     .Where(m => mltIds
                     .Contains(m.Id))
                     .Select(m => new {
@@ -118,9 +124,11 @@ namespace Project_v1.Controllers
                         m.Email, 
                         m.PhoneNumber,
                         LabName = m.Lab.LabName ?? "No Lab Assigned"
-                }).ToListAsync();
+                });
 
-                return Ok(userDetails);
+                var filteredResult = await _filter.Filtering(userDetails, query);
+
+                return Ok(filteredResult);
             } catch (Exception e) {
                 return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
             }
@@ -128,13 +136,13 @@ namespace Project_v1.Controllers
 
         [HttpGet]
         [Route("getPHIs")]
-        public async Task<IActionResult> GetPHIs() {
+        public async Task<IActionResult> GetPHIs([FromQuery] QueryObject query) {
             try {
                 var phis = await _userManager.GetUsersInRoleAsync("PHI");
                 
                 var phiIds = phis.Select(p => p.Id);
 
-                var userDetails = await _context.Users
+                var userDetails = _context.Users
                     .Where(p => phiIds
                     .Contains(p.Id))
                     .Select(p => new {
@@ -143,9 +151,11 @@ namespace Project_v1.Controllers
                         p.Email, 
                         p.PhoneNumber,
                         PHIName = p.PHIArea.PHIAreaName ?? "No PHI Area Assigned"
-                }).ToListAsync();
+                });
 
-                return Ok(userDetails);
+                var filteredResult = await _filter.Filtering(userDetails, query);
+
+                return Ok(filteredResult);
             } catch (Exception e) {
                 return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
             }
@@ -153,13 +163,13 @@ namespace Project_v1.Controllers
 
         [HttpGet]
         [Route("getMOHSupervisors")]
-        public async Task<IActionResult> GetMOHSupervisors() {
+        public async Task<IActionResult> GetMOHSupervisors([FromQuery] QueryObject query) {
             try {
                 var mohsupervisors = await _userManager.GetUsersInRoleAsync("MOH_Supervisor");
                 
                 var mohids = mohsupervisors.Select(m => m.Id);
 
-                var userDetails = await _context.Users
+                var userDetails = _context.Users
                     .Where(m => mohids
                     .Contains(m.Id))
                     .Select(m => new {
@@ -168,9 +178,11 @@ namespace Project_v1.Controllers
                         m.Email, 
                         m.PhoneNumber,
                         MOHAreaName = m.MOHArea.MOHAreaName ?? "No MOH Area Assigned"
-                }).ToListAsync();
+                });
 
-                return Ok(userDetails);
+                var filteredResult = await _filter.Filtering(userDetails, query);
+
+                return Ok(filteredResult);
             } catch (Exception e) {
                 return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
             }

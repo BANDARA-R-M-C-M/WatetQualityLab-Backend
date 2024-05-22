@@ -3,14 +3,14 @@
     public class QueryObject {
         public string? UserId { get; set; } = null;
         public string? CategoryId { get; set; } = null;
-        public string? InstrumentId { get; set; } = null;
+        /*public string? InstrumentId { get; set; } = null;
         public string? MediaId { get; set; } = null;
         public string? YourRefNo { get; set; } = null;
         public string? MyRefNo { get; set; } = null;
         public string? GeneralCategoryName { get; set; } = null;
         public string? SurgicalCategoryName { get; set; } = null;
         public string? GeneralItemName { get; set; } = null;
-        public string? SurgicalItemName { get; set; } = null;
+        public string? SurgicalItemName { get; set; } = null;*/
         public string? SearchTerm { get; set;} = null;
         public string? SearchParameter { get; set; } = null;
         public string SearchParameterType { get; set; } = "string";

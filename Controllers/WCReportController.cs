@@ -16,6 +16,7 @@ using Project_v1.Services.FirebaseStrorage;
 using Project_v1.Services.IdGeneratorService;
 using Project_v1.Services.ReportService;
 using System.Linq;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace Project_v1.Controllers
 {
@@ -108,22 +109,26 @@ namespace Project_v1.Controllers
 
         [HttpGet]
         [Route("newreports")]
-        public async Task<IActionResult> GetNewReports(String mohId) {
+        public async Task<IActionResult> GetNewReports([FromQuery] QueryObject query) {
             try {
-                var moh = await _userManager.FindByIdAsync(mohId);
+                if (query.UserId == null) {
+                    return BadRequest(new Response { Status = "Error", Message = "User ID is required!" });
+                }
+
+                var moh = await _userManager.FindByIdAsync(query.UserId);
 
                 if (moh == null) {
-                    return NotFound($"User with username '{mohId}' not found.");
+                    return NotFound($"User with username '{query.UserId}' not found.");
                 }
 
                 if (moh.MOHAreaId == null) {
-                    return NotFound($"User with username '{mohId}' have a MOH Area assigned.");
+                    return NotFound($"User with username '{query.UserId}' have a MOH Area assigned.");
                 }
 
                 var mohArea = await _context.MOHAreas.Where(m => m.MOHAreaID == moh.MOHAreaId).ToListAsync();
 
                 if (mohArea == null) {
-                    return NotFound($"No MOHArea found for the Lab assigned to user '{mohId}'.");
+                    return NotFound($"No MOHArea found for the Lab assigned to user '{query.UserId}'.");
                 }
 
                 var mohAreaIds = mohArea.Select(m => m.MOHAreaID).ToList();
@@ -131,7 +136,7 @@ namespace Project_v1.Controllers
                 var phiAreas = await _context.PHIAreas.Where(phi => mohAreaIds.Contains(phi.MOHAreaId)).ToListAsync();
 
                 if (phiAreas == null) {
-                    return NotFound($"No PHIArea found for the MOH Area assigned to user '{mohId}'.");
+                    return NotFound($"No PHIArea found for the MOH Area assigned to user '{query.UserId}'.");
                 }
 
                 var phiAreaIds = phiAreas.Select(pa => pa.PHIAreaID).ToList();
@@ -151,7 +156,7 @@ namespace Project_v1.Controllers
 
                 var sampleIds = samples.Select(s => s.SampleId).ToList();
 
-                var reports = await _context.Reports
+                var reports = _context.Reports
                     .Where(report => sampleIds.Contains(report.SampleId))
                     .Select(report => new {
                         report.Sample.SampleId,
@@ -169,10 +174,11 @@ namespace Project_v1.Controllers
                         report.LabId,
                         report.ReportUrl,
                         report.Sample.PHIArea.MOHArea.MOHAreaName
-                    })
-                    .ToListAsync();
+                    });
 
-                return Ok(reports);
+                var filteredResult = await _filter.Filtering(reports, query);
+
+                return Ok(filteredResult);
             } catch (Exception e){
                 return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
             }
