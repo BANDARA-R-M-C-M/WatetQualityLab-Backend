@@ -376,18 +376,20 @@ namespace Project_v1.Controllers {
                 }
 
                 var samples = await _context.Samples
-                    .Include(s => s.PHIArea)
-                    .ThenInclude(p => p.MOHArea)
-                    .Where(s => s.PHIArea.MOHArea.LabID == mlt.LabID && s.DateOfCollection.Year == year)
-                    .GroupBy(s => new { s.DateOfCollection.Year, s.DateOfCollection.Month, s.PHIArea.MOHArea.MOHAreaName })
-                    .Select(g => new {
-                        g.Key.MOHAreaName,
-                        SampleCount = g.Count()
-                    }).ToListAsync();
+                .Include(s => s.PHIArea)
+                .ThenInclude(p => p.MOHArea)
+                .Where(s => s.PHIArea.MOHArea.LabID == mlt.LabID && s.DateOfCollection.Year == year)
+                .GroupBy(s => new { s.DateOfCollection.Year, s.DateOfCollection.Month, s.PHIArea.MOHArea.MOHAreaName })
+                .Select(g => new SampleCount {
+                    MOHAreaName = g.Key.MOHAreaName,
+                    TotalCount = g.Count(),
+                    Month = g.Key.Month,
+                    Year = g.Key.Year
+                }).ToListAsync();
 
                 byte[] report = _reportService.GenerateSampleCountReport(samples, year);
 
-                return File(report, "application/pdf", "fullSampleCount");
+                return File(report, "application/pdf", "fullSampleCount" + year);
             } catch (Exception e) {
                 return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
             }

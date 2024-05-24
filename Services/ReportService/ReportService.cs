@@ -1,4 +1,5 @@
-﻿using iText.Kernel.Pdf;
+﻿using iText.Kernel.Geom;
+using iText.Kernel.Pdf;
 using iText.Layout;
 using iText.Layout.Borders;
 using iText.Layout.Element;
@@ -129,38 +130,50 @@ namespace Project_v1.Services.ReportService {
             return stream.ToArray();
         }
 
-        public byte[] GenerateSampleCountReport<T>(List<T> sampleCount, int year) {
+        public byte[] GenerateSampleCountReport(List<SampleCount> sampleCounts, int year) {
             using MemoryStream stream = new MemoryStream();
-            // Create a new PDF document
             PdfDocument pdfDoc = new PdfDocument(new PdfWriter(stream));
-
-            // Create a document
             Document document = new Document(pdfDoc);
 
-            // Header
-            Paragraph header = new Paragraph($"Sample Counts by MOH Areas for , {year}")
+            pdfDoc.SetDefaultPageSize(PageSize.A4.Rotate());
+
+            Paragraph header = new Paragraph($"Water Quality Testing Laboratory, MOH Office - {year}")
                 .SetTextAlignment(TextAlignment.CENTER)
                 .SetFontSize(20)
                 .SetBold();
             document.Add(header);
 
-            // Add table for sample counts
-            Table table = new Table(2);
+            document.Add(new Paragraph("\n"));
+
+            Table table = new Table(13);
             table.SetWidth(UnitValue.CreatePercentValue(100));
 
-            // Table headers
-            Cell mohAreaHeader = new Cell().Add(new Paragraph("MOH Area").SetBold()).SetTextAlignment(TextAlignment.CENTER);
-            table.AddHeaderCell(mohAreaHeader);
+            table.AddHeaderCell(new Cell().Add(new Paragraph("MOH Area").SetBold()));
+            for (int month = 1; month <= 12; month++) {
+                table.AddHeaderCell(new Cell().Add(new Paragraph(new DateTime(year, month, 1).ToString("MMMM")).SetBold()));
+            }
 
-            Cell sampleCountHeader = new Cell().Add(new Paragraph("Sample Count").SetBold()).SetTextAlignment(TextAlignment.CENTER);
-            table.AddHeaderCell(sampleCountHeader);
+            table.SetSkipFirstHeader(false);
+            table.SetSkipLastFooter(false);
 
-            // Add sample count data for the specified month
-            foreach (var count in sampleCount) {
-                table.AddCell(new Cell().Add(new Paragraph(count.ToString()).SetTextAlignment(TextAlignment.CENTER)));
+            var groupedSamples = sampleCounts.GroupBy(s => s.MOHAreaName).OrderBy(g => g.Key);
+
+            foreach (var group in groupedSamples) {
+                table.AddCell(new Cell().Add(new Paragraph(group.Key)));
+
+                for (int month = 1; month <= 12; month++) {
+                    var sampleCount = group.FirstOrDefault(s => s.Month == month)?.TotalCount ?? 0;
+                    table.AddCell(new Cell().Add(new Paragraph(sampleCount.ToString())));
+                }
             }
 
             document.Add(table);
+
+            Paragraph footer = new Paragraph($"For any information, please contact [MLT Name]. Water Quality Testing Laboratory")
+                .SetTextAlignment(TextAlignment.LEFT)
+                .SetFontSize(12)
+                .SetBold();
+            document.Add(footer);
 
             document.Close();
 
