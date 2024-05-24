@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.CodeAnalysis.Elfie.Serialization;
 using Microsoft.EntityFrameworkCore;
 using Project_v1.Data;
 using Project_v1.Models;
@@ -10,8 +11,7 @@ using Project_v1.Models.DTOs.Signup;
 using Project_v1.Services.Filtering;
 using Project_v1.Services.TokenService;
 
-namespace Project_v1.Controllers
-{
+namespace Project_v1.Controllers {
     [Route("api/[controller]")]
     [ApiController]
     public class UserController : ControllerBase {
@@ -37,7 +37,7 @@ namespace Project_v1.Controllers
 
         [HttpPost]
         [Route("login")]
-        public async Task<IActionResult> Login([FromBody]Login loginUser) {
+        public async Task<IActionResult> Login([FromBody] Login loginUser) {
             try {
                 if (loginUser == null || !ModelState.IsValid) {
                     return BadRequest(new Response { Status = "Error", Message = "Invalid user data!" });
@@ -55,31 +55,45 @@ namespace Project_v1.Controllers
 
                 var role = await _userManager.GetRolesAsync(existingUser);
 
-                return Ok(new { 
+                string areaId = null;
+
+                if (role[0] == "Mlt") {
+                    areaId = existingUser.LabID;
+                } else if (role[0] == "Phi") {
+                    areaId = existingUser.PHIAreaId;
+                } else if (role[0] == "MohSupervisor") {
+                    areaId = existingUser.MOHAreaId;
+                }
+
+                return Ok(new {
                     Username = existingUser.UserName,
                     UserId = existingUser.Id,
                     Role = role[0],
-                    Token = _tokenService.CreateToken(existingUser) 
+                    AreaId = areaId,
+                    Token = _tokenService.CreateToken(existingUser)
                 });
             } catch (Exception e) {
                 return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
             }
-        }   
+        }
 
         [HttpPost]
         [Route("signup")]
-        public async Task<IActionResult> Signup([FromBody]Signup registeredUser) {
+        public async Task<IActionResult> Signup([FromBody] Signup registeredUser) {
             try {
                 if (registeredUser == null || !ModelState.IsValid) {
                     return BadRequest(new Response { Status = "Error", Message = "Invalid user data!" });
                 }
 
+                var existingId = await _context.Users.FirstOrDefaultAsync(u => u.Id == registeredUser.Id);
                 var existingUser = await _context.Users.FirstOrDefaultAsync(u => u.UserName == registeredUser.UserName);
                 var existingEmail = await _context.Users.FirstOrDefaultAsync(u => u.Email == registeredUser.Email);
 
-                if (existingUser != null) {
+                if (existingId != null) {
+                    return StatusCode(StatusCodes.Status403Forbidden, new Response { Status = "Error", Message = "User ID already exists!" });
+                } else if (existingUser != null) {
                     return StatusCode(StatusCodes.Status403Forbidden, new Response { Status = "Error", Message = "UserName already exists!" });
-                } else if(existingEmail != null) {
+                } else if (existingEmail != null) {
                     return StatusCode(StatusCodes.Status403Forbidden, new Response { Status = "Error", Message = "Email already exists!" });
                 }
 
@@ -120,11 +134,11 @@ namespace Project_v1.Controllers
                     .Contains(m.Id))
                     .Select(m => new {
                         m.Id,
-                        m.UserName, 
-                        m.Email, 
+                        m.UserName,
+                        m.Email,
                         m.PhoneNumber,
                         LabName = m.Lab.LabName ?? "No Lab Assigned"
-                });
+                    });
 
                 var filteredResult = await _filter.Filtering(userDetails, query);
 
@@ -139,7 +153,7 @@ namespace Project_v1.Controllers
         public async Task<IActionResult> GetPHIs([FromQuery] QueryObject query) {
             try {
                 var phis = await _userManager.GetUsersInRoleAsync("PHI");
-                
+
                 var phiIds = phis.Select(p => p.Id);
 
                 var userDetails = _context.Users
@@ -147,11 +161,11 @@ namespace Project_v1.Controllers
                     .Contains(p.Id))
                     .Select(p => new {
                         p.Id,
-                        p.UserName, 
-                        p.Email, 
+                        p.UserName,
+                        p.Email,
                         p.PhoneNumber,
                         PHIName = p.PHIArea.PHIAreaName ?? "No PHI Area Assigned"
-                });
+                    });
 
                 var filteredResult = await _filter.Filtering(userDetails, query);
 
@@ -166,7 +180,7 @@ namespace Project_v1.Controllers
         public async Task<IActionResult> GetMOHSupervisors([FromQuery] QueryObject query) {
             try {
                 var mohsupervisors = await _userManager.GetUsersInRoleAsync("MOH_Supervisor");
-                
+
                 var mohids = mohsupervisors.Select(m => m.Id);
 
                 var userDetails = _context.Users
@@ -174,11 +188,11 @@ namespace Project_v1.Controllers
                     .Contains(m.Id))
                     .Select(m => new {
                         m.Id,
-                        m.UserName, 
-                        m.Email, 
+                        m.UserName,
+                        m.Email,
                         m.PhoneNumber,
                         MOHAreaName = m.MOHArea.MOHAreaName ?? "No MOH Area Assigned"
-                });
+                    });
 
                 var filteredResult = await _filter.Filtering(userDetails, query);
 
@@ -190,7 +204,7 @@ namespace Project_v1.Controllers
 
         [HttpPut]
         [Route("updateUser/{id}")]
-        public async Task<IActionResult> UpdateUser([FromRoute] String id,[FromBody]SystemUser updatedUser) {
+        public async Task<IActionResult> UpdateUser([FromRoute] String id, [FromBody] SystemUser updatedUser) {
             try {
                 var user = await _userManager.FindByIdAsync(id);
 
@@ -198,7 +212,7 @@ namespace Project_v1.Controllers
                     return StatusCode(StatusCodes.Status404NotFound, new Response { Status = "Error", Message = "User not found!" });
                 }
 
-                if(updatedUser == null || !ModelState.IsValid) {
+                if (updatedUser == null || !ModelState.IsValid) {
                     return BadRequest(new Response { Status = "Error", Message = "Invalid user data!" });
                 }
 

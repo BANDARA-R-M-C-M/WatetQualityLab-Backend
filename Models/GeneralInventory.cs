@@ -1,5 +1,6 @@
 ﻿using Humanizer;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Project_v1.Models {
     public class GeneralInventory {

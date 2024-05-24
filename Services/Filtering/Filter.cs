@@ -65,7 +65,7 @@ namespace Project_v1.Services.Filtering {
             }
         }
 
-        public IQueryable<T> Search<T>(IQueryable<T> query, String searchTerm, String queryParameter) {
+        /*public IQueryable<T> Search<T>(IQueryable<T> query, String searchTerm, String queryParameter) {
             try {
                 var searchResults = query.AsQueryable();
 
@@ -103,7 +103,7 @@ namespace Project_v1.Services.Filtering {
 
                 var skipNumber = pageSize * (pageNumber - 1);
                 var paginatedList = await list.Skip(skipNumber).Take(pageSize).ToListAsync();
-                /*return await list.Skip(skipNumber).Take(pageSize).ToListAsync();*/
+                *//*return await list.Skip(skipNumber).Take(pageSize).ToListAsync();*//*
 
                 return new PaginatedResult<T> {
                     Items = paginatedList,
@@ -113,7 +113,7 @@ namespace Project_v1.Services.Filtering {
                 Console.WriteLine("Error Paginating: " + e.Message);
                 throw;
             }
-        }
+        }*/
 
         /*public async Task<List<T>> SearchInstrumentalQualityRecords<T>(IQueryable<T> query, QueryObject queryObject) {
             try {

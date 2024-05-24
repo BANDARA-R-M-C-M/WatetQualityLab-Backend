@@ -8,13 +8,14 @@ namespace Project_v1.Services.IdGeneratorService {
         public IdGenerator(ApplicationDBContext context) {
             _context = context;
         }
+
         public string GenerateSampleId() {
             /*string newSampleId;
             do {
                 newSampleId = "SMP-" + Guid.NewGuid().ToString();
             } while (!(_context.Samples.Any(s => s.SampleId == newSampleId)));*/
 
-            return ("SAMPLE-" + Guid.NewGuid().ToString());
+            return ("SAMPLE" + Guid.NewGuid().ToString());
         }     
 
         public string GenerateReportId() {
@@ -23,47 +24,47 @@ namespace Project_v1.Services.IdGeneratorService {
              *                           newReportId = "RPT-" + Guid.NewGuid().ToString();
              *                                      } while (!(_context.Reports.Any(r => r.ReportId == newReportId)));*/
 
-            return ("REPORT-" + Guid.NewGuid().ToString());
+            return ("REPORT" + Guid.NewGuid().ToString());
         }
 
         public string GenerateLabId() {
-            return ("LAB-" + Guid.NewGuid().ToString());
+            return ("LAB" + Guid.NewGuid().ToString());
         }
 
         public string GeneratePHIAreaId() {
-            return ("PHIAREA-" + Guid.NewGuid().ToString());
+            return ("PHIAREA" + Guid.NewGuid().ToString());
         }
 
         public string GenerateMOHAreaId() {
-            return ("MOHAREA-" + Guid.NewGuid().ToString());
+            return ("MOHAREA" + Guid.NewGuid().ToString());
         }
 
         public string GenerateGeneralInventoryId() {
-            return ("GENERALINVENTORY-" + Guid.NewGuid().ToString());
+            return ("GI" + Guid.NewGuid().ToString());
         }
 
         public string GenerateGeneralCatagoryId() {
-            return ("GENERALCATEGORY-" + Guid.NewGuid().ToString());
+            return ("GC" + Guid.NewGuid().ToString());
         }
 
         public string GenerateSurgicalInventoryId() {
-            return ("SURGICALINVENTORY-" + Guid.NewGuid().ToString());
+            return ("SI" + Guid.NewGuid().ToString());
         }
 
         public string GenerateSurgicalCatagoryId() {
-            return ("SURGICALCATEGORY-" + Guid.NewGuid().ToString());
+            return ("SC" + Guid.NewGuid().ToString());
         }
 
         public string GenerateIssuedItemId() {
-            return ("ISSUEDITEM-" + Guid.NewGuid().ToString());
+            return ("ISSUEDITEM" + Guid.NewGuid().ToString());
         }
 
         public string GenerateInstrumentalQualityControlId() {
-            return ("INSTRUMENTALQC-" + Guid.NewGuid().ToString());
+            return ("IQC" + Guid.NewGuid().ToString());
         }
 
         public string GenerateMediaQualityControlId() {
-            return ("MEDIAQC-" + Guid.NewGuid().ToString());
+            return ("MQC" + Guid.NewGuid().ToString());
         }
     }
 }

@@ -11,8 +11,7 @@ using Project_v1.Models.DTOs.Response;
 using Project_v1.Services.Filtering;
 using Project_v1.Services.IdGeneratorService;
 
-namespace Project_v1.Controllers
-{
+namespace Project_v1.Controllers {
     [Route("api/[controller]")]
     [ApiController]
     public class InstrumentalQualityControlController : ControllerBase {
@@ -115,7 +114,7 @@ namespace Project_v1.Controllers
 
         [HttpPut]
         [Route("UpdateInstrumentalQualityControlRecord/{id}")]
-        public async Task<IActionResult> UpdateInstrumentalQualityControlRecord([FromRoute] String id, [FromBody]UpdateInstrumentalQC instrumentalQC) {
+        public async Task<IActionResult> UpdateInstrumentalQualityControlRecord([FromRoute] String id, [FromBody] UpdateInstrumentalQC instrumentalQC) {
             try {
                 var qcRecord = await _context.InstrumentalQualityControls.FindAsync(id);
 

@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Firebase.Auth;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -6,13 +7,13 @@ using Project_v1.Data;
 using Project_v1.Models;
 using Project_v1.Models.DTOs.Helper;
 using Project_v1.Models.DTOs.Response;
+using Project_v1.Models.DTOs.SampleCount;
 using Project_v1.Models.DTOs.WCReport;
 using Project_v1.Services.Filtering;
 using Project_v1.Services.IdGeneratorService;
 using Project_v1.Services.ReportService;
 
-namespace Project_v1.Controllers
-{
+namespace Project_v1.Controllers {
     [Route("api/[controller]")]
     [ApiController]
     public class WCSampleController : ControllerBase {
@@ -49,7 +50,7 @@ namespace Project_v1.Controllers
         [Route("getAddedSamples")]
         public async Task<IActionResult> GetAddedSamples([FromQuery] QueryObject query) {
             try {
-                if(query.UserId == null) {
+                if (query.UserId == null) {
                     return NotFound();
                 }
 
@@ -93,7 +94,7 @@ namespace Project_v1.Controllers
         [Route("GetHistory")]
         public async Task<IActionResult> GetHistory([FromQuery] QueryObject query) {
             try {
-                if(query.UserId == null) {
+                if (query.UserId == null) {
                     return NotFound();
                 }
 
@@ -151,7 +152,7 @@ namespace Project_v1.Controllers
                     return NotFound($"User with username '{query.UserId}' have a Lab assigned.");
                 }
 
-                var mohArea = await _context.MOHAreas.Where(m => m.LabID == mlt.LabID).ToListAsync();
+                /*var mohArea = await _context.MOHAreas.Where(m => m.LabID == mlt.LabID).ToListAsync();
 
                 if (mohArea == null) {
                     return NotFound($"No MOHArea found for the Lab assigned to user '{query.UserId}'.");
@@ -163,11 +164,30 @@ namespace Project_v1.Controllers
                     .Contains(phi.MOHAreaId))
                     .ToListAsync();
 
-                var phiAreaIds = phiAreas.Select(pa => pa.PHIAreaID).ToList();
+                var phiAreaIds = phiAreas.Select(pa => pa.PHIAreaID).ToList();*/
 
-                var samples = _context.Samples
+                /*var samples = _context.Samples
                     .Where(sample => phiAreaIds
                     .Contains(sample.PHIAreaId) && sample.Acceptance == "Pending")
+                    .Select(sample => new {
+                        sample.SampleId,
+                        sample.YourRefNo,
+                        sample.StateOfChlorination,
+                        sample.DateOfCollection,
+                        sample.AnalyzedDate,
+                        sample.CatagoryOfSource,
+                        sample.CollectingSource,
+                        sample.phiAreaName,
+                        sample.Acceptance,
+                        sample.PHIArea.MOHArea.LabID,
+                        sample.PHIArea.MOHArea.Lab.LabName,
+                        sample.PHIArea.MOHArea.Lab.LabLocation,
+                        sample.PHIArea.MOHArea.Lab.LabTelephone,
+                        ReportAvailable = _context.Reports.Any(r => r.SampleId == sample.SampleId)
+                    });*/
+
+                var samples = _context.Samples
+                    .Where(sample => sample.PHIArea.MOHArea.LabID == mlt.LabID && sample.Acceptance == "Pending")
                     .Select(sample => new {
                         sample.SampleId,
                         sample.YourRefNo,
@@ -215,23 +235,60 @@ namespace Project_v1.Controllers
                     return NotFound($"User with username '{query.UserId}' have a Lab assigned.");
                 }
 
-                var mohArea = await _context.MOHAreas.Where(m => m.LabID == mlt.LabID).ToListAsync();
+                /*var mohArea = await _context.MOHAreas.Where(m => m.LabID == mlt.LabID).ToListAsync();
 
                 if (mohArea == null) {
                     return NotFound($"No MOHArea found for the Lab assigned to user '{query.UserId}'.");
                 }
 
-                var mohAreaIds = mohArea.Select(m => m.MOHAreaID).ToList();
+                var mohAreaIds = mohArea.Select(m => m.MOHAreaID).ToList();*/
 
-                var phiAreas = await _context.PHIAreas.Where(phi => mohAreaIds
+                /*var phiAreas = await _context.PHIAreas.Where(phi => mohAreaIds
                     .Contains(phi.MOHAreaId))
                     .ToListAsync();
 
-                var phiAreaIds = phiAreas.Select(pa => pa.PHIAreaID).ToList();
+                var phiAreaIds = phiAreas.Select(pa => pa.PHIAreaID).ToList();*/
 
-                var samples = _context.Samples
+                /*var mohAreaIds = await _context.MOHAreas
+                    .Where(m => m.LabID == mlt.LabID)
+                    .Select(m => m.MOHAreaID)
+                    .ToListAsync();
+
+                if (!mohAreaIds.Any()) {
+                    return NotFound($"No MOHArea found for the Lab assigned to user '{query.UserId}'.");
+                }
+
+                var phiAreaIds = await _context.PHIAreas.Where(phi => mohAreaIds
+                    .Contains(phi.MOHAreaId))
+                    .Select(pa => pa.PHIAreaID)
+                    .ToListAsync();
+
+                if (!phiAreaIds.Any()) {
+                    return NotFound($"No PHIArea found for the MOHAreas assigned to the Lab of user '{query.UserId}'.");
+                }*/
+
+                /*var samples = _context.Samples
                     .Where(sample => phiAreaIds
                     .Contains(sample.PHIAreaId) && sample.Acceptance == "Accepted")
+                    .Select(sample => new {
+                        sample.SampleId,
+                        sample.YourRefNo,
+                        sample.StateOfChlorination,
+                        sample.DateOfCollection,
+                        sample.AnalyzedDate,
+                        sample.CatagoryOfSource,
+                        sample.CollectingSource,
+                        sample.phiAreaName,
+                        sample.Acceptance,
+                        sample.PHIArea.MOHArea.LabID,
+                        sample.PHIArea.MOHArea.Lab.LabName,
+                        sample.PHIArea.MOHArea.Lab.LabLocation,
+                        sample.PHIArea.MOHArea.Lab.LabTelephone,
+                        ReportAvailable = _context.Reports.Any(r => r.SampleId == sample.SampleId)
+                    });*/
+
+                var samples = _context.Samples
+                    .Where(s => s.PHIArea.MOHArea.LabID == mlt.LabID && s.Acceptance == "Accepted")
                     .Select(sample => new {
                         sample.SampleId,
                         sample.YourRefNo,
@@ -256,6 +313,81 @@ namespace Project_v1.Controllers
                 var filteredResult = await _filter.Filtering(samples, query);
 
                 return Ok(filteredResult);
+            } catch (Exception e) {
+                return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
+            }
+        }
+
+        [HttpGet]
+        [Route("GetSampleCount")]
+        public async Task<IActionResult> GetSampleCount([FromQuery] QueryObject query) {
+            try {
+                if (query.UserId == null) {
+                    return NotFound();
+                }
+
+                var mlt = await _userManager.FindByIdAsync(query.UserId);
+
+                if (mlt == null) {
+                    return NotFound($"User with username '{query.UserId}' not found.");
+                }
+
+                if (mlt.LabID == null) {
+                    return NotFound($"User with username '{query.UserId}' does not have a Lab assigned.");
+                }
+
+                var samples = _context.Samples
+                    .Include(s => s.PHIArea)
+                    .ThenInclude(p => p.MOHArea)
+                    .Where(s => s.PHIArea.MOHArea.LabID == mlt.LabID)
+                    .GroupBy(s => new { s.DateOfCollection.Year, s.DateOfCollection.Month, s.PHIArea.MOHArea.MOHAreaName })
+                    .Select(g => new {
+                        g.Key.Year,
+                        g.Key.Month,
+                        g.Key.MOHAreaName,
+                        SampleCount = g.Count()
+                    });
+
+                var filteredSamples = await _filter.Filtering(samples, query);
+
+                return Ok();
+
+            } catch (Exception e) {
+                return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
+            }
+        }
+
+        [HttpGet]
+        [Route("GetMonthlySampleReport")]
+        public async Task<IActionResult> GetMonthlySampleReport(String mltId, int year) {
+            try {
+                if (mltId == null) {
+                    return NotFound();
+                }
+
+                var mlt = await _userManager.FindByIdAsync(mltId);
+
+                if (mlt == null) {
+                    return NotFound($"User with username '{mltId}' not found.");
+                }
+
+                if (mlt.LabID == null) {
+                    return NotFound($"User with username '{mltId}' does not have a Lab assigned.");
+                }
+
+                var samples = await _context.Samples
+                    .Include(s => s.PHIArea)
+                    .ThenInclude(p => p.MOHArea)
+                    .Where(s => s.PHIArea.MOHArea.LabID == mlt.LabID && s.DateOfCollection.Year == year)
+                    .GroupBy(s => new { s.DateOfCollection.Year, s.DateOfCollection.Month, s.PHIArea.MOHArea.MOHAreaName })
+                    .Select(g => new {
+                        g.Key.MOHAreaName,
+                        SampleCount = g.Count()
+                    }).ToListAsync();
+
+                byte[] report = _reportService.GenerateSampleCountReport(samples, year);
+
+                return File(report, "application/pdf", "fullSampleCount");
             } catch (Exception e) {
                 return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
             }

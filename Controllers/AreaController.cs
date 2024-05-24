@@ -10,8 +10,7 @@ using Project_v1.Models.DTOs.Response;
 using Project_v1.Services.Filtering;
 using Project_v1.Services.IdGeneratorService;
 
-namespace Project_v1.Controllers
-{
+namespace Project_v1.Controllers {
     [Route("api/[controller]")]
     [ApiController]
     public class AreaController : ControllerBase {
@@ -39,11 +38,11 @@ namespace Project_v1.Controllers
 
                 var mohareasList = _context.MOHAreas
                     .Select(moharea => new {
-                    mohAreaId = moharea.MOHAreaID,
-                    mohAreaName = moharea.MOHAreaName,
-                    labId = moharea.LabID,
-                    labName = moharea.Lab.LabName
-                });
+                        mohAreaId = moharea.MOHAreaID,
+                        mohAreaName = moharea.MOHAreaName,
+                        labId = moharea.LabID,
+                        labName = moharea.Lab.LabName
+                    });
 
                 var filteredResult = await _filter.Filtering(mohareasList, query);
 
@@ -86,11 +85,11 @@ namespace Project_v1.Controllers
 
                 var phiaAreasList = _context.PHIAreas
                     .Select(phiaArea => new {
-                    phiAreaId = phiaArea.PHIAreaID,
-                    phiAreaName = phiaArea.PHIAreaName,
-                    mohAreaId = phiaArea.MOHAreaId,
-                    mohAreaName = phiaArea.MOHArea.MOHAreaName
-                });
+                        phiAreaId = phiaArea.PHIAreaID,
+                        phiAreaName = phiaArea.PHIAreaName,
+                        mohAreaId = phiaArea.MOHAreaId,
+                        mohAreaName = phiaArea.MOHArea.MOHAreaName
+                    });
 
                 var filteredResult = await _filter.Filtering(phiaAreasList, query);
 
@@ -108,11 +107,11 @@ namespace Project_v1.Controllers
 
                 var labsList = _context.Labs
                     .Select(lab => new {
-                    labId = lab.LabID,
-                    labName = lab.LabName,
-                    labLocation = lab.LabLocation,
-                    labTelephone = lab.LabTelephone
-                });
+                        labId = lab.LabID,
+                        labName = lab.LabName,
+                        labLocation = lab.LabLocation,
+                        labTelephone = lab.LabTelephone
+                    });
 
                 var filteredResult = await _filter.Filtering(labsList, query);
 
@@ -205,7 +204,7 @@ namespace Project_v1.Controllers
 
         [HttpPut]
         [Route("UpdatePHIArea/{id}")]
-        public async Task<IActionResult> UpdatePHIArea([FromRoute] String id ,[FromBody] UpdatedPHIArea phiaArea) {
+        public async Task<IActionResult> UpdatePHIArea([FromRoute] String id, [FromBody] UpdatedPHIArea phiaArea) {
             try {
 
                 var existingPhiArea = await _context.PHIAreas.FindAsync(id);
@@ -284,7 +283,7 @@ namespace Project_v1.Controllers
 
         [HttpDelete]
         [Route("DeleteMOHArea/{id}")]
-        public async Task<IActionResult> DeleteMOHArea([FromRoute]string id) {
+        public async Task<IActionResult> DeleteMOHArea([FromRoute] string id) {
             try {
                 var moharea = await _context.MOHAreas.FindAsync(id);
                 if (moharea == null) {
@@ -302,7 +301,7 @@ namespace Project_v1.Controllers
 
         [HttpDelete]
         [Route("DeletePHIArea/{id}")]
-        public async Task<IActionResult> DeletePHIArea([FromRoute]string id) {
+        public async Task<IActionResult> DeletePHIArea([FromRoute] string id) {
             try {
                 var phiaArea = await _context.PHIAreas.FindAsync(id);
                 if (phiaArea == null) {
@@ -320,7 +319,7 @@ namespace Project_v1.Controllers
 
         [HttpDelete]
         [Route("DeleteLab/{id}")]
-        public async Task<IActionResult> DeleteLab([FromRoute]string id) {
+        public async Task<IActionResult> DeleteLab([FromRoute] string id) {
             try {
                 var lab = await _context.Labs.FindAsync(id);
                 if (lab == null) {

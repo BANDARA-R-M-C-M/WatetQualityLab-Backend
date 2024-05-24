@@ -15,8 +15,7 @@ using System.Net;
 using Project_v1.Services.Filtering;
 using Project_v1.Models.DTOs.Helper;
 
-namespace Project_v1.Controllers
-{
+namespace Project_v1.Controllers {
     [Route("api/[controller]")]
     [ApiController]
     public class SurgicalInventoryController : ControllerBase {
@@ -214,12 +213,12 @@ namespace Project_v1.Controllers
                 }
 
                 var newCategory = new SurgicalCategory {
-                    SurgicalCategoryID = _idGenerator.GenerateSurgicalInventoryId(),
+                    SurgicalCategoryID = _idGenerator.GenerateSurgicalCatagoryId(),
                     SurgicalCategoryName = category.SurgicalCategoryName,
                     LabId = category.LabId
                 };
 
-                _context.SurgicalCategory.AddAsync(newCategory);
+                await _context.SurgicalCategory.AddAsync(newCategory);
                 await _context.SaveChangesAsync();
 
                 return Ok(new Response { Status = "Success", Message = "Catagory Added Successfully!" });
@@ -265,7 +264,7 @@ namespace Project_v1.Controllers
                     SurgicalCategoryID = newSurgicalItem.SurgicalCategoryID
                 };
 
-                _context.SurgicalInventory.AddAsync(surgicalInventoryItem);
+                await _context.SurgicalInventory.AddAsync(surgicalInventoryItem);
                 await _context.SaveChangesAsync();
 
                 return Ok(new Response { Status = "Success", Message = "Item Added Successfully!" });
@@ -301,7 +300,7 @@ namespace Project_v1.Controllers
                     SurgicalInventoryID = issueItem.ItemId
                 };
 
-                _context.IssuedItems.AddAsync(issuedItem);
+                await _context.IssuedItems.AddAsync(issuedItem);
                 await _context.SaveChangesAsync();
 
                 return Ok(new Response { Status = "Success", Message = "Item Issued Successfully!" });
@@ -417,7 +416,7 @@ namespace Project_v1.Controllers
                     _context.SurgicalInventory.Remove(surgicalInventoryItem);
                     await _context.SaveChangesAsync();
                 }
-                
+
                 return Ok(new Response { Status = "Success", Message = "Item Deleted Successfully!" });
             } catch (Exception e) {
                 return StatusCode(StatusCodes.Status500InternalServerError, e.Message);

@@ -212,7 +212,7 @@ namespace Project_v1.Controllers
                 }
 
                 var newCategory = new GeneralCategory {
-                    GeneralCategoryID = _idGenerator.GenerateGeneralInventoryId(),
+                    GeneralCategoryID = _idGenerator.GenerateGeneralCatagoryId(),
                     GeneralCategoryName = category.GeneralCategoryName,
                     LabId = category.LabId
                 };

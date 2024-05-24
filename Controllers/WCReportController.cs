@@ -18,8 +18,7 @@ using Project_v1.Services.ReportService;
 using System.Linq;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
-namespace Project_v1.Controllers
-{
+namespace Project_v1.Controllers {
     [Route("api/[controller]")]
     [ApiController]
     public class WCReportController : ControllerBase {
@@ -31,7 +30,7 @@ namespace Project_v1.Controllers
         private readonly IStorageService _storageService;
         private readonly IFilter _filter;
 
-        public WCReportController(ApplicationDBContext context, 
+        public WCReportController(ApplicationDBContext context,
                                   UserManager<SystemUser> userManager,
                                   IReportService reportService,
                                   IIdGenerator idGenerator,
@@ -166,7 +165,7 @@ namespace Project_v1.Controllers
                         report.Sample.CollectingSource,
                         report.Sample.phiAreaName,
                         report.ReportRefId,
-                        report.PresumptiveColiformCount,    
+                        report.PresumptiveColiformCount,
                         report.IssuedDate,
                         report.EcoliCount,
                         report.AppearanceOfSample,
@@ -179,7 +178,7 @@ namespace Project_v1.Controllers
                 var filteredResult = await _filter.Filtering(reports, query);
 
                 return Ok(filteredResult);
-            } catch (Exception e){
+            } catch (Exception e) {
                 return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
             }
         }
@@ -352,7 +351,7 @@ namespace Project_v1.Controllers
                     return NotFound(new Response { Status = "Error", Message = "Report not found!" });
                 }
 
-                if(await _storageService.DeleteFile(id)) {
+                if (await _storageService.DeleteFile(id)) {
                     _context.Reports.Remove(report);
                     await _context.SaveChangesAsync();
                 }

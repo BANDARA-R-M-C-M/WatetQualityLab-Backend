@@ -4,10 +4,11 @@ using iText.Layout.Borders;
 using iText.Layout.Element;
 using iText.Layout.Properties;
 using Project_v1.Models.DTOs.WCReport;
+using System.Globalization;
 
-namespace Project_v1.Services.ReportService
-{
+namespace Project_v1.Services.ReportService {
     public class ReportService : IReportService {
+
         public byte[] GenerateWaterQualityReport(FullReport wcreport) {
             using MemoryStream stream = new MemoryStream();
             // Create a new PDF document
@@ -122,6 +123,44 @@ namespace Project_v1.Services.ReportService
             Paragraph comment = new Paragraph($"Comment :-           {wcreport.Results}")
                 .SetPaddingTop(25);
             document.Add(comment);
+
+            document.Close();
+
+            return stream.ToArray();
+        }
+
+        public byte[] GenerateSampleCountReport<T>(List<T> sampleCount, int year) {
+            using MemoryStream stream = new MemoryStream();
+            // Create a new PDF document
+            PdfDocument pdfDoc = new PdfDocument(new PdfWriter(stream));
+
+            // Create a document
+            Document document = new Document(pdfDoc);
+
+            // Header
+            Paragraph header = new Paragraph($"Sample Counts by MOH Areas for , {year}")
+                .SetTextAlignment(TextAlignment.CENTER)
+                .SetFontSize(20)
+                .SetBold();
+            document.Add(header);
+
+            // Add table for sample counts
+            Table table = new Table(2);
+            table.SetWidth(UnitValue.CreatePercentValue(100));
+
+            // Table headers
+            Cell mohAreaHeader = new Cell().Add(new Paragraph("MOH Area").SetBold()).SetTextAlignment(TextAlignment.CENTER);
+            table.AddHeaderCell(mohAreaHeader);
+
+            Cell sampleCountHeader = new Cell().Add(new Paragraph("Sample Count").SetBold()).SetTextAlignment(TextAlignment.CENTER);
+            table.AddHeaderCell(sampleCountHeader);
+
+            // Add sample count data for the specified month
+            foreach (var count in sampleCount) {
+                table.AddCell(new Cell().Add(new Paragraph(count.ToString()).SetTextAlignment(TextAlignment.CENTER)));
+            }
+
+            document.Add(table);
 
             document.Close();
 

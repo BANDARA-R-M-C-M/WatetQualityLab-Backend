@@ -7,8 +7,7 @@ using Project_v1.Models;
 using Project_v1.Models.DTOs.Assigns;
 using Project_v1.Models.DTOs.Response;
 
-namespace Project_v1.Controllers
-{
+namespace Project_v1.Controllers {
     [Route("api/[controller]")]
     [ApiController]
     public class UserassignController : ControllerBase {
@@ -24,7 +23,7 @@ namespace Project_v1.Controllers
 
         [HttpPost]
         [Route("assignMLTtoLabs")]
-        public async Task<IActionResult> assignMLTtoLabs([FromBody]mltLab mltlab) {
+        public async Task<IActionResult> assignMLTtoLabs([FromBody] mltLab mltlab) {
             try {
                 var mlt = await _userManager.FindByIdAsync(mltlab.mltId);
 
@@ -32,7 +31,7 @@ namespace Project_v1.Controllers
                     return StatusCode(StatusCodes.Status404NotFound, new Response { Status = "Error", Message = "User not found!" });
                 }
 
-                if(mltlab.labId == null) {
+                if (mltlab.labId == null) {
                     return StatusCode(StatusCodes.Status403Forbidden, new Response { Status = "Error", Message = "Lab not found" });
                 }
 
@@ -47,7 +46,7 @@ namespace Project_v1.Controllers
 
         [HttpPost]
         [Route("assignPHItoPHIAreas")]
-        public async Task<IActionResult> AssignPHItoPHIArea([FromBody]phiPhiarea phi_phiarea) {
+        public async Task<IActionResult> AssignPHItoPHIArea([FromBody] phiPhiarea phi_phiarea) {
             try {
                 var phi = await _userManager.FindByIdAsync(phi_phiarea.phiId);
 
@@ -69,7 +68,7 @@ namespace Project_v1.Controllers
 
         [HttpPost]
         [Route("assignMOHSupervisortoMOHAreas")]
-        public async Task<IActionResult> assignMOHSupervisortoMOHArea([FromBody]mohMoharea moh_moharea) {
+        public async Task<IActionResult> assignMOHSupervisortoMOHArea([FromBody] mohMoharea moh_moharea) {
             try {
                 var moh = await _userManager.FindByIdAsync(moh_moharea.mohSupervisorId);
 

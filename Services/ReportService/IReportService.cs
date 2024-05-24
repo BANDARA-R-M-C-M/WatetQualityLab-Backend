@@ -4,5 +4,6 @@ namespace Project_v1.Services.ReportService
 {
     public interface IReportService {
         byte[] GenerateWaterQualityReport(FullReport wcreport);
+        byte[] GenerateSampleCountReport<T>(List<T> sampleCount, int year);
     }
 }
