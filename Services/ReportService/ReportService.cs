@@ -12,13 +12,9 @@ namespace Project_v1.Services.ReportService {
 
         public byte[] GenerateWaterQualityReport(FullReport wcreport) {
             using MemoryStream stream = new MemoryStream();
-            // Create a new PDF document
             PdfDocument pdfDoc = new PdfDocument(new PdfWriter(stream));
-
-            // Create a document
             Document document = new Document(pdfDoc);
 
-            // Header
             Paragraph labHeader = new Paragraph($"{wcreport.LabName}")
               .SetTextAlignment(TextAlignment.CENTER)
               .SetFontSize(20)
@@ -120,7 +116,6 @@ namespace Project_v1.Services.ReportService {
 
             document.Add(table);
 
-            // Comments
             Paragraph comment = new Paragraph($"Comment :-           {wcreport.Results}")
                 .SetPaddingTop(25);
             document.Add(comment);

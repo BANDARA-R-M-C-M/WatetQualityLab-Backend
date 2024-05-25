@@ -44,7 +44,7 @@ namespace Project_v1.Services.FirebaseStrorage {
 
                 return true;
             } catch (Exception e) {
-                Console.WriteLine("Error deleting file: " + e.Message);
+                Console.WriteLine("Error deleting QR: " + e.Message);
                 throw;
             }
         }

@@ -350,7 +350,26 @@ namespace Project_v1.Controllers {
 
                 var filteredSamples = await _filter.Filtering(samples, query);
 
-                return Ok();
+                var groupedSamples = filteredSamples.Items
+                     .GroupBy(s => s.Year)
+                     .Select(g => new SampleCountResponse {
+                         Year = g.Key,
+                         Months = g.GroupBy(m => m.Month)
+                                   .Select(m => new MonthSampleCount {
+                                       Month = m.Key,
+                                       MOHSampleCounts = m.Select(moh => new MOHSampleCount {
+                                           MOHAreaName = moh.MOHAreaName,
+                                           SampleCount = moh.SampleCount
+                                       }).ToList()
+                                   }).ToList()
+                     });
+
+                var totalPages = filteredSamples.TotalPages;
+
+                return Ok(new {
+                    groupedSamples,
+                    filteredSamples.TotalPages
+                });
 
             } catch (Exception e) {
                 return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
@@ -358,27 +377,27 @@ namespace Project_v1.Controllers {
         }
 
         [HttpGet]
-        [Route("GetMonthlySampleReport")]
-        public async Task<IActionResult> GetMonthlySampleReport(String mltId, int year) {
+        [Route("GetSampleCountReport")]
+        public async Task<IActionResult> GetSampleCountReport(String MltId, int Year) {
             try {
-                if (mltId == null) {
+                if (MltId == null) {
                     return NotFound();
                 }
 
-                var mlt = await _userManager.FindByIdAsync(mltId);
+                var mlt = await _userManager.FindByIdAsync(MltId);
 
                 if (mlt == null) {
-                    return NotFound($"User with username '{mltId}' not found.");
+                    return NotFound($"User with username '{MltId}' not found.");
                 }
 
                 if (mlt.LabID == null) {
-                    return NotFound($"User with username '{mltId}' does not have a Lab assigned.");
+                    return NotFound($"User with username '{MltId}' does not have a Lab assigned.");
                 }
 
                 var samples = await _context.Samples
                 .Include(s => s.PHIArea)
                 .ThenInclude(p => p.MOHArea)
-                .Where(s => s.PHIArea.MOHArea.LabID == mlt.LabID && s.DateOfCollection.Year == year)
+                .Where(s => s.PHIArea.MOHArea.LabID == mlt.LabID && s.DateOfCollection.Year == Year)
                 .GroupBy(s => new { s.DateOfCollection.Year, s.DateOfCollection.Month, s.PHIArea.MOHArea.MOHAreaName })
                 .Select(g => new SampleCount {
                     MOHAreaName = g.Key.MOHAreaName,
@@ -387,9 +406,9 @@ namespace Project_v1.Controllers {
                     Year = g.Key.Year
                 }).ToListAsync();
 
-                byte[] report = _reportService.GenerateSampleCountReport(samples, year);
+                byte[] report = _reportService.GenerateSampleCountReport(samples, Year);
 
-                return File(report, "application/pdf", "fullSampleCount" + year);
+                return File(report, "application/pdf", "fullSampleCount - " + Year);
             } catch (Exception e) {
                 return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
             }
