@@ -8,10 +8,13 @@ using Project_v1.Models;
 using Project_v1.Models.DTOs.Helper;
 using Project_v1.Models.DTOs.Response;
 using Project_v1.Models.DTOs.SampleCount;
+using Project_v1.Models.DTOs.Summary;
 using Project_v1.Models.DTOs.WCReport;
 using Project_v1.Services.Filtering;
 using Project_v1.Services.IdGeneratorService;
 using Project_v1.Services.ReportService;
+using System.Diagnostics.Metrics;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace Project_v1.Controllers {
     [Route("api/[controller]")]
@@ -22,17 +25,45 @@ namespace Project_v1.Controllers {
         private readonly IReportService _reportService;
         private readonly IIdGenerator _idGenerator;
         private readonly IFilter _filter;
+        private readonly HttpClient _httpClient;
+        private readonly string _googleMapsApiKey;
+        private readonly IConfiguration _configuration;
 
         public WCSampleController(ApplicationDBContext context,
                                   UserManager<SystemUser> userManager,
                                   IReportService reportService,
                                   IIdGenerator idGenerator,
-                                  IFilter filter) {
+                                  IFilter filter,
+                                  HttpClient httpClient,
+                                  IConfiguration configuration) {
             _context = context;
             _userManager = userManager;
             _reportService = reportService;
             _idGenerator = idGenerator;
             _filter = filter;
+            _httpClient = httpClient;
+            _googleMapsApiKey = configuration["ApiKeys:GoogleMapsApi"];
+            _configuration = configuration;
+        }
+
+        [HttpGet]
+        [Route("GetCities")]
+        public async Task<IActionResult> GetCities(String query) {
+            try {
+                var country = "LK";
+                var requestUrl = $"https://maps.googleapis.com/maps/api/place/autocomplete/json?input={query}&components=country:{country}&types=(cities)&key={_googleMapsApiKey}";
+
+                var response = await _httpClient.GetAsync(requestUrl);
+                if (response.IsSuccessStatusCode) {
+                    var data = await response.Content.ReadAsStringAsync();
+                    return Ok(data);
+                }
+                return StatusCode((int)response.StatusCode, await response.Content.ReadAsStringAsync());
+            } catch (HttpRequestException e) {
+                return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
+            } catch (Exception e) {
+                return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
+            }
         }
 
         [HttpGet]
@@ -340,7 +371,11 @@ namespace Project_v1.Controllers {
                     .Include(s => s.PHIArea)
                     .ThenInclude(p => p.MOHArea)
                     .Where(s => s.PHIArea.MOHArea.LabID == mlt.LabID)
-                    .GroupBy(s => new { s.DateOfCollection.Year, s.DateOfCollection.Month, s.PHIArea.MOHArea.MOHAreaName })
+                    .GroupBy(s => new {
+                        s.DateOfCollection.Year,
+                        s.DateOfCollection.Month,
+                        s.PHIArea.MOHArea.MOHAreaName
+                    })
                     .Select(g => new {
                         g.Key.Year,
                         g.Key.Month,
@@ -369,6 +404,70 @@ namespace Project_v1.Controllers {
                 return Ok(new {
                     groupedSamples,
                     filteredSamples.TotalPages
+                });
+
+            } catch (Exception e) {
+                return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
+            }
+        }
+
+        [HttpGet]
+        [Route("GetMonthlySamples")]
+        public async Task<IActionResult> GetMonthlySamples([FromQuery] QueryObject query) {
+            try {
+                if (query.UserId == null) {
+                    return NotFound();
+                }
+
+                var mlt = await _userManager.FindByIdAsync(query.UserId);
+
+                if (mlt == null) {
+                    return NotFound($"User with username '{query.UserId}' not found.");
+                }
+
+                if (mlt.LabID == null) {
+                    return NotFound($"User with username '{query.UserId}' does not have a Lab assigned.");
+                }
+
+                var samples = _context.PHIAreas
+                    .Where(p => p.MOHArea.LabID == mlt.LabID) // Filter PHI areas by LabID
+                    .SelectMany(p => p.Samples.DefaultIfEmpty(), (p, s) => new { PHIArea = p, Sample = s }) // Perform left outer join with samples
+                    .GroupBy(ps => new {
+                        Year = ps.Sample != null ? ps.Sample.DateOfCollection.Year : (int?)null,
+                        Month = ps.Sample != null ? ps.Sample.DateOfCollection.Month : (int?)null,
+                        ps.PHIArea.PHIAreaName,
+                        ps.PHIArea.MOHArea.MOHAreaName
+                    })
+                    .Select(g => new {
+                        g.Key.Year,
+                        g.Key.Month,
+                        g.Key.PHIAreaName,
+                        g.Key.MOHAreaName,
+                        SamplesReceived = g.Key.Year != null, // Check if any samples are received for this PHI Area
+                        SampleCount = g.Count(s => s.Sample != null) // Calculate the sample count
+                    });
+
+                var filteredSamples = await _filter.Filtering(samples, query);
+
+                var groupedSamples = filteredSamples.Items
+                    .GroupBy(s => s.Year)
+                    .Select(g => new {
+                        Year = g.Key,
+                        Months = g.GroupBy(m => m.Month)
+                                   .Select(m => new {
+                                       Month = m.Key,
+                                       MOHSampleCounts = m.GroupBy(moh => new { moh.MOHAreaName, moh.PHIAreaName })
+                                                          .Select(mohGroup => new {
+                                                              mohGroup.Key.MOHAreaName,
+                                                              mohGroup.Key.PHIAreaName,
+                                                              SamplesReceived = mohGroup.Any(moh => moh.SamplesReceived),
+                                                              SampleCount = mohGroup.Sum(moh => moh.SampleCount)
+                                                          }).ToList()
+                                   }).ToList()
+                    });
+
+                return Ok(new {
+                    groupedSamples
                 });
 
             } catch (Exception e) {

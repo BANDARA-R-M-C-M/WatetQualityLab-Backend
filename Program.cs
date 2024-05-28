@@ -93,6 +93,8 @@ builder.Services.AddControllers().AddNewtonsoftJson(options =>{
     options.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore;
 });
 
+builder.Services.AddHttpClient();
+
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IReportService, ReportService>();
 builder.Services.AddScoped<IIdGenerator, IdGenerator>();
