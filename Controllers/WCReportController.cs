@@ -15,6 +15,7 @@ using Project_v1.Services.Filtering;
 using Project_v1.Services.FirebaseStrorage;
 using Project_v1.Services.IdGeneratorService;
 using Project_v1.Services.ReportService;
+using System.Composition;
 using System.Linq;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
@@ -184,6 +185,46 @@ namespace Project_v1.Controllers {
         }
 
         [HttpGet]
+        [Route("GetMOHAreaDetails")]
+        public async Task<IActionResult> GetReportDetails([FromQuery] QueryObject query, [FromQuery] int? Month = null, [FromQuery] int? Year = null) {
+            try {
+                if (query.UserId == null) {
+                    return NotFound();
+                }
+
+                var moh = await _userManager.FindByIdAsync(query.UserId);
+
+                if (moh == null) {
+                    return NotFound();
+                }
+
+                if (moh.MOHAreaId == null) {
+                    return NotFound();
+                }
+
+                var phiAreaList = await _context.PHIAreas
+                .Where(phi => phi.MOHAreaId == moh.MOHAreaId)
+                .Select(phi => new {
+                    phi.PHIAreaID,
+                    phi.PHIAreaName,
+                    phi.MOHAreaId,
+                    phi.MOHArea.MOHAreaName,
+                    Contamination = _context.Reports
+                        .Where(report => report.Sample.PHIAreaId == phi.PHIAreaID &&
+                                            (Month == null || report.IssuedDate.Month == Month) &&
+                                            (Year == null || report.IssuedDate.Year == Year))
+                        .Select(report => new {
+                            report.Contaminated
+                        }).ToList()
+                }).ToListAsync();
+
+                return Ok(phiAreaList);
+            } catch (Exception e) {
+                return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
+            }
+        }
+
+        [HttpGet]
         [Route("GetReportPDF")]
         public async Task<IActionResult> GetReportPDF(String reportId) {
             try {
@@ -260,6 +301,7 @@ namespace Project_v1.Controllers {
                     AppearanceOfSample = wcreport.AppearanceOfSample,
                     Remarks = wcreport.Remarks,
                     ReportUrl = reportUrl,
+                    Contaminated = wcreport.Contaminated,
                     MltId = wcreport.MltId,
                     SampleId = wcreport.SampleId,
                     LabId = wcreport.LabId

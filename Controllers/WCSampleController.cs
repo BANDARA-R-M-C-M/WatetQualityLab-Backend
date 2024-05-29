@@ -413,7 +413,7 @@ namespace Project_v1.Controllers {
 
         [HttpGet]
         [Route("GetMonthlySamples")]
-        public async Task<IActionResult> GetMonthlySamples([FromQuery] QueryObject query) {
+        public async Task<IActionResult> GetMonthlySamples([FromQuery] QueryObject query, [FromQuery] int? Month = null, [FromQuery] int? Year = null) {
             try {
                 if (query.UserId == null) {
                     return NotFound();
@@ -429,7 +429,7 @@ namespace Project_v1.Controllers {
                     return NotFound($"User with username '{query.UserId}' does not have a Lab assigned.");
                 }
 
-                var samples = _context.PHIAreas
+                /*var samples = _context.PHIAreas
                     .Where(p => p.MOHArea.LabID == mlt.LabID) // Filter PHI areas by LabID
                     .SelectMany(p => p.Samples.DefaultIfEmpty(), (p, s) => new { PHIArea = p, Sample = s }) // Perform left outer join with samples
                     .GroupBy(ps => new {
@@ -464,11 +464,41 @@ namespace Project_v1.Controllers {
                                                               SampleCount = mohGroup.Sum(moh => moh.SampleCount)
                                                           }).ToList()
                                    }).ToList()
+                    });*/
+
+                var phiAreasList = _context.PHIAreas
+                    .Select(phiaArea => new {
+                        phiAreaId = phiaArea.PHIAreaID,
+                        phiAreaName = phiaArea.PHIAreaName,
+                        mohAreaName = phiaArea.MOHArea.MOHAreaName,
+                        sampleCount = _context.Samples
+                            .Where(sample => sample.PHIAreaId == phiaArea.PHIAreaID &&
+                                             (Month == null || sample.DateOfCollection.Month == Month) &&
+                                             (Year == null || sample.DateOfCollection.Year == Year))
+                            .Count(),
+                        acceptedSampleCount = _context.Samples
+                            .Where(sample => sample.PHIAreaId == phiaArea.PHIAreaID &&
+                                             (Month == null || sample.DateOfCollection.Month == Month) &&
+                                             (Year == null || sample.DateOfCollection.Year == Year) &&
+                                             sample.Acceptance == "Accepted")
+                            .Count(),
+                        rejectedSampleCount = _context.Samples
+                            .Where(sample => sample.PHIAreaId == phiaArea.PHIAreaID &&
+                                             (Month == null || sample.DateOfCollection.Month == Month) &&
+                                             (Year == null || sample.DateOfCollection.Year == Year) &&
+                                             sample.Acceptance == "Rejected")
+                            .Count(),
+                        pendingSampleCount = _context.Samples
+                            .Where(sample => sample.PHIAreaId == phiaArea.PHIAreaID &&
+                                             (Month == null || sample.DateOfCollection.Month == Month) &&
+                                             (Year == null || sample.DateOfCollection.Year == Year) &&
+                                             sample.Acceptance == "Pending")
+                            .Count()
                     });
 
-                return Ok(new {
-                    groupedSamples
-                });
+                var filteredSamples = await _filter.Filtering(phiAreasList, query);
+
+                return Ok(filteredSamples);
 
             } catch (Exception e) {
                 return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
@@ -477,7 +507,7 @@ namespace Project_v1.Controllers {
 
         [HttpGet]
         [Route("GetSampleCountReport")]
-        public async Task<IActionResult> GetSampleCountReport(String MltId, int Year) {
+        public async Task<IActionResult> GetSampleCountReport([FromQuery] String MltId, [FromQuery] int Year) {
             try {
                 if (MltId == null) {
                     return NotFound();

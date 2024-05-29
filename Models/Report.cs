@@ -12,6 +12,7 @@ namespace Project_v1.Models {
         public string AppearanceOfSample { get; set; }
         public string Remarks { get; set; }
         public string ReportUrl { get; set; }
+        public bool Contaminated { get; set; }
         public string MltId { get; set; }
         public string LabId { get; set; }
         public virtual Lab Lab { get; set; }

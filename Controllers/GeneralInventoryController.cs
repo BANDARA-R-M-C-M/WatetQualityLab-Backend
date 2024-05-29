@@ -68,6 +68,7 @@ namespace Project_v1.Controllers
                     .Select(c => new {
                         c.GeneralCategoryID,
                         c.GeneralCategoryName,
+                        ItemCount = c.GeneralInventories.Count(),
                         c.LabId
                     });
 
@@ -82,6 +83,28 @@ namespace Project_v1.Controllers
                 return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
             }
         }
+
+        /*[HttpGet]
+        [Route("GetGeneralCategoryDetails")]
+        public async Task<ActionResult> GetGeneralCategoryDetails() {
+            try {
+                var generalCategory = await _context.GeneralCategory
+                    .Select(c => new {
+                        c.GeneralCategoryID,
+                        c.GeneralCategoryName,
+                        ItemCount = c.GeneralInventories.Count()
+                    })
+                    .ToListAsync();
+                    
+                if (generalCategory == null) {
+                    return NotFound();
+                }
+
+                return Ok(generalCategory);
+            } catch (Exception e) {
+                return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
+            }
+        }*/
 
         [HttpGet]
         [Route("GetGeneralInventoryItem")]
