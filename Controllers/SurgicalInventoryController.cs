@@ -67,12 +67,9 @@ namespace Project_v1.Controllers {
                     .Select(c => new {
                         c.SurgicalCategoryID,
                         c.SurgicalCategoryName,
+                        ItemCount = c.SurgicalInventories.Count,
                         c.LabId
                     });
-
-                /*var seachResult = _filter.Search(surgicalCategories, query.SurgicalCategoryName, "SurgicalCategoryName");
-                var sortedResult = _filter.Sort(seachResult, query);
-                var result = await _filter.Paginate(sortedResult, query.PageNumber, query.PageSize);*/
 
                 var filteredResult = await _filter.Filtering(surgicalCategories, query);
 
@@ -167,10 +164,6 @@ namespace Project_v1.Controllers {
                         items.ItemQR,
                         items.SurgicalCategory.LabId
                     });
-
-                /*var searchResult = _filter.Search(surgicalItems, query.SurgicalItemName, "SurgicalItemName");
-                var sortedResult = _filter.Sort(searchResult, query);
-                var result = await _filter.Paginate(sortedResult, query.PageNumber, query.PageSize);*/
 
                 var filteredResult = await _filter.Filtering(surgicalItems, query);
 

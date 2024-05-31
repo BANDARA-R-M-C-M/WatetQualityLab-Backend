@@ -11,11 +11,9 @@ using Project_v1.Services.Filtering;
 using Project_v1.Services.FirebaseStrorage;
 using Project_v1.Services.IdGeneratorService;
 using Project_v1.Services.QRGeneratorService;
-using QRCoder;
-using System.Drawing;
+using Serilog;
 
-namespace Project_v1.Controllers
-{
+namespace Project_v1.Controllers {
     [Route("api/[controller]")]
     [ApiController]
     public class GeneralInventoryController : ControllerBase {
@@ -26,19 +24,22 @@ namespace Project_v1.Controllers
         private readonly IQRGenerator _qrGenerator;
         private readonly IStorageService _storageService;
         private readonly IFilter _filter;
+        private readonly ILogger<GeneralInventoryController> _logger;
 
         public GeneralInventoryController(ApplicationDBContext context,
                                           IIdGenerator idGenerator,
                                           UserManager<SystemUser> userManager,
                                           IQRGenerator qRGenerator,
                                           IStorageService storageService,
-                                          IFilter filter) {
+                                          IFilter filter,
+                                          ILogger<GeneralInventoryController> logger) {
             _context = context;
             _idGenerator = idGenerator;
             _userManager = userManager;
             _qrGenerator = qRGenerator;
             _storageService = storageService;
             _filter = filter;
+            _logger = logger;
         }
 
         [HttpGet]
@@ -230,7 +231,7 @@ namespace Project_v1.Controllers
                     return BadRequest(ModelState);
                 }
 
-                if(await _context.GeneralCategory.AnyAsync(c => c.GeneralCategoryName == category.GeneralCategoryName)) {
+                if (await _context.GeneralCategory.AnyAsync(c => c.GeneralCategoryName == category.GeneralCategoryName)) {
                     return BadRequest(new Response { Status = "Error", Message = "Category already exists!" });
                 }
 
@@ -289,9 +290,11 @@ namespace Project_v1.Controllers
                     ItemQR = QRurl,
                     GeneralCategoryID = newGeneralItem.GeneralCategoryID
                 };
-            
+
                 _context.GeneralInventory.Add(generalInventoryItem);
                 await _context.SaveChangesAsync();
+
+                _logger.LogInformation("Added General Inventory Item {ItemId}", generalInventoryId);
 
                 return Ok(new Response { Status = "Success", Message = "Item Added Successfully!" });
             } catch (Exception e) {

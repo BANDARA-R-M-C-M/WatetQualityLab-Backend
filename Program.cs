@@ -8,21 +8,45 @@ using Project_v1.Services.TokenService;
 using System.Text;
 using Project_v1.Services.ReportService;
 using Project_v1.Services.IdGeneratorService;
-using FirebaseAdmin;
-using Google.Apis.Auth.OAuth2;
 using Project_v1.Services.FirebaseStrorage;
 using Project_v1.Models;
 using Project_v1.Services.QRGeneratorService;
 using Project_v1.Services.Filtering;
+using Serilog.Sinks.MSSqlServer;
+using Serilog;
+using static Serilog.Sinks.MSSqlServer.ColumnOptions;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
 builder.Services.AddDbContext<ApplicationDBContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// Obtain an access token
-/*var accessToken = await GoogleCredential.GetApplicationDefaultAsync().Result.GetAccessTokenForRequestAsync();*/
+var inventoryColumnOptions = new ColumnOptions();
+
+var userActionColumnOptions = new ColumnOptions();
+
+Log.Logger = new LoggerConfiguration()
+    .MinimumLevel.Information()
+    .WriteTo.Console()
+    .WriteTo.MSSqlServer(
+        connectionString: builder.Configuration.GetConnectionString("DefaultConnection"),
+        sinkOptions: new MSSqlServerSinkOptions {
+            TableName = "InventoryLogs",
+            AutoCreateSqlTable = true
+        },
+        columnOptions: inventoryColumnOptions
+    )
+    .WriteTo.MSSqlServer(
+        connectionString: builder.Configuration.GetConnectionString("DefaultConnection"),
+        sinkOptions: new MSSqlServerSinkOptions {
+            TableName = "UserActionLogs",
+            AutoCreateSqlTable = true
+        },
+        columnOptions: userActionColumnOptions
+    )
+    .CreateLogger();
+
+builder.Host.UseSerilog();
 
 builder.Services.AddIdentity<SystemUser, IdentityRole>(options => {
     options.Password.RequireDigit = false;
