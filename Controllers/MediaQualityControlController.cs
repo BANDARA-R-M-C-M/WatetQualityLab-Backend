@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -32,6 +33,7 @@ namespace Project_v1.Controllers {
 
         [HttpGet]
         [Route("GetMediaQualityControlRecords")]
+        [Authorize]
         public async Task<IActionResult> GetMediaQualityControlRecords([FromQuery] QueryObject query) {
             try {
                 if (query.UserId == null) {
@@ -63,10 +65,6 @@ namespace Project_v1.Controllers {
                         mqcr.LabId
                     });
 
-                /*var searchResult = _filter.Search(mediaQualityControlRecords, query.MediaId, "MediaId");
-                var sortedResult = _filter.Sort(searchResult, query);
-                var result = await _filter.Paginate(sortedResult, query.PageNumber, query.PageSize);*/
-
                 var filteredResult = await _filter.Filtering(mediaQualityControlRecords, query);
 
                 return Ok(filteredResult);
@@ -77,6 +75,7 @@ namespace Project_v1.Controllers {
 
         [HttpPost]
         [Route("AddMediaQualityControlRecord")]
+        [Authorize]
         public async Task<IActionResult> AddMediaQualityControlRecord([FromBody] MediaQualityRecord newRecord) {
             try {
                 var lab = await _context.Labs.FindAsync(newRecord.LabId);
@@ -109,6 +108,7 @@ namespace Project_v1.Controllers {
 
         [HttpPut]
         [Route("UpdateMediaQualityControlRecord/{id}")]
+        [Authorize]
         public async Task<IActionResult> UpdateMediaQualityControlRecord(string id, [FromBody] UpdateMediaQC updatedRecord) {
             try {
                 var mediaQualityControlRecord = await _context.MediaQualityControls.FindAsync(id);
@@ -134,6 +134,7 @@ namespace Project_v1.Controllers {
 
         [HttpDelete]
         [Route("DeleteMediaQualityControlRecord/{id}")]
+        [Authorize]
         public async Task<IActionResult> DeleteMediaQualityControlRecord(string id) {
             try {
                 var mediaQualityControlRecord = await _context.MediaQualityControls.FindAsync(id);

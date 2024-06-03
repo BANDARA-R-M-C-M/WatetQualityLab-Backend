@@ -1,4 +1,5 @@
 ﻿using Firebase.Auth;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -33,6 +34,7 @@ namespace Project_v1.Controllers {
 
         [HttpGet]
         [Route("GetInstrumentalQualityControlRecords")]
+        [Authorize]
         public async Task<IActionResult> GetInstrumentalQualityControlRecords([FromQuery] QueryObject query) {
             try {
                 if (query.UserId == null) {
@@ -66,10 +68,6 @@ namespace Project_v1.Controllers {
                         iqcr.LabId
                     });
 
-                /*var searchResult = _filter.Search(instrumentalQualityControlRecords, query.InstrumentId, "InstrumentId");
-                var sortedResult = _filter.Sort(searchResult, query);
-                var result = await _filter.Paginate(sortedResult, query.PageNumber, query.PageSize);*/
-
                 var filteredResult = await _filter.Filtering(instrumentalQualityControlRecords, query);
 
                 return Ok(filteredResult);
@@ -80,6 +78,7 @@ namespace Project_v1.Controllers {
 
         [HttpPost]
         [Route("AddInstrumentalQualityControlRecord")]
+        [Authorize]
         public async Task<IActionResult> AddInstrumentalQualityControlRecord([FromBody] InstrumentalQualityRecord newRecord) {
             try {
                 var lab = await _context.Labs.FindAsync(newRecord.LabId);
@@ -114,6 +113,7 @@ namespace Project_v1.Controllers {
 
         [HttpPut]
         [Route("UpdateInstrumentalQualityControlRecord/{id}")]
+        [Authorize]
         public async Task<IActionResult> UpdateInstrumentalQualityControlRecord([FromRoute] String id, [FromBody] UpdateInstrumentalQC instrumentalQC) {
             try {
                 var qcRecord = await _context.InstrumentalQualityControls.FindAsync(id);
@@ -140,6 +140,7 @@ namespace Project_v1.Controllers {
 
         [HttpDelete]
         [Route("DeleteInstrumentalQualityControlRecord/{id}")]
+        [Authorize]
         public async Task<IActionResult> DeleteInstrumentalQualityControlRecord([FromRoute] String id) {
             try {
                 var qcRecord = await _context.InstrumentalQualityControls.FindAsync(id);

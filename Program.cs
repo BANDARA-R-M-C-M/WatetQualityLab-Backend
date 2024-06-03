@@ -15,6 +15,8 @@ using Project_v1.Services.Filtering;
 using Serilog.Sinks.MSSqlServer;
 using Serilog;
 using static Serilog.Sinks.MSSqlServer.ColumnOptions;
+using Serilog.Events;
+using Project_v1.Services.Logging;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -25,7 +27,7 @@ var inventoryColumnOptions = new ColumnOptions();
 
 var userActionColumnOptions = new ColumnOptions();
 
-Log.Logger = new LoggerConfiguration()
+var inventoryLogger = new LoggerConfiguration()
     .MinimumLevel.Information()
     .WriteTo.Console()
     .WriteTo.MSSqlServer(
@@ -34,16 +36,26 @@ Log.Logger = new LoggerConfiguration()
             TableName = "InventoryLogs",
             AutoCreateSqlTable = true
         },
-        columnOptions: inventoryColumnOptions
+        restrictedToMinimumLevel: LogEventLevel.Information
     )
+    .CreateLogger();
+
+var userActionLogger = new LoggerConfiguration()
+    .MinimumLevel.Information()
+    .WriteTo.Console()
     .WriteTo.MSSqlServer(
         connectionString: builder.Configuration.GetConnectionString("DefaultConnection"),
         sinkOptions: new MSSqlServerSinkOptions {
             TableName = "UserActionLogs",
             AutoCreateSqlTable = true
         },
-        columnOptions: userActionColumnOptions
+        restrictedToMinimumLevel: LogEventLevel.Information
     )
+    .CreateLogger();
+
+Log.Logger = new LoggerConfiguration()
+    .MinimumLevel.Information()
+    .WriteTo.Console()
     .CreateLogger();
 
 builder.Host.UseSerilog();
@@ -125,6 +137,9 @@ builder.Services.AddScoped<IIdGenerator, IdGenerator>();
 builder.Services.AddScoped<IStorageService, StorageService>();
 builder.Services.AddScoped<IQRGenerator, QRGenetator>();
 builder.Services.AddScoped<IFilter, Filter>();
+
+builder.Services.AddSingleton<InventoryOperationsLogger>(new InventoryOperationsLogger(inventoryLogger));
+builder.Services.AddSingleton<UserActionsLogger>(new UserActionsLogger(userActionLogger));
 
 var app = builder.Build();
 

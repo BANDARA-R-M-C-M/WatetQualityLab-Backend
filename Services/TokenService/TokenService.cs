@@ -24,15 +24,18 @@ namespace Project_v1.Services.TokenService
         public string CreateToken(SystemUser user)
         {
             var claims = new List<Claim> {
-                new Claim("Username", user.UserName),
-                new Claim("UserId", user.Id)
+                /*new Claim("Username", user.UserName),
+                new Claim("UserId", user.Id)*/
+                new Claim(ClaimTypes.Name, user.UserName),
+                new Claim(ClaimTypes.NameIdentifier, user.Id)
             };
 
             var roles = _userManager.GetRolesAsync(user).Result;
 
             foreach (var role in roles)
             {
-                claims.Add(new Claim("Role", role));
+                //claims.Add(new Claim("Role", role));
+                claims.Add(new Claim(ClaimTypes.Role, role));
             }
 
             var credentials = new SigningCredentials(_key, SecurityAlgorithms.HmacSha256Signature);
@@ -40,7 +43,7 @@ namespace Project_v1.Services.TokenService
             var tokenDescriptor = new SecurityTokenDescriptor
             {
                 Subject = new ClaimsIdentity(claims),
-                Expires = DateTime.Now.AddHours(1),
+                Expires = DateTime.Now.AddHours(5),
                 SigningCredentials = credentials,
                 Issuer = _config["JWT:Issuer"],
                 Audience = _config["JWT:Audience"]

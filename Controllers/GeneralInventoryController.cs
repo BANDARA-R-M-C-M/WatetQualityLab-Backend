@@ -10,8 +10,10 @@ using Project_v1.Models.DTOs.Response;
 using Project_v1.Services.Filtering;
 using Project_v1.Services.FirebaseStrorage;
 using Project_v1.Services.IdGeneratorService;
+using Project_v1.Services.Logging;
 using Project_v1.Services.QRGeneratorService;
 using Serilog;
+using System.Security.Claims;
 
 namespace Project_v1.Controllers {
     [Route("api/[controller]")]
@@ -24,7 +26,7 @@ namespace Project_v1.Controllers {
         private readonly IQRGenerator _qrGenerator;
         private readonly IStorageService _storageService;
         private readonly IFilter _filter;
-        private readonly ILogger<GeneralInventoryController> _logger;
+        private readonly InventoryOperationsLogger _inventoryLogger;
 
         public GeneralInventoryController(ApplicationDBContext context,
                                           IIdGenerator idGenerator,
@@ -32,14 +34,14 @@ namespace Project_v1.Controllers {
                                           IQRGenerator qRGenerator,
                                           IStorageService storageService,
                                           IFilter filter,
-                                          ILogger<GeneralInventoryController> logger) {
+                                          InventoryOperationsLogger inventoryLogger) {
             _context = context;
             _idGenerator = idGenerator;
             _userManager = userManager;
             _qrGenerator = qRGenerator;
             _storageService = storageService;
             _filter = filter;
-            _logger = logger;
+            _inventoryLogger = inventoryLogger;
         }
 
         [HttpGet]
@@ -73,10 +75,6 @@ namespace Project_v1.Controllers {
                         c.LabId
                     });
 
-                /*var searchResult = _filter.Search(generalCategories, query.GeneralCategoryName, "GeneralCategoryName");
-                var sortedResult = _filter.Sort(searchResult, query);
-                var result = await _filter.Paginate(sortedResult, query.PageNumber, query.PageSize);*/
-
                 var filteredResult = await _filter.Filtering(generalCategories, query);
 
                 return Ok(filteredResult);
@@ -84,28 +82,6 @@ namespace Project_v1.Controllers {
                 return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
             }
         }
-
-        /*[HttpGet]
-        [Route("GetGeneralCategoryDetails")]
-        public async Task<ActionResult> GetGeneralCategoryDetails() {
-            try {
-                var generalCategory = await _context.GeneralCategory
-                    .Select(c => new {
-                        c.GeneralCategoryID,
-                        c.GeneralCategoryName,
-                        ItemCount = c.GeneralInventories.Count()
-                    })
-                    .ToListAsync();
-                    
-                if (generalCategory == null) {
-                    return NotFound();
-                }
-
-                return Ok(generalCategory);
-            } catch (Exception e) {
-                return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
-            }
-        }*/
 
         [HttpGet]
         [Route("GetGeneralInventoryItem")]
@@ -191,10 +167,6 @@ namespace Project_v1.Controllers {
                             items.GeneralCategory.LabId
                         });
 
-                /*var searchResult = _filter.Search(generalInventoryItems, query.GeneralItemName, "ItemName");
-                var sortedResult = _filter.Sort(searchResult, query);
-                var result = await _filter.Paginate(sortedResult, query.PageNumber, query.PageSize);*/
-
                 var filteredResult = await _filter.Filtering(generalInventoryItems, query);
 
                 return Ok(filteredResult);
@@ -235,14 +207,20 @@ namespace Project_v1.Controllers {
                     return BadRequest(new Response { Status = "Error", Message = "Category already exists!" });
                 }
 
+                var generalDategoryId = _idGenerator.GenerateGeneralCatagoryId();
+
                 var newCategory = new GeneralCategory {
-                    GeneralCategoryID = _idGenerator.GenerateGeneralCatagoryId(),
+                    GeneralCategoryID = generalDategoryId,
                     GeneralCategoryName = category.GeneralCategoryName,
                     LabId = category.LabId
                 };
 
                 _context.GeneralCategory.Add(newCategory);
                 await _context.SaveChangesAsync();
+
+                var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+                _inventoryLogger.LogInformation($"Added General Category: {generalDategoryId} to  Lab: {category.LabId} by: {userId}");
 
                 return Ok(new Response { Status = "Success", Message = "Catagory Added Successfully!" });
             } catch (Exception e) {
@@ -294,7 +272,9 @@ namespace Project_v1.Controllers {
                 _context.GeneralInventory.Add(generalInventoryItem);
                 await _context.SaveChangesAsync();
 
-                _logger.LogInformation("Added General Inventory Item {ItemId}", generalInventoryId);
+                var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+                _inventoryLogger.LogInformation($"Added General Inventory Item: {generalInventoryId} to {newGeneralItem.GeneralCategoryID} in Lab: {newGeneralItem.LabId} by: {userId}");
 
                 return Ok(new Response { Status = "Success", Message = "Item Added Successfully!" });
             } catch (Exception e) {
@@ -315,6 +295,10 @@ namespace Project_v1.Controllers {
                 generalCategory.GeneralCategoryName = updatedCategory.GeneralCategoryName;
 
                 await _context.SaveChangesAsync();
+
+                var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+                _inventoryLogger.LogInformation($"Update General Category: {id} || General Category Name: {updatedCategory.GeneralCategoryName} by: {userId}");
 
                 return Ok(new Response { Status = "Success", Message = "Category Updated Successfully!" });
             } catch (Exception e) {
@@ -349,6 +333,10 @@ namespace Project_v1.Controllers {
 
                 await _context.SaveChangesAsync();
 
+                var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+                _inventoryLogger.LogInformation($"Update General Inventory Item: {id} in {newGeneralItem.GeneralCategoryID} Category by: {userId}");
+
                 return Ok(new Response { Status = "Success", Message = "Item Updated Successfully!" });
             } catch (Exception e) {
                 return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
@@ -367,6 +355,8 @@ namespace Project_v1.Controllers {
 
                 _context.GeneralCategory.Remove(generalCategory);
                 await _context.SaveChangesAsync();
+
+                //_inventoryLogger.LogInformation($"Delete General Category: {id} Deleted by: {}");
 
                 return Ok(new Response { Status = "Success", Message = "Category Deleted Successfully!" });
             } catch (Exception e) {
@@ -388,6 +378,8 @@ namespace Project_v1.Controllers {
                     _context.GeneralInventory.Remove(generalInventoryItem);
                     await _context.SaveChangesAsync();
                 }
+
+                _inventoryLogger.LogInformation($"Delete General Inventory Item: {id}");
 
                 return Ok(new Response { Status = "Success", Message = "Item Deleted Successfully!" });
             } catch (Exception e) {

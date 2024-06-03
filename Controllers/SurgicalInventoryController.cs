@@ -14,6 +14,7 @@ using System.Diagnostics;
 using System.Net;
 using Project_v1.Services.Filtering;
 using Project_v1.Models.DTOs.Helper;
+using Project_v1.Services.Logging;
 
 namespace Project_v1.Controllers {
     [Route("api/[controller]")]
@@ -26,19 +27,22 @@ namespace Project_v1.Controllers {
         private readonly IQRGenerator _qrGenerator;
         private readonly IStorageService _storageService;
         private readonly IFilter _filter;
+        private readonly InventoryOperationsLogger _inventoryLogger;
 
         public SurgicalInventoryController(ApplicationDBContext context,
                                           IIdGenerator idGenerator,
                                           UserManager<SystemUser> userManager,
                                           IQRGenerator qRGenerator,
                                           IStorageService storageService,
-                                          IFilter filter) {
+                                          IFilter filter,
+                                          InventoryOperationsLogger logger) {
             _context = context;
             _idGenerator = idGenerator;
             _userManager = userManager;
             _qrGenerator = qRGenerator;
             _storageService = storageService;
             _filter = filter;
+            _inventoryLogger = logger;
         }
 
         [HttpGet]
@@ -260,6 +264,8 @@ namespace Project_v1.Controllers {
                 await _context.SurgicalInventory.AddAsync(surgicalInventoryItem);
                 await _context.SaveChangesAsync();
 
+                _inventoryLogger.LogInformation($"Added Surgical Inventory Item: {surgicalInventoryId} to {newSurgicalItem.SurgicalCategoryID} Category in Lab: {newSurgicalItem.LabId}");
+
                 return Ok(new Response { Status = "Success", Message = "Item Added Successfully!" });
             } catch (Exception e) {
                 return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
@@ -296,6 +302,8 @@ namespace Project_v1.Controllers {
                 await _context.IssuedItems.AddAsync(issuedItem);
                 await _context.SaveChangesAsync();
 
+                _inventoryLogger.LogInformation($"Issued {issueItem.Quantity} units of {issueItem.ItemId} item in Surgical Inventory");
+
                 return Ok(new Response { Status = "Success", Message = "Item Issued Successfully!" });
             } catch (Exception e) {
                 return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
@@ -315,6 +323,8 @@ namespace Project_v1.Controllers {
                 item.Quantity += addQuantity.Quantity;
 
                 await _context.SaveChangesAsync();
+
+                _inventoryLogger.LogInformation($"Added {addQuantity.Quantity} units of {id} item in Surgical Inventory");
 
                 return Ok(new Response { Status = "Success", Message = "Quantity Added Successfully!" });
             } catch (Exception e) {
@@ -370,6 +380,8 @@ namespace Project_v1.Controllers {
 
                 await _context.SaveChangesAsync();
 
+                _inventoryLogger.LogInformation($"Updated Surgical Inventory Item: {id} in {updatedItem.SurgicalCategoryID} Category");
+
                 return Ok(new Response { Status = "Success", Message = "Item Updated Successfully!" });
             } catch (Exception e) {
                 return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
@@ -409,6 +421,8 @@ namespace Project_v1.Controllers {
                     _context.SurgicalInventory.Remove(surgicalInventoryItem);
                     await _context.SaveChangesAsync();
                 }
+
+                _inventoryLogger.LogInformation($"Deleted Surgical Inventory Item: {id}");
 
                 return Ok(new Response { Status = "Success", Message = "Item Deleted Successfully!" });
             } catch (Exception e) {

@@ -95,10 +95,6 @@ namespace Project_v1.Controllers {
                         report.Sample.PHIArea.MOHArea.MOHAreaName
                     });
 
-                /*var searchResult = _filter.Search(reports, query.MyRefNo, "MyRefNo");
-                var sortedResult = _filter.Sort(searchResult, query);
-                var result = await _filter.Paginate(sortedResult, query.PageNumber, query.PageSize);*/
-
                 var filteredResult = await _filter.Filtering(reports, query);
 
                 return Ok(filteredResult);

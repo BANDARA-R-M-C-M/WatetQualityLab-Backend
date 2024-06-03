@@ -1,4 +1,5 @@
 ﻿using Firebase.Auth;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -58,6 +59,7 @@ namespace Project_v1.Controllers {
                     var data = await response.Content.ReadAsStringAsync();
                     return Ok(data);
                 }
+
                 return StatusCode((int)response.StatusCode, await response.Content.ReadAsStringAsync());
             } catch (HttpRequestException e) {
                 return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
@@ -109,10 +111,6 @@ namespace Project_v1.Controllers {
                         sample.Comments
                     });
 
-                /*var searchResults = _filter.Search(samples, query.YourRefNo, "YourRefNo");
-                var sortedResult = _filter.Sort(searchResults, query);
-                var result = await _filter.Paginate(sortedResult, query.PageNumber, query.PageSize);*/
-
                 var filteredResult = await _filter.Filtering(samples, query);
 
                 return Ok(filteredResult);
@@ -153,10 +151,6 @@ namespace Project_v1.Controllers {
                         sample.Comments
                     });
 
-                /*var searchResults = _filter.Search(samples, query.YourRefNo, "YourRefNo");
-                var sortedResult = _filter.Sort(searchResults, query);
-                var result = await _filter.Paginate(sortedResult, query.PageNumber, query.PageSize);*/
-
                 var filteredResult = await _filter.Filtering(samples, query);
 
                 return Ok(filteredResult);
@@ -183,40 +177,6 @@ namespace Project_v1.Controllers {
                     return NotFound($"User with username '{query.UserId}' have a Lab assigned.");
                 }
 
-                /*var mohArea = await _context.MOHAreas.Where(m => m.LabID == mlt.LabID).ToListAsync();
-
-                if (mohArea == null) {
-                    return NotFound($"No MOHArea found for the Lab assigned to user '{query.UserId}'.");
-                }
-
-                var mohAreaIds = mohArea.Select(m => m.MOHAreaID).ToList();
-
-                var phiAreas = await _context.PHIAreas.Where(phi => mohAreaIds
-                    .Contains(phi.MOHAreaId))
-                    .ToListAsync();
-
-                var phiAreaIds = phiAreas.Select(pa => pa.PHIAreaID).ToList();*/
-
-                /*var samples = _context.Samples
-                    .Where(sample => phiAreaIds
-                    .Contains(sample.PHIAreaId) && sample.Acceptance == "Pending")
-                    .Select(sample => new {
-                        sample.SampleId,
-                        sample.YourRefNo,
-                        sample.StateOfChlorination,
-                        sample.DateOfCollection,
-                        sample.AnalyzedDate,
-                        sample.CatagoryOfSource,
-                        sample.CollectingSource,
-                        sample.phiAreaName,
-                        sample.Acceptance,
-                        sample.PHIArea.MOHArea.LabID,
-                        sample.PHIArea.MOHArea.Lab.LabName,
-                        sample.PHIArea.MOHArea.Lab.LabLocation,
-                        sample.PHIArea.MOHArea.Lab.LabTelephone,
-                        ReportAvailable = _context.Reports.Any(r => r.SampleId == sample.SampleId)
-                    });*/
-
                 var samples = _context.Samples
                     .Where(sample => sample.PHIArea.MOHArea.LabID == mlt.LabID && sample.Acceptance == "Pending")
                     .Select(sample => new {
@@ -235,10 +195,6 @@ namespace Project_v1.Controllers {
                         sample.PHIArea.MOHArea.Lab.LabTelephone,
                         ReportAvailable = _context.Reports.Any(r => r.SampleId == sample.SampleId)
                     });
-
-                /*var searchResults = _filter.Search(samples, query.YourRefNo, "YourRefNo");
-                var sortedResult = _filter.Sort(searchResults, query);
-                var result = await _filter.Paginate(sortedResult, query.PageNumber, query.PageSize);*/
 
                 var filteredResult = await _filter.Filtering(samples, query);
 
@@ -266,58 +222,6 @@ namespace Project_v1.Controllers {
                     return NotFound($"User with username '{query.UserId}' have a Lab assigned.");
                 }
 
-                /*var mohArea = await _context.MOHAreas.Where(m => m.LabID == mlt.LabID).ToListAsync();
-
-                if (mohArea == null) {
-                    return NotFound($"No MOHArea found for the Lab assigned to user '{query.UserId}'.");
-                }
-
-                var mohAreaIds = mohArea.Select(m => m.MOHAreaID).ToList();*/
-
-                /*var phiAreas = await _context.PHIAreas.Where(phi => mohAreaIds
-                    .Contains(phi.MOHAreaId))
-                    .ToListAsync();
-
-                var phiAreaIds = phiAreas.Select(pa => pa.PHIAreaID).ToList();*/
-
-                /*var mohAreaIds = await _context.MOHAreas
-                    .Where(m => m.LabID == mlt.LabID)
-                    .Select(m => m.MOHAreaID)
-                    .ToListAsync();
-
-                if (!mohAreaIds.Any()) {
-                    return NotFound($"No MOHArea found for the Lab assigned to user '{query.UserId}'.");
-                }
-
-                var phiAreaIds = await _context.PHIAreas.Where(phi => mohAreaIds
-                    .Contains(phi.MOHAreaId))
-                    .Select(pa => pa.PHIAreaID)
-                    .ToListAsync();
-
-                if (!phiAreaIds.Any()) {
-                    return NotFound($"No PHIArea found for the MOHAreas assigned to the Lab of user '{query.UserId}'.");
-                }*/
-
-                /*var samples = _context.Samples
-                    .Where(sample => phiAreaIds
-                    .Contains(sample.PHIAreaId) && sample.Acceptance == "Accepted")
-                    .Select(sample => new {
-                        sample.SampleId,
-                        sample.YourRefNo,
-                        sample.StateOfChlorination,
-                        sample.DateOfCollection,
-                        sample.AnalyzedDate,
-                        sample.CatagoryOfSource,
-                        sample.CollectingSource,
-                        sample.phiAreaName,
-                        sample.Acceptance,
-                        sample.PHIArea.MOHArea.LabID,
-                        sample.PHIArea.MOHArea.Lab.LabName,
-                        sample.PHIArea.MOHArea.Lab.LabLocation,
-                        sample.PHIArea.MOHArea.Lab.LabTelephone,
-                        ReportAvailable = _context.Reports.Any(r => r.SampleId == sample.SampleId)
-                    });*/
-
                 var samples = _context.Samples
                     .Where(s => s.PHIArea.MOHArea.LabID == mlt.LabID && s.Acceptance == "Accepted")
                     .Select(sample => new {
@@ -336,10 +240,6 @@ namespace Project_v1.Controllers {
                         sample.PHIArea.MOHArea.Lab.LabTelephone,
                         ReportAvailable = _context.Reports.Any(r => r.SampleId == sample.SampleId)
                     });
-
-                /*var searchResults = _filter.Search(samples, query.YourRefNo, "YourRefNo");
-                var sortedResult = _filter.Sort(searchResults, query);
-                var result = await _filter.Paginate(sortedResult, query.PageNumber, query.PageSize);*/
 
                 var filteredResult = await _filter.Filtering(samples, query);
 
@@ -429,81 +329,48 @@ namespace Project_v1.Controllers {
                     return NotFound($"User with username '{query.UserId}' does not have a Lab assigned.");
                 }
 
-                /*var samples = _context.PHIAreas
-                    .Where(p => p.MOHArea.LabID == mlt.LabID) // Filter PHI areas by LabID
-                    .SelectMany(p => p.Samples.DefaultIfEmpty(), (p, s) => new { PHIArea = p, Sample = s }) // Perform left outer join with samples
-                    .GroupBy(ps => new {
-                        Year = ps.Sample != null ? ps.Sample.DateOfCollection.Year : (int?)null,
-                        Month = ps.Sample != null ? ps.Sample.DateOfCollection.Month : (int?)null,
-                        ps.PHIArea.PHIAreaName,
-                        ps.PHIArea.MOHArea.MOHAreaName
-                    })
-                    .Select(g => new {
-                        g.Key.Year,
-                        g.Key.Month,
-                        g.Key.PHIAreaName,
-                        g.Key.MOHAreaName,
-                        SamplesReceived = g.Key.Year != null, // Check if any samples are received for this PHI Area
-                        SampleCount = g.Count(s => s.Sample != null) // Calculate the sample count
-                    });
-
-                var filteredSamples = await _filter.Filtering(samples, query);
-
-                var groupedSamples = filteredSamples.Items
-                    .GroupBy(s => s.Year)
-                    .Select(g => new {
-                        Year = g.Key,
-                        Months = g.GroupBy(m => m.Month)
-                                   .Select(m => new {
-                                       Month = m.Key,
-                                       MOHSampleCounts = m.GroupBy(moh => new { moh.MOHAreaName, moh.PHIAreaName })
-                                                          .Select(mohGroup => new {
-                                                              mohGroup.Key.MOHAreaName,
-                                                              mohGroup.Key.PHIAreaName,
-                                                              SamplesReceived = mohGroup.Any(moh => moh.SamplesReceived),
-                                                              SampleCount = mohGroup.Sum(moh => moh.SampleCount)
-                                                          }).ToList()
-                                   }).ToList()
-                    });*/
-
-                var phiAreasList = _context.PHIAreas
-                    .Select(phiaArea => new {
-                        phiAreaId = phiaArea.PHIAreaID,
-                        phiAreaName = phiaArea.PHIAreaName,
-                        mohAreaName = phiaArea.MOHArea.MOHAreaName,
-                        sampleCount = _context.Samples
-                            .Where(sample => sample.PHIAreaId == phiaArea.PHIAreaID &&
-                                             (Month == null || sample.DateOfCollection.Month == Month) &&
-                                             (Year == null || sample.DateOfCollection.Year == Year))
-                            .Count(),
-                        acceptedSampleCount = _context.Samples
-                            .Where(sample => sample.PHIAreaId == phiaArea.PHIAreaID &&
-                                             (Month == null || sample.DateOfCollection.Month == Month) &&
-                                             (Year == null || sample.DateOfCollection.Year == Year) &&
-                                             sample.Acceptance == "Accepted")
-                            .Count(),
-                        rejectedSampleCount = _context.Samples
-                            .Where(sample => sample.PHIAreaId == phiaArea.PHIAreaID &&
-                                             (Month == null || sample.DateOfCollection.Month == Month) &&
-                                             (Year == null || sample.DateOfCollection.Year == Year) &&
-                                             sample.Acceptance == "Rejected")
-                            .Count(),
-                        pendingSampleCount = _context.Samples
-                            .Where(sample => sample.PHIAreaId == phiaArea.PHIAreaID &&
-                                             (Month == null || sample.DateOfCollection.Month == Month) &&
-                                             (Year == null || sample.DateOfCollection.Year == Year) &&
-                                             sample.Acceptance == "Pending")
-                            .Count()
+                var phiAreasList = _context.MOHAreas
+                    .Where(moh => moh.LabID == mlt.LabID)
+                    .Select(moh => new {
+                        mohAreaName = moh.MOHAreaName,
+                        phiAreas = moh.PHIAreas
+                            .Select(phiaArea => new {
+                                phiAreaId = phiaArea.PHIAreaID,
+                                phiAreaName = phiaArea.PHIAreaName,
+                                sampleCount = _context.Samples
+                                    .Where(sample => sample.PHIAreaId == phiaArea.PHIAreaID &&
+                                                     (Month == null || sample.DateOfCollection.Month == Month) &&
+                                                     (Year == null || sample.DateOfCollection.Year == Year))
+                                    .Count(),
+                                acceptedSampleCount = _context.Samples
+                                    .Where(sample => sample.PHIAreaId == phiaArea.PHIAreaID &&
+                                                     (Month == null || sample.DateOfCollection.Month == Month) &&
+                                                     (Year == null || sample.DateOfCollection.Year == Year) &&
+                                                     sample.Acceptance == "Accepted")
+                                    .Count(),
+                                rejectedSampleCount = _context.Samples
+                                    .Where(sample => sample.PHIAreaId == phiaArea.PHIAreaID &&
+                                                     (Month == null || sample.DateOfCollection.Month == Month) &&
+                                                     (Year == null || sample.DateOfCollection.Year == Year) &&
+                                                     sample.Acceptance == "Rejected")
+                                    .Count(),
+                                pendingSampleCount = _context.Samples
+                                    .Where(sample => sample.PHIAreaId == phiaArea.PHIAreaID &&
+                                                     (Month == null || sample.DateOfCollection.Month == Month) &&
+                                                     (Year == null || sample.DateOfCollection.Year == Year) &&
+                                                     sample.Acceptance == "Pending")
+                                    .Count()
+                            }).ToList()
                     });
 
                 var filteredSamples = await _filter.Filtering(phiAreasList, query);
 
                 return Ok(filteredSamples);
-
             } catch (Exception e) {
                 return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
             }
         }
+
 
         [HttpGet]
         [Route("GetSampleCountReport")]

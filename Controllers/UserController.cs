@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using Firebase.Auth;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.CodeAnalysis.Elfie.Serialization;
 using Microsoft.EntityFrameworkCore;
@@ -9,7 +11,9 @@ using Project_v1.Models.DTOs.Login;
 using Project_v1.Models.DTOs.Response;
 using Project_v1.Models.DTOs.Signup;
 using Project_v1.Services.Filtering;
+using Project_v1.Services.Logging;
 using Project_v1.Services.TokenService;
+using System.Security.Claims;
 
 namespace Project_v1.Controllers {
     [Route("api/[controller]")]
@@ -21,18 +25,21 @@ namespace Project_v1.Controllers {
         private readonly RoleManager<IdentityRole> _roleManager;
         private readonly ITokenService _tokenService;
         private readonly IFilter _filter;
+        private readonly UserActionsLogger _actionsLogger;
 
         public UserController(ApplicationDBContext context,
                               UserManager<SystemUser> userManager,
                               RoleManager<IdentityRole> roleManager,
                               ITokenService tokenService,
-                              IFilter filter) {
+                              IFilter filter,
+                              UserActionsLogger actionsLogger) {
 
             _context = context;
             _userManager = userManager;
             _roleManager = roleManager;
             _tokenService = tokenService;
             _filter = filter;
+            _actionsLogger = actionsLogger;
         }
 
         [HttpPost]
@@ -79,6 +86,7 @@ namespace Project_v1.Controllers {
 
         [HttpPost]
         [Route("signup")]
+        [Authorize]
         public async Task<IActionResult> Signup([FromBody] Signup registeredUser) {
             try {
                 if (registeredUser == null || !ModelState.IsValid) {
@@ -115,6 +123,10 @@ namespace Project_v1.Controllers {
 
                 await _userManager.AddToRoleAsync(newUser, registeredUser.Role);
 
+                var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+                _actionsLogger.LogInformation($"User {registeredUser.Id} created by: {userId}");
+
                 return StatusCode(StatusCodes.Status201Created, new Response { Status = "Success", Message = "User created successfully!" });
             } catch (Exception e) {
                 return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
@@ -123,6 +135,7 @@ namespace Project_v1.Controllers {
 
         [HttpGet]
         [Route("getMLTs")]
+        //[Authorize]
         public async Task<IActionResult> GetMLTs([FromQuery] QueryObject query) {
             try {
                 var mlts = await _userManager.GetUsersInRoleAsync("MLT");
@@ -150,6 +163,7 @@ namespace Project_v1.Controllers {
 
         [HttpGet]
         [Route("getPHIs")]
+        //[Authorize]
         public async Task<IActionResult> GetPHIs([FromQuery] QueryObject query) {
             try {
                 var phis = await _userManager.GetUsersInRoleAsync("PHI");
@@ -177,6 +191,7 @@ namespace Project_v1.Controllers {
 
         [HttpGet]
         [Route("getMOHSupervisors")]
+        //[Authorize]
         public async Task<IActionResult> GetMOHSupervisors([FromQuery] QueryObject query) {
             try {
                 var mohsupervisors = await _userManager.GetUsersInRoleAsync("MOH_Supervisor");
@@ -204,6 +219,7 @@ namespace Project_v1.Controllers {
 
         [HttpPut]
         [Route("updateUser/{id}")]
+        [Authorize]
         public async Task<IActionResult> UpdateUser([FromRoute] String id, [FromBody] SystemUser updatedUser) {
             try {
                 var user = await _userManager.FindByIdAsync(id);
@@ -231,6 +247,7 @@ namespace Project_v1.Controllers {
 
         [HttpDelete]
         [Route("deleteUser/{id}")]
+        [Authorize]
         public async Task<IActionResult> DeleteUser([FromRoute] String id) {
             try {
                 var user = await _userManager.FindByIdAsync(id);

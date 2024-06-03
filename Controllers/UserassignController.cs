@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -6,6 +7,8 @@ using Project_v1.Data;
 using Project_v1.Models;
 using Project_v1.Models.DTOs.Assigns;
 using Project_v1.Models.DTOs.Response;
+using Project_v1.Services.Logging;
+using System.Security.Claims;
 
 namespace Project_v1.Controllers {
     [Route("api/[controller]")]
@@ -14,16 +17,19 @@ namespace Project_v1.Controllers {
 
         private readonly ApplicationDBContext _context;
         private readonly UserManager<SystemUser> _userManager;
+        private readonly UserActionsLogger _actionsLogger;
 
         public UserassignController(ApplicationDBContext context,
-                                    UserManager<SystemUser> userManager) {
+                                    UserManager<SystemUser> userManager,
+                                    UserActionsLogger actionsLogger) {
             _context = context;
             _userManager = userManager;
+            _actionsLogger = actionsLogger;
         }
 
         [HttpPost]
-        [Route("assignMLTtoLabs")]
-        public async Task<IActionResult> assignMLTtoLabs([FromBody] mltLab mltlab) {
+        [Route("AssignMLTtoLabs")]
+        public async Task<IActionResult> AssignMLTtoLabs([FromBody] mltLab mltlab) {
             try {
                 var mlt = await _userManager.FindByIdAsync(mltlab.mltId);
 
@@ -38,6 +44,10 @@ namespace Project_v1.Controllers {
                 mlt.LabID = mltlab.labId;
                 await _context.SaveChangesAsync();
 
+                var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+                _actionsLogger.LogInformation($"MLT {mlt.Id} assigned to Lab {mlt.LabID} by: {userId}");
+
                 return Ok(new Response { Status = "Success", Message = "Lab assigned successfully!" });
             } catch (Exception e) {
                 return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
@@ -45,7 +55,7 @@ namespace Project_v1.Controllers {
         }
 
         [HttpPost]
-        [Route("assignPHItoPHIAreas")]
+        [Route("AssignPHItoPHIAreas")]
         public async Task<IActionResult> AssignPHItoPHIArea([FromBody] phiPhiarea phi_phiarea) {
             try {
                 var phi = await _userManager.FindByIdAsync(phi_phiarea.phiId);
@@ -60,6 +70,11 @@ namespace Project_v1.Controllers {
 
                 phi.PHIAreaId = phi_phiarea.phiAreaId;
                 await _context.SaveChangesAsync();
+
+                var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+                _actionsLogger.LogInformation($"PHI {phi.Id} assigned to PHI Area {phi.PHIAreaId} by: {userId}");
+
                 return Ok(new Response { Status = "Success", Message = "PHI Area assigned successfully!" });
             } catch (Exception e) {
                 return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
@@ -67,8 +82,8 @@ namespace Project_v1.Controllers {
         }
 
         [HttpPost]
-        [Route("assignMOHSupervisortoMOHAreas")]
-        public async Task<IActionResult> assignMOHSupervisortoMOHArea([FromBody] mohMoharea moh_moharea) {
+        [Route("AssignMOHSupervisortoMOHAreas")]
+        public async Task<IActionResult> AssignMOHSupervisortoMOHArea([FromBody] mohMoharea moh_moharea) {
             try {
                 var moh = await _userManager.FindByIdAsync(moh_moharea.mohSupervisorId);
 
@@ -82,6 +97,11 @@ namespace Project_v1.Controllers {
 
                 moh.MOHAreaId = moh_moharea.mohAreaId;
                 await _context.SaveChangesAsync();
+
+                var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+                _actionsLogger.LogInformation($"MOH Supervisor {moh.Id} assigned to MOH Area {moh.MOHAreaId} by: {userId}");
+
                 return Ok(new Response { Status = "Success", Message = "MOH Area assigned successfully!" });
             } catch (Exception e) {
                 return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
