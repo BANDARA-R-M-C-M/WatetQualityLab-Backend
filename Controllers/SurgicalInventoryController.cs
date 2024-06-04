@@ -15,6 +15,9 @@ using System.Net;
 using Project_v1.Services.Filtering;
 using Project_v1.Models.DTOs.Helper;
 using Project_v1.Services.Logging;
+using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
+using Firebase.Auth;
 
 namespace Project_v1.Controllers {
     [Route("api/[controller]")]
@@ -47,6 +50,7 @@ namespace Project_v1.Controllers {
 
         [HttpGet]
         [Route("GetSurgicalCategories")]
+        [Authorize]
         public async Task<IActionResult> GetSurgicalCategories([FromQuery] QueryObject query) {
             try {
                 if (query.UserId == null) {
@@ -85,6 +89,7 @@ namespace Project_v1.Controllers {
 
         [HttpGet]
         [Route("GetSurgicalInventoryItem")]
+        [Authorize]
         public async Task<IActionResult> GetSurgicalInventoryItem(String itemId) {
             try {
                 var today = DateOnly.FromDateTime(DateTime.Now);
@@ -114,6 +119,7 @@ namespace Project_v1.Controllers {
 
         [HttpGet]
         [Route("GetSurgicalInventoryItems")]
+        [Authorize]
         public async Task<IActionResult> GetSurgicalInventoryItems([FromQuery] QueryObject query) {
             try {
                 if (query.UserId == null) {
@@ -179,6 +185,7 @@ namespace Project_v1.Controllers {
 
         [HttpGet]
         [Route("GetSurgicalInventoryQR")]
+        [Authorize]
         public async Task<IActionResult> GetSurgicalInventoryQR(String itemId) {
             try {
                 var item = await _context.SurgicalInventory.FindAsync(itemId);
@@ -199,6 +206,7 @@ namespace Project_v1.Controllers {
 
         [HttpPost]
         [Route("AddSurgicalCategory")]
+        [Authorize]
         public async Task<IActionResult> AddSurgicalCategory([FromBody] AddSurgicalCategory category) {
             try {
                 if (category == null || !ModelState.IsValid) {
@@ -218,6 +226,10 @@ namespace Project_v1.Controllers {
                 await _context.SurgicalCategory.AddAsync(newCategory);
                 await _context.SaveChangesAsync();
 
+                var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+                _inventoryLogger.LogInformation($"Added Surgical Category: {newCategory.SurgicalCategoryID} in Lab: {category.LabId} by: {userId}");
+
                 return Ok(new Response { Status = "Success", Message = "Catagory Added Successfully!" });
             } catch (Exception e) {
                 return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
@@ -226,6 +238,7 @@ namespace Project_v1.Controllers {
 
         [HttpPost]
         [Route("AddSurgicalInventoryItem")]
+        [Authorize]
         public async Task<IActionResult> AddSurgicalInventoryItem([FromBody] NewSurgicalItem newSurgicalItem) {
             try {
                 if (newSurgicalItem == null || !ModelState.IsValid) {
@@ -264,7 +277,9 @@ namespace Project_v1.Controllers {
                 await _context.SurgicalInventory.AddAsync(surgicalInventoryItem);
                 await _context.SaveChangesAsync();
 
-                _inventoryLogger.LogInformation($"Added Surgical Inventory Item: {surgicalInventoryId} to {newSurgicalItem.SurgicalCategoryID} Category in Lab: {newSurgicalItem.LabId}");
+                var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+                _inventoryLogger.LogInformation($"Added Surgical Inventory Item: {surgicalInventoryId} to {newSurgicalItem.SurgicalCategoryID} Category in Lab: {newSurgicalItem.LabId} by: {userId}");
 
                 return Ok(new Response { Status = "Success", Message = "Item Added Successfully!" });
             } catch (Exception e) {
@@ -274,6 +289,7 @@ namespace Project_v1.Controllers {
 
         [HttpPost]
         [Route("IssueItem")]
+        [Authorize]
         public async Task<IActionResult> IssueItem([FromBody] IssueItem issueItem) {
             try {
                 var item = await _context.SurgicalInventory.FindAsync(issueItem.ItemId);
@@ -302,7 +318,9 @@ namespace Project_v1.Controllers {
                 await _context.IssuedItems.AddAsync(issuedItem);
                 await _context.SaveChangesAsync();
 
-                _inventoryLogger.LogInformation($"Issued {issueItem.Quantity} units of {issueItem.ItemId} item in Surgical Inventory");
+                var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+                _inventoryLogger.LogInformation($"Issued {issueItem.Quantity} units of {issueItem.ItemId} item in Surgical Inventory by: {userId}");
 
                 return Ok(new Response { Status = "Success", Message = "Item Issued Successfully!" });
             } catch (Exception e) {
@@ -312,6 +330,7 @@ namespace Project_v1.Controllers {
 
         [HttpPatch]
         [Route("AddQuantity/{id}")]
+        [Authorize]
         public async Task<IActionResult> AddQuantity([FromRoute] string id, [FromBody] AddQuantity addQuantity) {
             try {
                 var item = await _context.SurgicalInventory.FindAsync(id);
@@ -324,7 +343,9 @@ namespace Project_v1.Controllers {
 
                 await _context.SaveChangesAsync();
 
-                _inventoryLogger.LogInformation($"Added {addQuantity.Quantity} units of {id} item in Surgical Inventory");
+                var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+                _inventoryLogger.LogInformation($"Added {addQuantity.Quantity} units of {id} item in Surgical Inventory by: {userId}");
 
                 return Ok(new Response { Status = "Success", Message = "Quantity Added Successfully!" });
             } catch (Exception e) {
@@ -334,6 +355,7 @@ namespace Project_v1.Controllers {
 
         [HttpPut]
         [Route("UpdateSurgicalCategory/{id}")]
+        [Authorize]
         public async Task<IActionResult> UpdateGeneralCategory([FromRoute] string id, [FromBody] UpdateSurgicalCategory updatedCategory) {
             try {
                 var surgicalCategory = await _context.SurgicalCategory.FindAsync(id);
@@ -346,6 +368,10 @@ namespace Project_v1.Controllers {
 
                 await _context.SaveChangesAsync();
 
+                var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+                _inventoryLogger.LogInformation($"Update Surgical Category: {id} || Surgical Category Name: {updatedCategory.SurgicalCategoryName} by: {userId}");
+
                 return Ok(new Response { Status = "Success", Message = "Category Updated Successfully!" });
             } catch (Exception e) {
                 return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
@@ -354,6 +380,7 @@ namespace Project_v1.Controllers {
 
         [HttpPut]
         [Route("UpdateSurgicalInventoryItem/{id}")]
+        [Authorize]
         public async Task<IActionResult> UpdateSurgicalInventoryItem([FromRoute] string id, [FromBody] UpdateSurgicalItem updatedItem) {
             try {
                 var surgicalInventoryItem = await _context.SurgicalInventory.FindAsync(id);
@@ -380,7 +407,9 @@ namespace Project_v1.Controllers {
 
                 await _context.SaveChangesAsync();
 
-                _inventoryLogger.LogInformation($"Updated Surgical Inventory Item: {id} in {updatedItem.SurgicalCategoryID} Category");
+                var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+                _inventoryLogger.LogInformation($"Updated Surgical Inventory Item: {id} in {updatedItem.SurgicalCategoryID} Category by: {userId}");
 
                 return Ok(new Response { Status = "Success", Message = "Item Updated Successfully!" });
             } catch (Exception e) {
@@ -390,6 +419,7 @@ namespace Project_v1.Controllers {
 
         [HttpDelete]
         [Route("DeleteSurgicalCategory/{id}")]
+        [Authorize]
         public async Task<IActionResult> DeleteSurgicalCategory([FromRoute] string id) {
             try {
                 var surgicalCategory = await _context.SurgicalCategory.FindAsync(id);
@@ -401,6 +431,10 @@ namespace Project_v1.Controllers {
                 _context.SurgicalCategory.Remove(surgicalCategory);
                 await _context.SaveChangesAsync();
 
+                var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+                _inventoryLogger.LogInformation($"Deleted Surgical Category: {id} by: {userId}");
+
                 return Ok(new Response { Status = "Success", Message = "Category Deleted Successfully!" });
             } catch (Exception e) {
                 return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
@@ -409,6 +443,7 @@ namespace Project_v1.Controllers {
 
         [HttpDelete]
         [Route("DeleteSurgicalInventoryItem/{id}")]
+        [Authorize]
         public async Task<IActionResult> DeleteSurgicalInventoryItem([FromRoute] string id) {
             try {
                 var surgicalInventoryItem = await _context.SurgicalInventory.FindAsync(id);
@@ -422,7 +457,9 @@ namespace Project_v1.Controllers {
                     await _context.SaveChangesAsync();
                 }
 
-                _inventoryLogger.LogInformation($"Deleted Surgical Inventory Item: {id}");
+                var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+                _inventoryLogger.LogInformation($"Deleted Surgical Inventory Item: {id} by: {userId}");
 
                 return Ok(new Response { Status = "Success", Message = "Item Deleted Successfully!" });
             } catch (Exception e) {

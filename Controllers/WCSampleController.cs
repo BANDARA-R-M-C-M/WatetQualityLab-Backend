@@ -13,8 +13,10 @@ using Project_v1.Models.DTOs.Summary;
 using Project_v1.Models.DTOs.WCReport;
 using Project_v1.Services.Filtering;
 using Project_v1.Services.IdGeneratorService;
+using Project_v1.Services.Logging;
 using Project_v1.Services.ReportService;
 using System.Diagnostics.Metrics;
+using System.Security.Claims;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace Project_v1.Controllers {
@@ -29,6 +31,7 @@ namespace Project_v1.Controllers {
         private readonly HttpClient _httpClient;
         private readonly string _googleMapsApiKey;
         private readonly IConfiguration _configuration;
+        private readonly UserActionsLogger _actionsLogger;
 
         public WCSampleController(ApplicationDBContext context,
                                   UserManager<SystemUser> userManager,
@@ -36,7 +39,8 @@ namespace Project_v1.Controllers {
                                   IIdGenerator idGenerator,
                                   IFilter filter,
                                   HttpClient httpClient,
-                                  IConfiguration configuration) {
+                                  IConfiguration configuration,
+                                  UserActionsLogger actionsLogger) {
             _context = context;
             _userManager = userManager;
             _reportService = reportService;
@@ -45,8 +49,9 @@ namespace Project_v1.Controllers {
             _httpClient = httpClient;
             _googleMapsApiKey = configuration["ApiKeys:GoogleMapsApi"];
             _configuration = configuration;
+            _actionsLogger = actionsLogger;
         }
-
+            
         [HttpGet]
         [Route("GetCities")]
         public async Task<IActionResult> GetCities(String query) {
@@ -70,6 +75,7 @@ namespace Project_v1.Controllers {
 
         [HttpGet]
         [Route("GetWCSamples")]
+        [Authorize]
         public async Task<IActionResult> GetWCSamples() {
             try {
                 var samples = await _context.Samples.ToListAsync();
@@ -81,6 +87,7 @@ namespace Project_v1.Controllers {
 
         [HttpGet]
         [Route("getAddedSamples")]
+        [Authorize]
         public async Task<IActionResult> GetAddedSamples([FromQuery] QueryObject query) {
             try {
                 if (query.UserId == null) {
@@ -121,6 +128,7 @@ namespace Project_v1.Controllers {
 
         [HttpGet]
         [Route("GetHistory")]
+        [Authorize]
         public async Task<IActionResult> GetHistory([FromQuery] QueryObject query) {
             try {
                 if (query.UserId == null) {
@@ -161,6 +169,7 @@ namespace Project_v1.Controllers {
 
         [HttpGet]
         [Route("GetPendingSamples")]
+        [Authorize]
         public async Task<IActionResult> GetPendingSamples([FromQuery] QueryObject query) {
             try {
                 if (query.UserId == null) {
@@ -206,6 +215,7 @@ namespace Project_v1.Controllers {
 
         [HttpGet]
         [Route("GetAcceptedSamples")]
+        [Authorize]
         public async Task<IActionResult> GetAcceptedSamples([FromQuery] QueryObject query) {
             try {
                 if (query.UserId == null) {
@@ -251,6 +261,7 @@ namespace Project_v1.Controllers {
 
         [HttpGet]
         [Route("GetSampleCount")]
+        [Authorize]
         public async Task<IActionResult> GetSampleCount([FromQuery] QueryObject query) {
             try {
                 if (query.UserId == null) {
@@ -313,6 +324,7 @@ namespace Project_v1.Controllers {
 
         [HttpGet]
         [Route("GetMonthlySamples")]
+        [Authorize]
         public async Task<IActionResult> GetMonthlySamples([FromQuery] QueryObject query, [FromQuery] int? Month = null, [FromQuery] int? Year = null) {
             try {
                 if (query.UserId == null) {
@@ -371,9 +383,9 @@ namespace Project_v1.Controllers {
             }
         }
 
-
         [HttpGet]
         [Route("GetSampleCountReport")]
+        [Authorize]
         public async Task<IActionResult> GetSampleCountReport([FromQuery] String MltId, [FromQuery] int Year) {
             try {
                 if (MltId == null) {
@@ -412,6 +424,7 @@ namespace Project_v1.Controllers {
 
         [HttpPost]
         [Route("AddWCSample")]
+        [Authorize]
         public async Task<IActionResult> AddWCSample([FromBody] Wc_sample wcsample) {
             try {
                 if (wcsample == null || !ModelState.IsValid) {
@@ -435,6 +448,10 @@ namespace Project_v1.Controllers {
                 await _context.Samples.AddAsync(sample);
                 await _context.SaveChangesAsync();
 
+                var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+                _actionsLogger.LogInformation($"Added WC Sample: {sample.SampleId} Added by: {userId}");
+
                 return Ok(new Response { Status = "Success", Message = "WC Sample added successfully!" });
             } catch (Exception e) {
                 return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
@@ -443,6 +460,7 @@ namespace Project_v1.Controllers {
 
         [HttpPut]
         [Route("updateWCSample/{id}")]
+        [Authorize]
         public async Task<IActionResult> UpdateWCSample([FromRoute] String id, [FromBody] Wc_updatedSample updatedSample) {
             try {
                 var sample = await _context.Samples.FindAsync(id);
@@ -463,6 +481,10 @@ namespace Project_v1.Controllers {
 
                 await _context.SaveChangesAsync();
 
+                var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+                _actionsLogger.LogInformation($"Updated WC Sample: {sample.SampleId} Updated by: {userId}");
+
                 return Ok(new Response { Status = "Success", Message = "Sample updated successfully!" });
             } catch (Exception e) {
                 return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
@@ -471,6 +493,7 @@ namespace Project_v1.Controllers {
 
         [HttpPut]
         [Route("updateSampleStatus")]
+        [Authorize]
         public async Task<IActionResult> UpdateSampleStatus([FromBody] SampleStatus sampleStatus) {
             try {
                 var sampleToUpdate = await _context.Samples.FindAsync(sampleStatus.SampleId);
@@ -484,6 +507,10 @@ namespace Project_v1.Controllers {
 
                 await _context.SaveChangesAsync();
 
+                var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+                _actionsLogger.LogInformation($"Updated WC Sample Status: {sampleStatus.SampleId} to: {sampleStatus.Status} || Comment: {sampleStatus.Comment} Updated by: {userId}");
+
                 return Ok(new Response { Status = "Success", Message = "Sample status updated successfully!" });
             } catch (Exception e) {
                 return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
@@ -492,6 +519,7 @@ namespace Project_v1.Controllers {
 
         [HttpDelete]
         [Route("deleteWCSample/{id}")]
+        [Authorize]
         public async Task<IActionResult> DeleteWCSample([FromRoute] String id) {
             try {
                 var sample = await _context.Samples.FindAsync(id);
@@ -502,6 +530,10 @@ namespace Project_v1.Controllers {
 
                 _context.Samples.Remove(sample);
                 await _context.SaveChangesAsync();
+
+                var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+                _actionsLogger.LogInformation($"Deleted WC Sample: {id} Deleted by: {userId}");
 
                 return Ok(new Response { Status = "Success", Message = "Sample deleted successfully!" });
             } catch (Exception e) {

@@ -14,9 +14,11 @@ using Project_v1.Models.DTOs.WCReport;
 using Project_v1.Services.Filtering;
 using Project_v1.Services.FirebaseStrorage;
 using Project_v1.Services.IdGeneratorService;
+using Project_v1.Services.Logging;
 using Project_v1.Services.ReportService;
 using System.Composition;
 using System.Linq;
+using System.Security.Claims;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace Project_v1.Controllers {
@@ -30,23 +32,27 @@ namespace Project_v1.Controllers {
         private readonly IIdGenerator _idGenerator;
         private readonly IStorageService _storageService;
         private readonly IFilter _filter;
+        private readonly UserActionsLogger _actionsLogger;
 
         public WCReportController(ApplicationDBContext context,
                                   UserManager<SystemUser> userManager,
                                   IReportService reportService,
                                   IIdGenerator idGenerator,
                                   IStorageService storageService,
-                                  IFilter filter) {
+                                  IFilter filter,
+                                  UserActionsLogger actionsLogger) {
             _context = context;
             _userManager = userManager;
             _reportService = reportService;
             _idGenerator = idGenerator;
             _storageService = storageService;
             _filter = filter;
+            _actionsLogger = actionsLogger;
         }
 
         [HttpGet]
         [Route("GetWCReports")]
+        [Authorize]
         public async Task<IActionResult> GetWCReports() {
             try {
                 var reports = await _context.Reports.ToListAsync();
@@ -58,6 +64,7 @@ namespace Project_v1.Controllers {
 
         [HttpGet]
         [Route("getAddedReports")]
+        [Authorize]
         public async Task<IActionResult> GetAddedReports([FromQuery] QueryObject query) {
             try {
                 if (query.UserId == null) {
@@ -105,6 +112,7 @@ namespace Project_v1.Controllers {
 
         [HttpGet]
         [Route("newreports")]
+        [Authorize]
         public async Task<IActionResult> GetNewReports([FromQuery] QueryObject query) {
             try {
                 if (query.UserId == null) {
@@ -182,6 +190,7 @@ namespace Project_v1.Controllers {
 
         [HttpGet]
         [Route("GetMOHAreaDetails")]
+        [Authorize]
         public async Task<IActionResult> GetReportDetails([FromQuery] QueryObject query, [FromQuery] int? Month = null, [FromQuery] int? Year = null) {
             try {
                 if (query.UserId == null) {
@@ -222,6 +231,7 @@ namespace Project_v1.Controllers {
 
         [HttpGet]
         [Route("GetReportPDF")]
+        [Authorize]
         public async Task<IActionResult> GetReportPDF(String reportId) {
             try {
                 var item = await _context.Reports.FindAsync(reportId);
@@ -243,6 +253,7 @@ namespace Project_v1.Controllers {
 
         [HttpPost]
         [Route("AddWCReport")]
+        [Authorize]
         public async Task<IActionResult> AddWCReport([FromBody] Wc_report wcreport) {
             try {
                 if (wcreport == null || !ModelState.IsValid) {
@@ -306,6 +317,10 @@ namespace Project_v1.Controllers {
                 await _context.Reports.AddAsync(report);
                 await _context.SaveChangesAsync();
 
+                var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+                _actionsLogger.LogInformation($"Added Water Quality Report: {reportId} Added by: {userId}");
+
                 return Ok(new Response { Status = "Success", Message = "WC Report added successfully!" });
             } catch (Exception e) {
                 return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
@@ -314,6 +329,7 @@ namespace Project_v1.Controllers {
 
         [HttpPut]
         [Route("updateWCReport/{id}")]
+        [Authorize]
         public async Task<IActionResult> UpdateWCReport([FromRoute] String id, [FromBody] Wc_updatedReport updatedReport) {
             try {
                 var report = await _context.Reports.FindAsync(id);
@@ -373,6 +389,10 @@ namespace Project_v1.Controllers {
                     await _context.SaveChangesAsync();
                 }
 
+                var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+                _actionsLogger.LogInformation($"Updated Water Quality Report: {id} Updated by: {userId}");
+
                 return Ok(new Response { Status = "Success", Message = "Report updated successfully!" });
             } catch (Exception e) {
                 return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
@@ -381,6 +401,7 @@ namespace Project_v1.Controllers {
 
         [HttpDelete]
         [Route("deleteWCReport/{id}")]
+        [Authorize]
         public async Task<IActionResult> DeleteWCReport([FromRoute] String id) {
             try {
                 var report = await _context.Reports.FindAsync(id);
@@ -393,6 +414,10 @@ namespace Project_v1.Controllers {
                     _context.Reports.Remove(report);
                     await _context.SaveChangesAsync();
                 }
+
+                var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+                _actionsLogger.LogInformation($"Deleted Water Quality Report: {id} Deleted by: {userId}");
 
                 return Ok(new Response { Status = "Success", Message = "Report deleted successfully!" });
             } catch (Exception e) {

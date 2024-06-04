@@ -10,6 +10,8 @@ using Project_v1.Models.DTOs.MediaQC;
 using Project_v1.Models.DTOs.Response;
 using Project_v1.Services.Filtering;
 using Project_v1.Services.IdGeneratorService;
+using Project_v1.Services.Logging;
+using System.Security.Claims;
 
 namespace Project_v1.Controllers {
     [Route("api/[controller]")]
@@ -20,15 +22,18 @@ namespace Project_v1.Controllers {
         private readonly UserManager<SystemUser> _userManager;
         private readonly IIdGenerator _idGenerator;
         private readonly IFilter _filter;
+        private readonly UserActionsLogger _actionsLogger;
 
         public MediaQualityControlController(ApplicationDBContext context,
                                              UserManager<SystemUser> userManager,
                                              IIdGenerator idGenerator,
-                                             IFilter filter) {
+                                             IFilter filter,
+                                             UserActionsLogger actionsLogger) {
             _context = context;
             _userManager = userManager;
             _idGenerator = idGenerator;
             _filter = filter;
+            _actionsLogger = actionsLogger;
         }
 
         [HttpGet]
@@ -84,8 +89,10 @@ namespace Project_v1.Controllers {
                     return NotFound();
                 }
 
+                var mediaQualityRecord = _idGenerator.GenerateMediaQualityControlId();
+
                 var mediaQualityControlRecord = new MediaQualityControl {
-                    MediaQualityControlID = _idGenerator.GenerateMediaQualityControlId(),
+                    MediaQualityControlID = mediaQualityRecord,
                     MediaId = newRecord.MediaId,
                     DateTime = newRecord.DateTime,
                     Sterility = newRecord.Sterility,
@@ -97,8 +104,11 @@ namespace Project_v1.Controllers {
                 };
 
                 await _context.MediaQualityControls.AddAsync(mediaQualityControlRecord);
-
                 await _context.SaveChangesAsync();
+
+                var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+                _actionsLogger.LogInformation($"Added Media Quality Control Record: {mediaQualityRecord} Added by: {userId}");
 
                 return Ok(new Response { Status = "Success", Message = "Media Quality Control Record added successfully!" });
             } catch (Exception e) {
@@ -126,6 +136,10 @@ namespace Project_v1.Controllers {
 
                 await _context.SaveChangesAsync();
 
+                var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+                _actionsLogger.LogInformation($"Updated Media Quality Control Record: {id} Updated by: {userId}");
+
                 return Ok(new Response { Status = "Success", Message = "Media Quality Control Record updated successfully!" });
             } catch (Exception e) {
                 return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
@@ -144,8 +158,11 @@ namespace Project_v1.Controllers {
                 }
 
                 _context.MediaQualityControls.Remove(mediaQualityControlRecord);
-
                 await _context.SaveChangesAsync();
+
+                var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+                _actionsLogger.LogInformation($"Deleted Media Quality Control Record: {id} Deleted by: {userId}");
 
                 return Ok(new Response { Status = "Success", Message = "Media Quality Control Record deleted successfully!" });
             } catch (Exception e) {

@@ -135,7 +135,7 @@ namespace Project_v1.Controllers {
 
         [HttpGet]
         [Route("getMLTs")]
-        //[Authorize]
+        [Authorize]
         public async Task<IActionResult> GetMLTs([FromQuery] QueryObject query) {
             try {
                 var mlts = await _userManager.GetUsersInRoleAsync("MLT");
@@ -163,7 +163,7 @@ namespace Project_v1.Controllers {
 
         [HttpGet]
         [Route("getPHIs")]
-        //[Authorize]
+        [Authorize]
         public async Task<IActionResult> GetPHIs([FromQuery] QueryObject query) {
             try {
                 var phis = await _userManager.GetUsersInRoleAsync("PHI");
@@ -191,7 +191,7 @@ namespace Project_v1.Controllers {
 
         [HttpGet]
         [Route("getMOHSupervisors")]
-        //[Authorize]
+        [Authorize]
         public async Task<IActionResult> GetMOHSupervisors([FromQuery] QueryObject query) {
             try {
                 var mohsupervisors = await _userManager.GetUsersInRoleAsync("MOH_Supervisor");

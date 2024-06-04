@@ -11,6 +11,8 @@ using Project_v1.Models.DTOs.InstrumentalQC;
 using Project_v1.Models.DTOs.Response;
 using Project_v1.Services.Filtering;
 using Project_v1.Services.IdGeneratorService;
+using Project_v1.Services.Logging;
+using System.Security.Claims;
 
 namespace Project_v1.Controllers {
     [Route("api/[controller]")]
@@ -21,15 +23,18 @@ namespace Project_v1.Controllers {
         private readonly UserManager<SystemUser> _userManager;
         private readonly IIdGenerator _idGenerator;
         private readonly IFilter _filter;
+        private readonly UserActionsLogger _actionsLogger;
 
         public InstrumentalQualityControlController(ApplicationDBContext context,
                                                     UserManager<SystemUser> userManager,
                                                     IIdGenerator idGenerator,
-                                                    IFilter filter) {
+                                                    IFilter filter,
+                                                    UserActionsLogger actionsLogger) {
             _context = context;
             _userManager = userManager;
             _idGenerator = idGenerator;
             _filter = filter;
+            _actionsLogger = actionsLogger;
         }
 
         [HttpGet]
@@ -87,8 +92,10 @@ namespace Project_v1.Controllers {
                     return NotFound();
                 }
 
+                var instrumentQualityId = _idGenerator.GenerateInstrumentalQualityControlId();
+
                 var newQCRecord = new InstrumentalQualityControl {
-                    InstrumentalQualityControlID = _idGenerator.GenerateInstrumentalQualityControlId(),
+                    InstrumentalQualityControlID = instrumentQualityId,
                     DateTime = newRecord.DateTime,
                     InstrumentId = newRecord.InstrumentId,
                     TemperatureFluctuation = newRecord.TemperatureFluctuation,
@@ -102,8 +109,11 @@ namespace Project_v1.Controllers {
                 };
 
                 await _context.InstrumentalQualityControls.AddAsync(newQCRecord);
-
                 await _context.SaveChangesAsync();
+
+                var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+                _actionsLogger.LogInformation($"Added Instrumental Quality Record: {instrumentQualityId} Added by: {userId}");
 
                 return Ok(new Response { Status = "Success", Message = "Instrumental Quality Control Record added successfully!" });
             } catch (Exception e) {
@@ -113,7 +123,6 @@ namespace Project_v1.Controllers {
 
         [HttpPut]
         [Route("UpdateInstrumentalQualityControlRecord/{id}")]
-        [Authorize]
         public async Task<IActionResult> UpdateInstrumentalQualityControlRecord([FromRoute] String id, [FromBody] UpdateInstrumentalQC instrumentalQC) {
             try {
                 var qcRecord = await _context.InstrumentalQualityControls.FindAsync(id);
@@ -132,6 +141,11 @@ namespace Project_v1.Controllers {
                 qcRecord.Remarks = instrumentalQC.Remarks;
 
                 await _context.SaveChangesAsync();
+
+                var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+                _actionsLogger.LogInformation($"Updated Instrumental Quality Record: {id} Updated by: {userId}");
+
                 return Ok(new Response { Status = "Success", Message = "Instrumental Quality Control Record updated successfully!" });
             } catch (Exception e) {
                 return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
@@ -150,8 +164,11 @@ namespace Project_v1.Controllers {
                 }
 
                 _context.InstrumentalQualityControls.Remove(qcRecord);
-
                 await _context.SaveChangesAsync();
+
+                var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+                _actionsLogger.LogInformation($"Deleted Instrumental Quality Record: {id} Deleted by: {userId}");
 
                 return Ok(new Response { Status = "Success", Message = "Instrumental Quality Control Record deleted successfully!" });
             } catch (Exception e) {

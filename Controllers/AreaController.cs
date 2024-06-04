@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -37,6 +38,7 @@ namespace Project_v1.Controllers {
 
         [HttpGet]
         [Route("GetMOHAreas")]
+        [Authorize]
         public async Task<IActionResult> GetMOHAreas([FromQuery] QueryObject query) {
             try {
                 var mohareasList = _context.MOHAreas
@@ -57,6 +59,7 @@ namespace Project_v1.Controllers {
 
         [HttpGet]
         [Route("GetPHIDetails")]
+        [Authorize]
         public async Task<IActionResult> GetPHIDetails(String phiId) {
             try {
                 var phi = await _userManager.FindByIdAsync(phiId);
@@ -82,6 +85,7 @@ namespace Project_v1.Controllers {
 
         [HttpGet]
         [Route("GetPHIAreas")]
+        [Authorize]
         public async Task<IActionResult> GetPHIAreas([FromQuery] QueryObject query) {
             try {
                 var phiaAreasList = _context.PHIAreas
@@ -102,6 +106,7 @@ namespace Project_v1.Controllers {
 
         [HttpGet]
         [Route("GetLabs")]
+        [Authorize]
         public async Task<IActionResult> GetLabs([FromQuery] QueryObject query) {
             try {
                 var labsList = _context.Labs
@@ -122,6 +127,7 @@ namespace Project_v1.Controllers {
 
         [HttpPost]
         [Route("AddMOHArea")]
+        [Authorize]
         public async Task<IActionResult> AddMOHArea([FromBody] Moh_area moh_area) {
             try {
                 if (moh_area == null || !ModelState.IsValid) {
@@ -151,6 +157,7 @@ namespace Project_v1.Controllers {
 
         [HttpPost]
         [Route("AddPHIArea")]
+        [Authorize]
         public async Task<IActionResult> AddPHIArea([FromBody] Phi_area phia_area) {
             try {
                 if (phia_area == null || !ModelState.IsValid) {
@@ -186,6 +193,7 @@ namespace Project_v1.Controllers {
 
         [HttpPost]
         [Route("AddLab")]
+        [Authorize]
         public async Task<IActionResult> AddLab([FromBody] lab lab) {
             try {
                 if (lab == null || !ModelState.IsValid) {
@@ -221,6 +229,7 @@ namespace Project_v1.Controllers {
 
         [HttpPut]
         [Route("UpdatePHIArea/{id}")]
+        [Authorize]
         public async Task<IActionResult> UpdatePHIArea([FromRoute] String id, [FromBody] UpdatedPHIArea phiaArea) {
             try {
 
@@ -251,6 +260,7 @@ namespace Project_v1.Controllers {
 
         [HttpPut]
         [Route("UpdateMOHArea/{id}")]
+        [Authorize]
         public async Task<IActionResult> UpdateMOHArea([FromRoute] String id, [FromBody] UpdatedMOHArea mohArea) {
             try {
 
@@ -281,6 +291,7 @@ namespace Project_v1.Controllers {
 
         [HttpPut]
         [Route("UpdateLab/{id}")]
+        [Authorize]
         public async Task<IActionResult> UpdateLab([FromRoute] String id, [FromBody] UpdatedLab lab) {
             try {
 
@@ -312,6 +323,7 @@ namespace Project_v1.Controllers {
 
         [HttpDelete]
         [Route("DeleteMOHArea/{id}")]
+        [Authorize]
         public async Task<IActionResult> DeleteMOHArea([FromRoute] string id) {
             try {
                 var moharea = await _context.MOHAreas.FindAsync(id);
@@ -334,6 +346,7 @@ namespace Project_v1.Controllers {
 
         [HttpDelete]
         [Route("DeletePHIArea/{id}")]
+        [Authorize]
         public async Task<IActionResult> DeletePHIArea([FromRoute] string id) {
             try {
                 var phiaArea = await _context.PHIAreas.FindAsync(id);
@@ -356,6 +369,7 @@ namespace Project_v1.Controllers {
 
         [HttpDelete]
         [Route("DeleteLab/{id}")]
+        [Authorize]
         public async Task<IActionResult> DeleteLab([FromRoute] string id) {
             try {
                 var lab = await _context.Labs.FindAsync(id);

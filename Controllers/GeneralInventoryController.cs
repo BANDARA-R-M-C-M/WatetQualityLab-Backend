@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -46,6 +47,7 @@ namespace Project_v1.Controllers {
 
         [HttpGet]
         [Route("GetGeneralCategories")]
+        [Authorize]
         public async Task<ActionResult> GetGeneralCategories([FromQuery] QueryObject query) {
             try {
                 if (query.UserId == null) {
@@ -85,6 +87,7 @@ namespace Project_v1.Controllers {
 
         [HttpGet]
         [Route("GetGeneralInventoryItem")]
+        [Authorize]
         public async Task<ActionResult> GetGeneralInventoryItem(String itemId) {
             try {
                 var today = DateOnly.FromDateTime(DateTime.Now);
@@ -113,6 +116,7 @@ namespace Project_v1.Controllers {
 
         [HttpGet]
         [Route("GetGeneralInventoryItems")]
+        [Authorize]
         public async Task<ActionResult> GetGeneralInventoryItems([FromQuery] QueryObject query) {
             try {
                 if (query.UserId == null || query.CategoryId == null) {
@@ -177,6 +181,7 @@ namespace Project_v1.Controllers {
 
         [HttpGet]
         [Route("GetGeneralInventoryQR")]
+        [Authorize]
         public async Task<IActionResult> GetSurgicalInventoryQR(String itemId) {
             try {
                 var item = await _context.GeneralInventory.FindAsync(itemId);
@@ -197,6 +202,7 @@ namespace Project_v1.Controllers {
 
         [HttpPost]
         [Route("AddGeneralCategory")]
+        [Authorize]
         public async Task<IActionResult> AddGeneralCategory([FromBody] AddGeneralCategory category) {
             try {
                 if (category == null || !ModelState.IsValid) {
@@ -230,6 +236,7 @@ namespace Project_v1.Controllers {
 
         [HttpPost]
         [Route("AddGeneralInventoryItem")]
+        [Authorize]
         public async Task<IActionResult> AddGeneralInventoryItem([FromBody] NewGeneralItem newGeneralItem) {
             try {
 
@@ -284,6 +291,7 @@ namespace Project_v1.Controllers {
 
         [HttpPut]
         [Route("UpdateGeneralCategory/{id}")]
+        [Authorize]
         public async Task<IActionResult> UpdateGeneralCategory([FromRoute] string id, [FromBody] UpdateGeneralCategory updatedCategory) {
             try {
                 var generalCategory = await _context.GeneralCategory.FindAsync(id);
@@ -308,6 +316,7 @@ namespace Project_v1.Controllers {
 
         [HttpPut]
         [Route("UpdateGeneralInventoryItem/{id}")]
+        [Authorize]
         public async Task<IActionResult> UpdateGeneralInventoryItem([FromRoute] string id, [FromBody] UpdateGeneralItem newGeneralItem) {
             try {
                 var generalInventoryItem = await _context.GeneralInventory.FindAsync(id);
@@ -345,6 +354,7 @@ namespace Project_v1.Controllers {
 
         [HttpDelete]
         [Route("DeleteGeneralCategory/{id}")]
+        [Authorize]
         public async Task<IActionResult> DeleteGeneralCategory([FromRoute] string id) {
             try {
                 var generalCategory = await _context.GeneralCategory.FindAsync(id);
@@ -356,7 +366,9 @@ namespace Project_v1.Controllers {
                 _context.GeneralCategory.Remove(generalCategory);
                 await _context.SaveChangesAsync();
 
-                //_inventoryLogger.LogInformation($"Delete General Category: {id} Deleted by: {}");
+                var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+                _inventoryLogger.LogInformation($"Delete General Category: {id} Deleted by: {userId}");
 
                 return Ok(new Response { Status = "Success", Message = "Category Deleted Successfully!" });
             } catch (Exception e) {
@@ -366,6 +378,7 @@ namespace Project_v1.Controllers {
 
         [HttpDelete]
         [Route("DeleteGeneralInventoryItem/{id}")]
+        [Authorize]
         public async Task<IActionResult> DeleteGeneralInventoryItem([FromRoute] string id) {
             try {
                 var generalInventoryItem = await _context.GeneralInventory.FindAsync(id);
@@ -379,7 +392,9 @@ namespace Project_v1.Controllers {
                     await _context.SaveChangesAsync();
                 }
 
-                _inventoryLogger.LogInformation($"Delete General Inventory Item: {id}");
+                var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+                _inventoryLogger.LogInformation($"Delete General Inventory Item: {id} by: {userId}");
 
                 return Ok(new Response { Status = "Success", Message = "Item Deleted Successfully!" });
             } catch (Exception e) {

@@ -29,6 +29,7 @@ namespace Project_v1.Controllers {
 
         [HttpPost]
         [Route("AssignMLTtoLabs")]
+        [Authorize]
         public async Task<IActionResult> AssignMLTtoLabs([FromBody] mltLab mltlab) {
             try {
                 var mlt = await _userManager.FindByIdAsync(mltlab.mltId);
@@ -56,6 +57,7 @@ namespace Project_v1.Controllers {
 
         [HttpPost]
         [Route("AssignPHItoPHIAreas")]
+        [Authorize]
         public async Task<IActionResult> AssignPHItoPHIArea([FromBody] phiPhiarea phi_phiarea) {
             try {
                 var phi = await _userManager.FindByIdAsync(phi_phiarea.phiId);
@@ -83,6 +85,7 @@ namespace Project_v1.Controllers {
 
         [HttpPost]
         [Route("AssignMOHSupervisortoMOHAreas")]
+        [Authorize]
         public async Task<IActionResult> AssignMOHSupervisortoMOHArea([FromBody] mohMoharea moh_moharea) {
             try {
                 var moh = await _userManager.FindByIdAsync(moh_moharea.mohSupervisorId);
