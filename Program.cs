@@ -17,6 +17,7 @@ using Serilog;
 using static Serilog.Sinks.MSSqlServer.ColumnOptions;
 using Serilog.Events;
 using Project_v1.Services.Logging;
+using Project_v1.Services.EmailService;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -140,6 +141,8 @@ builder.Services.AddScoped<IFilter, Filter>();
 
 builder.Services.AddSingleton<InventoryOperationsLogger>(new InventoryOperationsLogger(inventoryLogger));
 builder.Services.AddSingleton<UserActionsLogger>(new UserActionsLogger(userActionLogger));
+
+builder.Services.AddTransient<EmailService>();
 
 var app = builder.Build();
 

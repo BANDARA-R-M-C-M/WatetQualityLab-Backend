@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Project_v1.Data;
 
@@ -11,9 +12,11 @@ using Project_v1.Data;
 namespace Project_v1.Migrations
 {
     [DbContext(typeof(ApplicationDBContext))]
-    partial class ApplicationDBContextModelSnapshot : ModelSnapshot
+    [Migration("20240605072946_M25")]
+    partial class M25
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -443,6 +446,10 @@ namespace Project_v1.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("CommentId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
                     b.Property<bool>("Contaminated")
                         .HasColumnType("bit");
 
@@ -482,6 +489,8 @@ namespace Project_v1.Migrations
                         .HasColumnType("nvarchar(450)");
 
                     b.HasKey("ReportRefId");
+
+                    b.HasIndex("CommentId");
 
                     b.HasIndex("LabId");
 
@@ -812,6 +821,12 @@ namespace Project_v1.Migrations
 
             modelBuilder.Entity("Project_v1.Models.Report", b =>
                 {
+                    b.HasOne("Project_v1.Models.Comment", "Comment")
+                        .WithMany("Reports")
+                        .HasForeignKey("CommentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("Project_v1.Models.Lab", "Lab")
                         .WithMany("Reports")
                         .HasForeignKey("LabId")
@@ -823,6 +838,8 @@ namespace Project_v1.Migrations
                         .HasForeignKey("SampleId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("Comment");
 
                     b.Navigation("Lab");
 
@@ -881,6 +898,11 @@ namespace Project_v1.Migrations
                     b.Navigation("MOHArea");
 
                     b.Navigation("PHIArea");
+                });
+
+            modelBuilder.Entity("Project_v1.Models.Comment", b =>
+                {
+                    b.Navigation("Reports");
                 });
 
             modelBuilder.Entity("Project_v1.Models.GeneralCategory", b =>

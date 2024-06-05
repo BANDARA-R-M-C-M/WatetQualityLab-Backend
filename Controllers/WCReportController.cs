@@ -97,6 +97,7 @@ namespace Project_v1.Controllers {
                         report.EcoliCount,
                         report.AppearanceOfSample,
                         report.Remarks,
+                        report.Contaminated,
                         report.LabId,
                         report.ReportUrl,
                         report.Sample.PHIArea.MOHArea.MOHAreaName
@@ -189,6 +190,48 @@ namespace Project_v1.Controllers {
         }
 
         [HttpGet]
+        [Route("GetContaminationDetails")]
+        public async Task<IActionResult> GetContaminationDetails([FromQuery] QueryObject query, [FromQuery] int? Month = null, [FromQuery] int? Year = null) {
+            try {
+                if (query.UserId == null) {
+                    return NotFound();
+                }
+
+                var moh = await _userManager.FindByIdAsync(query.UserId);
+
+                if (moh == null || moh.MOHAreaId == null) {
+                    return NotFound();
+                }
+
+                var phiAreaList = _context.PHIAreas
+                .Where(phi => phi.MOHAreaId == moh.MOHAreaId)
+                .Select(phi => new {
+                    phi.PHIAreaID,
+                    phi.PHIAreaName,
+                    phi.MOHArea.MOHAreaName,
+                    ContaminationDetails = _context.Reports
+                        .Where(report => report.Sample.PHIAreaId == phi.PHIAreaID &&
+                                (Month == null || report.IssuedDate.Month == Month) &&
+                                (Year == null || report.IssuedDate.Year == Year))
+                        .Select(report => new {
+                            report.Contaminated,
+                            report.IssuedDate
+                        }).ToList(),
+                    ReportAvailableForMonth = _context.Reports
+                        .Any(report => report.Sample.PHIAreaId == phi.PHIAreaID &&
+                                        (Month == null || report.IssuedDate.Month == Month) &&
+                                        (Year == null || report.IssuedDate.Year == Year))
+                });
+
+                var filteredResult = await _filter.Filtering(phiAreaList, query);
+
+                return Ok(filteredResult);
+            } catch (Exception e) {
+                return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
+            }
+        }
+
+        [HttpGet]
         [Route("GetMOHAreaDetails")]
         [Authorize]
         public async Task<IActionResult> GetReportDetails([FromQuery] QueryObject query, [FromQuery] int? Month = null, [FromQuery] int? Year = null) {
@@ -250,6 +293,17 @@ namespace Project_v1.Controllers {
             }
         }
 
+        [HttpGet]
+        [Route("GetComments")]
+        [Authorize]
+        public async Task<IActionResult> GetComments() {
+            try {
+                var comments = await _context.Comments.ToListAsync();
+                return Ok(comments);
+            } catch (Exception e) {
+                return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
+            }
+        }
 
         [HttpPost]
         [Route("AddWCReport")]
@@ -327,6 +381,28 @@ namespace Project_v1.Controllers {
             }
         }
 
+        [HttpPost]
+        [Route("AddComment")]
+        [Authorize]
+        public async Task<IActionResult> AddComment([FromBody] Comment comment) {
+            try {
+                if (comment == null || !ModelState.IsValid) {
+                    return BadRequest(new Response { Status = "Error", Message = "Invalid comment data!" });
+                }
+
+                await _context.Comments.AddAsync(comment);
+                await _context.SaveChangesAsync();
+
+                var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+                _actionsLogger.LogInformation($"Added Comment: {comment.CommentId} Added by: {userId}");
+
+                return Ok(new Response { Status = "Success", Message = "Comment added successfully!" });
+            } catch (Exception e) {
+                return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
+            }
+        }
+
         [HttpPut]
         [Route("updateWCReport/{id}")]
         [Authorize]
@@ -399,6 +475,35 @@ namespace Project_v1.Controllers {
             }
         }
 
+        [HttpPut]
+        [Route("updateComment/{id}")]
+        [Authorize]
+        public async Task<IActionResult> UpdateComment([FromRoute] String id, [FromBody] Comment comment) {
+            try {
+                var existingComment = await _context.Comments.FindAsync(id);
+
+                if (existingComment == null) {
+                    return NotFound(new Response { Status = "Error", Message = "Comment not found!" });
+                }
+
+                if (comment == null || !ModelState.IsValid) {
+                    return BadRequest(new Response { Status = "Error", Message = "Invalid comment data!" });
+                }
+
+                existingComment.Feedback = comment.Feedback;
+
+                await _context.SaveChangesAsync();
+
+                var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+                _actionsLogger.LogInformation($"Updated Comment: {id} Updated by: {userId}");
+
+                return Ok(new Response { Status = "Success", Message = "Comment updated successfully!" });
+            } catch (Exception e) {
+                return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
+            }
+        }
+
         [HttpDelete]
         [Route("deleteWCReport/{id}")]
         [Authorize]
@@ -420,6 +525,30 @@ namespace Project_v1.Controllers {
                 _actionsLogger.LogInformation($"Deleted Water Quality Report: {id} Deleted by: {userId}");
 
                 return Ok(new Response { Status = "Success", Message = "Report deleted successfully!" });
+            } catch (Exception e) {
+                return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
+            }
+        }
+
+        [HttpDelete]
+        [Route("deleteComment/{id}")]
+        [Authorize]
+        public async Task<IActionResult> DeleteComment([FromRoute] String id) {
+            try {
+                var comment = await _context.Comments.FindAsync(id);
+
+                if (comment == null) {
+                    return NotFound(new Response { Status = "Error", Message = "Comment not found!" });
+                }
+
+                _context.Comments.Remove(comment);
+                await _context.SaveChangesAsync();
+
+                var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+                _actionsLogger.LogInformation($"Deleted Comment: {id} Deleted by: {userId}");
+
+                return Ok(new Response { Status = "Success", Message = "Comment deleted successfully!" });
             } catch (Exception e) {
                 return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
             }

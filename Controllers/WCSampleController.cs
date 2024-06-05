@@ -51,7 +51,7 @@ namespace Project_v1.Controllers {
             _configuration = configuration;
             _actionsLogger = actionsLogger;
         }
-            
+
         [HttpGet]
         [Route("GetCities")]
         public async Task<IActionResult> GetCities(String query) {
@@ -378,6 +378,49 @@ namespace Project_v1.Controllers {
                 var filteredSamples = await _filter.Filtering(phiAreasList, query);
 
                 return Ok(filteredSamples);
+            } catch (Exception e) {
+                return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
+            }
+        }
+
+        [HttpGet]
+        [Route("GetSampleCountDetails")]
+        [Authorize]
+        public async Task<IActionResult> GetSampleCountDetails([FromQuery] QueryObject query) {
+            try {
+                if (query.UserId == null) {
+                    return NotFound();
+                }
+
+                var phi = await _userManager.FindByIdAsync(query.UserId);
+
+                if (phi == null) {
+                    return NotFound($"User with username '{query.UserId}' not found.");
+                }
+
+                if (phi.PHIAreaId == null) {
+                    return NotFound($"User with username '{query.UserId}' have a PHI Area assigned.");
+                }
+
+                var sampleCount = await _context.Samples
+                .Where(s => s.PhiId == query.UserId)
+                .Include(p => p.PHIArea)
+                .GroupBy(s => s.PHIArea.PHIAreaName)
+                .Select(g => new {
+                    PHIAreaName = g.Key,
+                    acceptedsamples = g.Where(s => s.Acceptance == "Accepted").Count(),
+                    rejectedsamples = g.Where(s => s.Acceptance == "Rejected").Count(),
+                    pendingsamples = g.Where(s => s.Acceptance == "Pending").Count(),
+                    totalsamples = g.Count()
+                })
+                .ToListAsync();
+
+                var totalSampleCount = sampleCount.Sum(g => g.totalsamples);
+
+                return Ok(new {
+                    SampleCounts = sampleCount,
+                    TotalSampleCount = totalSampleCount
+                });
             } catch (Exception e) {
                 return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
             }

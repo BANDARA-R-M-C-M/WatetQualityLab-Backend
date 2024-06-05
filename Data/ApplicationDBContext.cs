@@ -15,6 +15,7 @@ namespace Project_v1.Data
         public DbSet<MOHArea> MOHAreas { get; set; }
         public DbSet<Sample> Samples { get; set; }
         public DbSet<Report> Reports { get; set; }
+        public DbSet<Comment> Comments { get; set; }
         public DbSet<GeneralInventory> GeneralInventory { get; set; }
         public DbSet<GeneralCategory> GeneralCategory { get; set; }
         public DbSet<SurgicalInventory> SurgicalInventory { get; set; }
