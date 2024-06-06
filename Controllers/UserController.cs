@@ -10,6 +10,7 @@ using Project_v1.Models.DTOs.Helper;
 using Project_v1.Models.DTOs.Login;
 using Project_v1.Models.DTOs.Response;
 using Project_v1.Models.DTOs.Signup;
+using Project_v1.Models.DTOs.User;
 using Project_v1.Services.Filtering;
 using Project_v1.Services.Logging;
 using Project_v1.Services.TokenService;
@@ -40,6 +41,31 @@ namespace Project_v1.Controllers {
             _tokenService = tokenService;
             _filter = filter;
             _actionsLogger = actionsLogger;
+        }
+
+        [HttpGet]
+        [Route("getUserDetails")]
+        [Authorize]
+        public async Task<IActionResult> GetUserDetails() {
+            try {
+                var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+                var user = await _userManager.FindByIdAsync(userId);
+
+                if (user == null) {
+                    return StatusCode(StatusCodes.Status404NotFound, new Response { Status = "Error", Message = "User not found!" });
+                }
+
+                return Ok(new {
+                    Username = user.UserName,
+                    UserId = user.Id,
+                    user.Email,
+                    user.PhoneNumber,
+                    user.ImageUrl
+                });
+            } catch (Exception e) {
+                return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
+            }
         }
 
         [HttpPost]
@@ -86,7 +112,7 @@ namespace Project_v1.Controllers {
 
         [HttpPost]
         [Route("signup")]
-        [Authorize]
+        //[Authorize]
         public async Task<IActionResult> Signup([FromBody] Signup registeredUser) {
             try {
                 if (registeredUser == null || !ModelState.IsValid) {
@@ -220,7 +246,7 @@ namespace Project_v1.Controllers {
         [HttpPut]
         [Route("updateUser/{id}")]
         [Authorize]
-        public async Task<IActionResult> UpdateUser([FromRoute] String id, [FromBody] SystemUser updatedUser) {
+        public async Task<IActionResult> UpdateUser([FromRoute] String id, [FromBody] UserDetails updatedUser) {
             try {
                 var user = await _userManager.FindByIdAsync(id);
 
@@ -235,6 +261,7 @@ namespace Project_v1.Controllers {
                 user.UserName = updatedUser.UserName;
                 user.Email = updatedUser.Email;
                 user.PhoneNumber = updatedUser.PhoneNumber;
+                user.ImageUrl = updatedUser.ImageUrl;
 
                 await _userManager.UpdateAsync(user);
                 await _context.SaveChangesAsync();

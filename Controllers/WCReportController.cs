@@ -295,7 +295,7 @@ namespace Project_v1.Controllers {
 
         [HttpGet]
         [Route("GetComments")]
-        [Authorize]
+        //[Authorize]
         public async Task<IActionResult> GetComments() {
             try {
                 var comments = await _context.Comments.ToListAsync();

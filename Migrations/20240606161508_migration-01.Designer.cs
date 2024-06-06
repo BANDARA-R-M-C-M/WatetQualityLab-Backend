@@ -12,8 +12,8 @@ using Project_v1.Data;
 namespace Project_v1.Migrations
 {
     [DbContext(typeof(ApplicationDBContext))]
-    [Migration("20240515183929_M16")]
-    partial class M16
+    [Migration("20240606161508_migration-01")]
+    partial class migration01
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -184,18 +184,32 @@ namespace Project_v1.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("Project_v1.Models.Comment", b =>
+                {
+                    b.Property<string>("CommentId")
+                        .HasColumnType("varchar(10)");
+
+                    b.Property<string>("Feedback")
+                        .IsRequired()
+                        .HasColumnType("varchar(200)");
+
+                    b.HasKey("CommentId");
+
+                    b.ToTable("Comments");
+                });
+
             modelBuilder.Entity("Project_v1.Models.GeneralCategory", b =>
                 {
                     b.Property<string>("GeneralCategoryID")
-                        .HasColumnType("nvarchar(450)");
+                        .HasColumnType("varchar(40)");
 
-                    b.Property<string>("CategoryName")
+                    b.Property<string>("GeneralCategoryName")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("varchar(30)");
 
                     b.Property<string>("LabId")
                         .IsRequired()
-                        .HasColumnType("nvarchar(450)");
+                        .HasColumnType("varchar(40)");
 
                     b.HasKey("GeneralCategoryID");
 
@@ -207,30 +221,30 @@ namespace Project_v1.Migrations
             modelBuilder.Entity("Project_v1.Models.GeneralInventory", b =>
                 {
                     b.Property<string>("GeneralInventoryID")
-                        .HasColumnType("nvarchar(450)");
+                        .HasColumnType("varchar(40)");
 
                     b.Property<string>("GeneralCategoryID")
                         .IsRequired()
-                        .HasColumnType("nvarchar(450)");
+                        .HasColumnType("varchar(40)");
 
                     b.Property<string>("IssuedBy")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("varchar(40)");
 
                     b.Property<DateOnly>("IssuedDate")
                         .HasColumnType("date");
 
                     b.Property<string>("ItemName")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("varchar(30)");
 
                     b.Property<string>("ItemQR")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("varchar(250)");
 
                     b.Property<string>("Remarks")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("varchar(150)");
 
                     b.HasKey("GeneralInventoryID");
 
@@ -239,14 +253,63 @@ namespace Project_v1.Migrations
                     b.ToTable("GeneralInventory");
                 });
 
+            modelBuilder.Entity("Project_v1.Models.InstrumentalQualityControl", b =>
+                {
+                    b.Property<string>("InstrumentalQualityControlID")
+                        .HasColumnType("varchar(40)");
+
+                    b.Property<DateTime>("DateTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("InstrumentId")
+                        .IsRequired()
+                        .HasColumnType("varchar(40)");
+
+                    b.Property<string>("LabId")
+                        .IsRequired()
+                        .HasColumnType("varchar(40)");
+
+                    b.Property<string>("MltId")
+                        .IsRequired()
+                        .HasColumnType("varchar(40)");
+
+                    b.Property<double>("PressureGradient")
+                        .HasColumnType("float");
+
+                    b.Property<string>("Remarks")
+                        .IsRequired()
+                        .HasColumnType("varchar(150)");
+
+                    b.Property<string>("Stability")
+                        .IsRequired()
+                        .HasColumnType("varchar(40)");
+
+                    b.Property<string>("Sterility")
+                        .IsRequired()
+                        .HasColumnType("varchar(40)");
+
+                    b.Property<double>("TemperatureFluctuation")
+                        .HasColumnType("float");
+
+                    b.Property<string>("Timer")
+                        .IsRequired()
+                        .HasColumnType("varchar(40)");
+
+                    b.HasKey("InstrumentalQualityControlID");
+
+                    b.HasIndex("LabId");
+
+                    b.ToTable("InstrumentalQualityControls");
+                });
+
             modelBuilder.Entity("Project_v1.Models.IssuedItem", b =>
                 {
                     b.Property<string>("IssuedItemID")
-                        .HasColumnType("nvarchar(450)");
+                        .HasColumnType("varchar(40)");
 
                     b.Property<string>("IssuedBy")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("varchar(40)");
 
                     b.Property<DateOnly>("IssuedDate")
                         .HasColumnType("date");
@@ -256,11 +319,11 @@ namespace Project_v1.Migrations
 
                     b.Property<string>("Remarks")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("varchar(150)");
 
                     b.Property<string>("SurgicalInventoryID")
                         .IsRequired()
-                        .HasColumnType("nvarchar(450)");
+                        .HasColumnType("varchar(40)");
 
                     b.HasKey("IssuedItemID");
 
@@ -272,19 +335,19 @@ namespace Project_v1.Migrations
             modelBuilder.Entity("Project_v1.Models.Lab", b =>
                 {
                     b.Property<string>("LabID")
-                        .HasColumnType("nvarchar(450)");
+                        .HasColumnType("varchar(40)");
 
                     b.Property<string>("LabLocation")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("varchar(50)");
 
                     b.Property<string>("LabName")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("varchar(30)");
 
                     b.Property<string>("LabTelephone")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("varchar(10)");
 
                     b.HasKey("LabID");
 
@@ -294,15 +357,15 @@ namespace Project_v1.Migrations
             modelBuilder.Entity("Project_v1.Models.MOHArea", b =>
                 {
                     b.Property<string>("MOHAreaID")
-                        .HasColumnType("nvarchar(450)");
+                        .HasColumnType("varchar(40)");
 
                     b.Property<string>("LabID")
                         .IsRequired()
-                        .HasColumnType("nvarchar(450)");
+                        .HasColumnType("varchar(40)");
 
                     b.Property<string>("MOHAreaName")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("varchar(30)");
 
                     b.HasKey("MOHAreaID");
 
@@ -311,18 +374,61 @@ namespace Project_v1.Migrations
                     b.ToTable("MOHAreas");
                 });
 
+            modelBuilder.Entity("Project_v1.Models.MediaQualityControl", b =>
+                {
+                    b.Property<string>("MediaQualityControlID")
+                        .HasColumnType("varchar(40)");
+
+                    b.Property<DateTime>("DateTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("LabId")
+                        .IsRequired()
+                        .HasColumnType("varchar(40)");
+
+                    b.Property<string>("MediaId")
+                        .IsRequired()
+                        .HasColumnType("varchar(40)");
+
+                    b.Property<string>("MltId")
+                        .IsRequired()
+                        .HasColumnType("varchar(40)");
+
+                    b.Property<string>("Remarks")
+                        .IsRequired()
+                        .HasColumnType("varchar(150)");
+
+                    b.Property<string>("Sensitivity")
+                        .IsRequired()
+                        .HasColumnType("varchar(40)");
+
+                    b.Property<string>("Stability")
+                        .IsRequired()
+                        .HasColumnType("varchar(40)");
+
+                    b.Property<string>("Sterility")
+                        .IsRequired()
+                        .HasColumnType("varchar(40)");
+
+                    b.HasKey("MediaQualityControlID");
+
+                    b.HasIndex("LabId");
+
+                    b.ToTable("MediaQualityControls");
+                });
+
             modelBuilder.Entity("Project_v1.Models.PHIArea", b =>
                 {
                     b.Property<string>("PHIAreaID")
-                        .HasColumnType("nvarchar(450)");
+                        .HasColumnType("varchar(40)");
 
                     b.Property<string>("MOHAreaId")
                         .IsRequired()
-                        .HasColumnType("nvarchar(450)");
+                        .HasColumnType("varchar(40)");
 
                     b.Property<string>("PHIAreaName")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("varchar(30)");
 
                     b.HasKey("PHIAreaID");
 
@@ -334,52 +440,54 @@ namespace Project_v1.Migrations
             modelBuilder.Entity("Project_v1.Models.Report", b =>
                 {
                     b.Property<string>("ReportRefId")
-                        .HasColumnType("nvarchar(450)");
+                        .HasColumnType("varchar(40)");
 
                     b.Property<string>("AppearanceOfSample")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("varchar(40)");
 
-                    b.Property<string>("EcoliCount")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<bool>("Contaminated")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("EcoliCount")
+                        .HasColumnType("int");
 
                     b.Property<DateOnly>("IssuedDate")
                         .HasColumnType("date");
 
                     b.Property<string>("LabId")
                         .IsRequired()
-                        .HasColumnType("nvarchar(450)");
+                        .HasColumnType("varchar(40)");
 
                     b.Property<string>("MltId")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("varchar(40)");
 
                     b.Property<string>("MyRefNo")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("varchar(10)");
 
-                    b.Property<string>("PresumptiveColiformCount")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<int>("PresumptiveColiformCount")
+                        .HasColumnType("int");
 
                     b.Property<string>("Remarks")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("varchar(200)");
 
                     b.Property<string>("ReportUrl")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("varchar(250)");
 
                     b.Property<string>("SampleId")
                         .IsRequired()
-                        .HasColumnType("nvarchar(450)");
+                        .HasColumnType("varchar(40)");
 
                     b.HasKey("ReportRefId");
 
                     b.HasIndex("LabId");
 
-                    b.HasIndex("SampleId");
+                    b.HasIndex("SampleId")
+                        .IsUnique();
 
                     b.ToTable("Reports");
                 });
@@ -387,49 +495,49 @@ namespace Project_v1.Migrations
             modelBuilder.Entity("Project_v1.Models.Sample", b =>
                 {
                     b.Property<string>("SampleId")
-                        .HasColumnType("nvarchar(450)");
+                        .HasColumnType("varchar(40)");
 
                     b.Property<string>("Acceptance")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("varchar(8)");
 
                     b.Property<DateOnly>("AnalyzedDate")
                         .HasColumnType("date");
 
                     b.Property<string>("CatagoryOfSource")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("varchar(40)");
 
                     b.Property<string>("CollectingSource")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("varchar(40)");
 
                     b.Property<string>("Comments")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("varchar(70)");
 
                     b.Property<DateOnly>("DateOfCollection")
                         .HasColumnType("date");
 
                     b.Property<string>("PHIAreaId")
                         .IsRequired()
-                        .HasColumnType("nvarchar(450)");
+                        .HasColumnType("varchar(40)");
 
                     b.Property<string>("PhiId")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("varchar(40)");
 
                     b.Property<string>("StateOfChlorination")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("varchar(10)");
 
                     b.Property<string>("YourRefNo")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("varchar(20)");
 
                     b.Property<string>("phiAreaName")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("varchar(40)");
 
                     b.HasKey("SampleId");
 
@@ -441,15 +549,15 @@ namespace Project_v1.Migrations
             modelBuilder.Entity("Project_v1.Models.SurgicalCategory", b =>
                 {
                     b.Property<string>("SurgicalCategoryID")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<string>("CategoryName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("varchar(40)");
 
                     b.Property<string>("LabId")
                         .IsRequired()
-                        .HasColumnType("nvarchar(450)");
+                        .HasColumnType("varchar(40)");
+
+                    b.Property<string>("SurgicalCategoryName")
+                        .IsRequired()
+                        .HasColumnType("varchar(30)");
 
                     b.HasKey("SurgicalCategoryID");
 
@@ -461,33 +569,33 @@ namespace Project_v1.Migrations
             modelBuilder.Entity("Project_v1.Models.SurgicalInventory", b =>
                 {
                     b.Property<string>("SurgicalInventoryID")
-                        .HasColumnType("nvarchar(450)");
+                        .HasColumnType("varchar(40)");
 
                     b.Property<string>("IssuedBy")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("varchar(40)");
 
                     b.Property<DateOnly>("IssuedDate")
                         .HasColumnType("date");
 
                     b.Property<string>("ItemName")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("varchar(40)");
 
                     b.Property<string>("ItemQR")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("varchar(250)");
 
                     b.Property<int>("Quantity")
                         .HasColumnType("int");
 
                     b.Property<string>("Remarks")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("varchar(150)");
 
                     b.Property<string>("SurgicalCategoryID")
                         .IsRequired()
-                        .HasColumnType("nvarchar(450)");
+                        .HasColumnType("varchar(40)");
 
                     b.HasKey("SurgicalInventoryID");
 
@@ -515,8 +623,11 @@ namespace Project_v1.Migrations
                     b.Property<bool>("EmailConfirmed")
                         .HasColumnType("bit");
 
+                    b.Property<string>("ImageUrl")
+                        .HasColumnType("varchar(250)");
+
                     b.Property<string>("LabID")
-                        .HasColumnType("nvarchar(450)");
+                        .HasColumnType("varchar(40)");
 
                     b.Property<bool>("LockoutEnabled")
                         .HasColumnType("bit");
@@ -525,7 +636,7 @@ namespace Project_v1.Migrations
                         .HasColumnType("datetimeoffset");
 
                     b.Property<string>("MOHAreaId")
-                        .HasColumnType("nvarchar(450)");
+                        .HasColumnType("varchar(40)");
 
                     b.Property<string>("NormalizedEmail")
                         .HasMaxLength(256)
@@ -536,7 +647,7 @@ namespace Project_v1.Migrations
                         .HasColumnType("nvarchar(256)");
 
                     b.Property<string>("PHIAreaId")
-                        .HasColumnType("nvarchar(450)");
+                        .HasColumnType("varchar(40)");
 
                     b.Property<string>("PasswordHash")
                         .HasColumnType("nvarchar(max)");
@@ -649,6 +760,17 @@ namespace Project_v1.Migrations
                     b.Navigation("GeneralCategory");
                 });
 
+            modelBuilder.Entity("Project_v1.Models.InstrumentalQualityControl", b =>
+                {
+                    b.HasOne("Project_v1.Models.Lab", "Lab")
+                        .WithMany("InstrumentalQualityControls")
+                        .HasForeignKey("LabId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Lab");
+                });
+
             modelBuilder.Entity("Project_v1.Models.IssuedItem", b =>
                 {
                     b.HasOne("Project_v1.Models.SurgicalInventory", "SurgicalInventory")
@@ -665,6 +787,17 @@ namespace Project_v1.Migrations
                     b.HasOne("Project_v1.Models.Lab", "Lab")
                         .WithMany("MOHAreas")
                         .HasForeignKey("LabID")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Lab");
+                });
+
+            modelBuilder.Entity("Project_v1.Models.MediaQualityControl", b =>
+                {
+                    b.HasOne("Project_v1.Models.Lab", "Lab")
+                        .WithMany("MediaQualityControls")
+                        .HasForeignKey("LabId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -691,8 +824,8 @@ namespace Project_v1.Migrations
                         .IsRequired();
 
                     b.HasOne("Project_v1.Models.Sample", "Sample")
-                        .WithMany("Reports")
-                        .HasForeignKey("SampleId")
+                        .WithOne("Reports")
+                        .HasForeignKey("Project_v1.Models.Report", "SampleId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -764,7 +897,11 @@ namespace Project_v1.Migrations
                 {
                     b.Navigation("GeneralCategories");
 
+                    b.Navigation("InstrumentalQualityControls");
+
                     b.Navigation("MOHAreas");
+
+                    b.Navigation("MediaQualityControls");
 
                     b.Navigation("Mlts");
 
@@ -787,7 +924,8 @@ namespace Project_v1.Migrations
 
             modelBuilder.Entity("Project_v1.Models.Sample", b =>
                 {
-                    b.Navigation("Reports");
+                    b.Navigation("Reports")
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("Project_v1.Models.SurgicalCategory", b =>

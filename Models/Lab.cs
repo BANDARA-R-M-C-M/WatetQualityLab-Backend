@@ -5,9 +5,16 @@ namespace Project_v1.Models
 {
     public class Lab {
         [Key]
+        [Column(TypeName = "varchar(40)")]
         public string LabID { get; set; }
+
+        [Column(TypeName = "varchar(30)")]
         public string LabName { get; set; }
+
+        [Column(TypeName = "varchar(50)")]
         public string LabLocation { get; set; }
+
+        [Column(TypeName = "varchar(10)")]
         public string LabTelephone { get; set; }
         public virtual ICollection<SystemUser> Mlts { get; set; } = new List<SystemUser>();
         public virtual ICollection<Report> Reports { get; set; } = new List<Report>();

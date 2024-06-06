@@ -15,7 +15,7 @@ namespace Project_v1.Services.IdGeneratorService {
                 newSampleId = "SMP-" + Guid.NewGuid().ToString();
             } while (!(_context.Samples.Any(s => s.SampleId == newSampleId)));*/
 
-            return ("SAMPLE" + Guid.NewGuid().ToString());
+            return ("SMP" + Guid.NewGuid().ToString());
         }     
 
         public string GenerateReportId() {
@@ -24,7 +24,7 @@ namespace Project_v1.Services.IdGeneratorService {
              *                           newReportId = "RPT-" + Guid.NewGuid().ToString();
              *                                      } while (!(_context.Reports.Any(r => r.ReportId == newReportId)));*/
 
-            return ("REPORT" + Guid.NewGuid().ToString());
+            return ("REP" + Guid.NewGuid().ToString());
         }
 
         public string GenerateLabId() {
@@ -32,11 +32,11 @@ namespace Project_v1.Services.IdGeneratorService {
         }
 
         public string GeneratePHIAreaId() {
-            return ("PHIAREA" + Guid.NewGuid().ToString());
+            return ("PHIA" + Guid.NewGuid().ToString());
         }
 
         public string GenerateMOHAreaId() {
-            return ("MOHAREA" + Guid.NewGuid().ToString());
+            return ("MOHA" + Guid.NewGuid().ToString());
         }
 
         public string GenerateGeneralInventoryId() {
@@ -56,7 +56,7 @@ namespace Project_v1.Services.IdGeneratorService {
         }
 
         public string GenerateIssuedItemId() {
-            return ("ISSUEDITEM" + Guid.NewGuid().ToString());
+            return ("II" + Guid.NewGuid().ToString());
         }
 
         public string GenerateInstrumentalQualityControlId() {
