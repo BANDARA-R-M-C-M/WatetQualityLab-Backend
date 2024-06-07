@@ -9,6 +9,7 @@ using Project_v1.Models;
 using Project_v1.Models.DTOs.Helper;
 using Project_v1.Models.DTOs.InstrumentalQC;
 using Project_v1.Models.DTOs.Response;
+using Project_v1.Models.DTOs.SurgicalInventoryItems;
 using Project_v1.Services.Filtering;
 using Project_v1.Services.IdGeneratorService;
 using Project_v1.Services.Logging;
@@ -86,6 +87,14 @@ namespace Project_v1.Controllers {
         [Authorize]
         public async Task<IActionResult> AddInstrumentalQualityControlRecord([FromBody] InstrumentalQualityRecord newRecord) {
             try {
+                if (!ModelState.IsValid) {
+                    return BadRequest(ModelState);
+                }
+
+                if (newRecord.DateTime > DateTime.Now) {
+                    return BadRequest(new { Message = "Record's Date Time cannot be in the future!" });
+                }
+
                 var lab = await _context.Labs.FindAsync(newRecord.LabId);
 
                 if (lab == null) {
@@ -98,8 +107,8 @@ namespace Project_v1.Controllers {
                     InstrumentalQualityControlID = instrumentQualityId,
                     DateTime = newRecord.DateTime,
                     InstrumentId = newRecord.InstrumentId,
-                    TemperatureFluctuation = newRecord.TemperatureFluctuation,
-                    PressureGradient = newRecord.PressureGradient,
+                    TemperatureFluctuation = (double)newRecord.TemperatureFluctuation,
+                    PressureGradient = (double)newRecord.PressureGradient,
                     Timer = newRecord.Timer,
                     Sterility = newRecord.Sterility,
                     Stability = newRecord.Stability,
@@ -125,6 +134,14 @@ namespace Project_v1.Controllers {
         [Route("UpdateInstrumentalQualityControlRecord/{id}")]
         public async Task<IActionResult> UpdateInstrumentalQualityControlRecord([FromRoute] String id, [FromBody] UpdateInstrumentalQC instrumentalQC) {
             try {
+                if (!ModelState.IsValid) {
+                    return BadRequest(ModelState);
+                }
+
+                if (instrumentalQC.DateTime > DateTime.Now) {
+                    return BadRequest(new { Message = "Record's Date Time cannot be in the future!" });
+                }
+
                 var qcRecord = await _context.InstrumentalQualityControls.FindAsync(id);
 
                 if (qcRecord == null) {
@@ -133,12 +150,13 @@ namespace Project_v1.Controllers {
 
                 qcRecord.DateTime = instrumentalQC.DateTime;
                 qcRecord.InstrumentId = instrumentalQC.InstrumentId;
-                qcRecord.TemperatureFluctuation = instrumentalQC.TemperatureFluctuation;
-                qcRecord.PressureGradient = instrumentalQC.PressureGradient;
+                qcRecord.TemperatureFluctuation = (double)instrumentalQC.TemperatureFluctuation;
+                qcRecord.PressureGradient = (double)instrumentalQC.PressureGradient;
                 qcRecord.Timer = instrumentalQC.Timer;
                 qcRecord.Sterility = instrumentalQC.Sterility;
                 qcRecord.Stability = instrumentalQC.Stability;
                 qcRecord.Remarks = instrumentalQC.Remarks;
+                qcRecord.MltId = instrumentalQC.MltId;
 
                 await _context.SaveChangesAsync();
 

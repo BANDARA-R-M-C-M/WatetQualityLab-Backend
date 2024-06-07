@@ -130,8 +130,12 @@ namespace Project_v1.Controllers {
         [Authorize]
         public async Task<IActionResult> AddMOHArea([FromBody] Moh_area moh_area) {
             try {
-                if (moh_area == null || !ModelState.IsValid) {
-                    return BadRequest(new Response { Status = "Error", Message = "Invalid data!" });
+                if (!ModelState.IsValid) {
+                    return BadRequest(ModelState);
+                }
+
+                if(await _context.MOHAreas.AnyAsync(m => m.MOHAreaName == moh_area.MOHAreaName)) {
+                    return StatusCode(StatusCodes.Status403Forbidden, new { Message = "MOH Area already exists!" });
                 }
 
                 var mohAreaId = _idGenerator.GenerateMOHAreaId();
@@ -160,14 +164,18 @@ namespace Project_v1.Controllers {
         [Authorize]
         public async Task<IActionResult> AddPHIArea([FromBody] Phi_area phia_area) {
             try {
-                if (phia_area == null || !ModelState.IsValid) {
-                    return BadRequest(new Response { Status = "Error", Message = "Invalid data!" });
+                if (!ModelState.IsValid) {
+                    return BadRequest(ModelState);
+                }
+
+                if (await _context.PHIAreas.AnyAsync(p => p.PHIAreaName == phia_area.PHIAreaName)) {
+                    return StatusCode(StatusCodes.Status403Forbidden, new { Message = "PHI Area already exists!" });
                 }
 
                 var moh_area = await _context.MOHAreas.FindAsync(phia_area.MOHAreaId);
 
                 if (moh_area == null) {
-                    return NotFound(new Response { Status = "Error", Message = "MOH Area not found!" });
+                    return NotFound(new {  Message = "MOH Area not found!" });
                 }
 
                 var phiAreaId = _idGenerator.GeneratePHIAreaId();
@@ -196,13 +204,12 @@ namespace Project_v1.Controllers {
         [Authorize]
         public async Task<IActionResult> AddLab([FromBody] lab lab) {
             try {
-                if (lab == null || !ModelState.IsValid) {
-                    return BadRequest(new Response { Status = "Error", Message = "Invalid data!" });
+                if (!ModelState.IsValid) {
+                    return BadRequest(ModelState);
                 }
 
-                var labExists = await _context.Labs.AnyAsync(l => l.LabName == lab.LabName);
-                if (labExists) {
-                    return BadRequest(new Response { Status = "Error", Message = "Lab already exists!" });
+                if(await _context.Labs.AnyAsync(l => l.LabName == lab.LabName)) {
+                    return StatusCode(StatusCodes.Status403Forbidden, new { Message = "Lab already exists!" });
                 }
 
                 var labId = _idGenerator.GenerateLabId();
@@ -232,15 +239,20 @@ namespace Project_v1.Controllers {
         [Authorize]
         public async Task<IActionResult> UpdatePHIArea([FromRoute] String id, [FromBody] UpdatedPHIArea phiaArea) {
             try {
+                if(!ModelState.IsValid) {
+                    return BadRequest(ModelState);
+                }
 
                 var existingPhiArea = await _context.PHIAreas.FindAsync(id);
 
                 if (existingPhiArea == null) {
-                    return StatusCode(StatusCodes.Status404NotFound, new Response { Status = "Error", Message = "PHI Area not found!" });
+                    return NotFound();
                 }
 
-                if (phiaArea == null || !ModelState.IsValid) {
-                    return BadRequest(new Response { Status = "Error", Message = "Invalid data!" });
+                if (existingPhiArea.PHIAreaName != phiaArea.phiAreaName) {
+                    if (await _context.PHIAreas.AnyAsync(c => c.PHIAreaName == phiaArea.phiAreaName)) {
+                        return StatusCode(StatusCodes.Status403Forbidden, new { Message = "PHI Area already exists!" });
+                    }
                 }
 
                 existingPhiArea.PHIAreaName = phiaArea.phiAreaName;
@@ -263,15 +275,20 @@ namespace Project_v1.Controllers {
         [Authorize]
         public async Task<IActionResult> UpdateMOHArea([FromRoute] String id, [FromBody] UpdatedMOHArea mohArea) {
             try {
+                if (!ModelState.IsValid) {
+                    return BadRequest(ModelState);
+                }
 
                 var existingMohArea = await _context.MOHAreas.FindAsync(id);
 
                 if (existingMohArea == null) {
-                    return StatusCode(StatusCodes.Status404NotFound, new Response { Status = "Error", Message = "MOH Area not found!" });
+                    return NotFound();
                 }
 
-                if (mohArea == null || !ModelState.IsValid) {
-                    return BadRequest(new Response { Status = "Error", Message = "Invalid data!" });
+                if (existingMohArea.MOHAreaName != mohArea.mohAreaName) {
+                    if (await _context.MOHAreas.AnyAsync(c => c.MOHAreaName == mohArea.mohAreaName)) {
+                        return StatusCode(StatusCodes.Status403Forbidden, new { Message = "PHI Area already exists!" });
+                    }
                 }
 
                 existingMohArea.MOHAreaName = mohArea.mohAreaName;
@@ -294,15 +311,20 @@ namespace Project_v1.Controllers {
         [Authorize]
         public async Task<IActionResult> UpdateLab([FromRoute] String id, [FromBody] UpdatedLab lab) {
             try {
+                if(!ModelState.IsValid) {
+                    return BadRequest(ModelState);
+                }
 
                 var existingLab = await _context.Labs.FindAsync(id);
 
                 if (existingLab == null) {
-                    return StatusCode(StatusCodes.Status404NotFound, new Response { Status = "Error", Message = "Lab not found!" });
+                    return NotFound();
                 }
 
-                if (lab == null || !ModelState.IsValid) {
-                    return BadRequest(new Response { Status = "Error", Message = "Invalid data!" });
+                if (existingLab.LabName != lab.LabName) {
+                    if (await _context.Labs.AnyAsync(c => c.LabName == lab.LabName)) {
+                        return StatusCode(StatusCodes.Status403Forbidden, new { Message = "PHI Area already exists!" });
+                    }
                 }
 
                 existingLab.LabName = lab.LabName;

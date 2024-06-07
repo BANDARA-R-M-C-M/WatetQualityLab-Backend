@@ -470,8 +470,13 @@ namespace Project_v1.Controllers {
         [Authorize]
         public async Task<IActionResult> AddWCSample([FromBody] Wc_sample wcsample) {
             try {
-                if (wcsample == null || !ModelState.IsValid) {
-                    return BadRequest(new Response { Status = "Error", Message = "Invalid data!" });
+                if (!ModelState.IsValid) {
+                    return BadRequest(ModelState);
+                }
+
+                //var existingRefNo = await _context.Samples.AnyAsync(s => s.YourRefNo == wcsample.YourRefNo);
+                if (await _context.Samples.AnyAsync(s => s.YourRefNo == wcsample.YourRefNo)) {
+                    return StatusCode(StatusCodes.Status403Forbidden, new { Message = "YourRefNo already exists!" });
                 }
 
                 var sample = new Sample {
@@ -506,14 +511,20 @@ namespace Project_v1.Controllers {
         [Authorize]
         public async Task<IActionResult> UpdateWCSample([FromRoute] String id, [FromBody] Wc_updatedSample updatedSample) {
             try {
+                if (!ModelState.IsValid) {
+                    return BadRequest(ModelState);
+                }
+
                 var sample = await _context.Samples.FindAsync(id);
 
                 if (sample == null) {
                     return NotFound(new Response { Status = "Error", Message = "Sample not found!" });
                 }
 
-                if (updatedSample == null || !ModelState.IsValid) {
-                    return BadRequest(new Response { Status = "Error", Message = "Invalid sample data!" });
+                if (sample.YourRefNo != updatedSample.YourRefNo) {
+                    if (await _context.Samples.AnyAsync(s => s.YourRefNo == updatedSample.YourRefNo)) {
+                        return StatusCode(StatusCodes.Status403Forbidden, new { Message = "YourRefNo already exists!" });
+                    }
                 }
 
                 sample.YourRefNo = updatedSample.YourRefNo;
@@ -539,6 +550,10 @@ namespace Project_v1.Controllers {
         [Authorize]
         public async Task<IActionResult> UpdateSampleStatus([FromBody] SampleStatus sampleStatus) {
             try {
+                if (!ModelState.IsValid) {
+                    return BadRequest(ModelState);
+                }
+
                 var sampleToUpdate = await _context.Samples.FindAsync(sampleStatus.SampleId);
 
                 if (sampleToUpdate == null) {

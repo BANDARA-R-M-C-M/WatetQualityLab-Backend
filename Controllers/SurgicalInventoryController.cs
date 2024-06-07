@@ -209,12 +209,12 @@ namespace Project_v1.Controllers {
         [Authorize]
         public async Task<IActionResult> AddSurgicalCategory([FromBody] AddSurgicalCategory category) {
             try {
-                if (category == null || !ModelState.IsValid) {
+                if (!ModelState.IsValid) {
                     return BadRequest(ModelState);
                 }
 
                 if (await _context.SurgicalCategory.AnyAsync(c => c.SurgicalCategoryName == category.SurgicalCategoryName)) {
-                    return BadRequest(new Response { Status = "Error", Message = "Category already exists!" });
+                    return StatusCode(StatusCodes.Status403Forbidden, new { Message = "Category already exists!" });
                 }
 
                 var newCategory = new SurgicalCategory {
@@ -241,20 +241,16 @@ namespace Project_v1.Controllers {
         [Authorize]
         public async Task<IActionResult> AddSurgicalInventoryItem([FromBody] NewSurgicalItem newSurgicalItem) {
             try {
-                if (newSurgicalItem == null || !ModelState.IsValid) {
+                if (!ModelState.IsValid) {
                     return BadRequest(ModelState);
                 }
 
+                if (await _context.SurgicalInventory.AnyAsync(c => c.ItemName == newSurgicalItem.ItemName)) {
+                    return StatusCode(StatusCodes.Status403Forbidden, new { Message = "Item Name exists!" });
+                }
+
                 if (newSurgicalItem.IssuedDate > DateOnly.FromDateTime(DateTime.Now)) {
-                    return BadRequest(new Response { Status = "Error", Message = "Issued Date cannot be in the future!" });
-                }
-
-                if (newSurgicalItem.SurgicalCategoryID == null) {
-                    return BadRequest(new Response { Status = "Error", Message = "Category ID cannot be null!" });
-                }
-
-                if (newSurgicalItem.LabId == null) {
-                    return BadRequest(new Response { Status = "Error", Message = "Lab ID cannot be null!" });
+                    return BadRequest(new { Message = "Issued Date cannot be in the future!" });
                 }
 
                 var surgicalInventoryId = _idGenerator.GenerateSurgicalInventoryId();
@@ -292,6 +288,10 @@ namespace Project_v1.Controllers {
         [Authorize]
         public async Task<IActionResult> IssueItem([FromBody] IssueItem issueItem) {
             try {
+                if (!ModelState.IsValid) {
+                    return BadRequest(ModelState);
+                }
+
                 var item = await _context.SurgicalInventory.FindAsync(issueItem.ItemId);
 
                 if (item == null) {
@@ -299,7 +299,7 @@ namespace Project_v1.Controllers {
                 }
 
                 if (item.Quantity < issueItem.Quantity) {
-                    return BadRequest(new Response { Status = "Error", Message = "Not enough quantity available!" });
+                    return BadRequest(new { Message = "Not enough quantity available!" });
                 }
 
                 var today = DateOnly.FromDateTime(DateTime.Now);
@@ -333,6 +333,10 @@ namespace Project_v1.Controllers {
         [Authorize]
         public async Task<IActionResult> AddQuantity([FromRoute] string id, [FromBody] AddQuantity addQuantity) {
             try {
+                if (!ModelState.IsValid) {
+                    return BadRequest(ModelState);
+                }
+
                 var item = await _context.SurgicalInventory.FindAsync(id);
 
                 if (item == null) {
@@ -358,10 +362,20 @@ namespace Project_v1.Controllers {
         [Authorize]
         public async Task<IActionResult> UpdateGeneralCategory([FromRoute] string id, [FromBody] UpdateSurgicalCategory updatedCategory) {
             try {
+                if (!ModelState.IsValid) {
+                    return BadRequest(ModelState);
+                }
+
                 var surgicalCategory = await _context.SurgicalCategory.FindAsync(id);
 
                 if (surgicalCategory == null) {
                     return NotFound();
+                }
+
+                if (surgicalCategory.SurgicalCategoryName != updatedCategory.SurgicalCategoryName) {
+                    if (await _context.SurgicalCategory.AnyAsync(c => c.SurgicalCategoryName == updatedCategory.SurgicalCategoryName)) {
+                        return StatusCode(StatusCodes.Status403Forbidden, new { Message = "Category already exists!" });
+                    }
                 }
 
                 surgicalCategory.SurgicalCategoryName = updatedCategory.SurgicalCategoryName;
@@ -383,10 +397,24 @@ namespace Project_v1.Controllers {
         [Authorize]
         public async Task<IActionResult> UpdateSurgicalInventoryItem([FromRoute] string id, [FromBody] UpdateSurgicalItem updatedItem) {
             try {
+                if (!ModelState.IsValid) {
+                    return BadRequest(ModelState);
+                }
+
                 var surgicalInventoryItem = await _context.SurgicalInventory.FindAsync(id);
 
                 if (surgicalInventoryItem == null) {
                     return NotFound();
+                }
+
+                if (surgicalInventoryItem.ItemName != updatedItem.ItemName) {
+                    if (await _context.SurgicalInventory.AnyAsync(c => c.ItemName == updatedItem.ItemName)) {
+                        return StatusCode(StatusCodes.Status403Forbidden, new { Message = "Item already exists!" });
+                    }
+                }
+
+                if (updatedItem.IssuedDate > DateOnly.FromDateTime(DateTime.Now)) {
+                    return BadRequest(new { Message = "Issued Date cannot be in the future!" });
                 }
 
                 if (!await _storageService.DeleteQRCode(id)) {

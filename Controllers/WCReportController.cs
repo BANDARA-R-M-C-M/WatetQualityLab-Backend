@@ -310,16 +310,21 @@ namespace Project_v1.Controllers {
         [Authorize]
         public async Task<IActionResult> AddWCReport([FromBody] Wc_report wcreport) {
             try {
-                if (wcreport == null || !ModelState.IsValid) {
-                    return BadRequest(new Response { Status = "Error", Message = "Invalid data!" });
+                if (!ModelState.IsValid) {
+                    return BadRequest(ModelState);
                 }
 
                 var sample = await _context.Samples.FindAsync(wcreport.SampleId);
-                var lab = await _context.Labs.FindAsync(wcreport.LabId);
 
                 if (sample == null) {
                     return NotFound(new Response { Status = "Error", Message = "Sample not found!" });
                 }
+
+                if (await _context.Reports.AnyAsync(r => r.MyRefNo == wcreport.MyRefNo)) {
+                    return StatusCode(StatusCodes.Status403Forbidden, new { Message = "YourRefNo already exists!" });
+                }
+
+                var lab = await _context.Labs.FindAsync(wcreport.LabId);
 
                 if (lab == null) {
                     return NotFound(new Response { Status = "Error", Message = "Lab not found!" });
@@ -408,14 +413,20 @@ namespace Project_v1.Controllers {
         [Authorize]
         public async Task<IActionResult> UpdateWCReport([FromRoute] String id, [FromBody] Wc_updatedReport updatedReport) {
             try {
+                if(!ModelState.IsValid) {
+                    return BadRequest(ModelState);
+                }
+
                 var report = await _context.Reports.FindAsync(id);
 
                 if (report == null) {
                     return NotFound(new Response { Status = "Error", Message = "Report not found!" });
                 }
 
-                if (updatedReport == null || !ModelState.IsValid) {
-                    return BadRequest(new Response { Status = "Error", Message = "Invalid report data!" });
+                if (report.MyRefNo != updatedReport.MyRefNo) {
+                    if (await _context.Reports.AnyAsync(s => s.MyRefNo == updatedReport.MyRefNo)) {
+                        return StatusCode(StatusCodes.Status403Forbidden, new { Message = "MyRefNo already exists!" });
+                    }
                 }
 
                 var existingReportData = await _context.Reports.

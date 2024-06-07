@@ -83,6 +83,14 @@ namespace Project_v1.Controllers {
         [Authorize]
         public async Task<IActionResult> AddMediaQualityControlRecord([FromBody] MediaQualityRecord newRecord) {
             try {
+                if(!ModelState.IsValid) {
+                    return BadRequest(ModelState);
+                }
+
+                if (newRecord.DateTime > DateTime.Now) {
+                    return BadRequest(new { Message = "Record's Date Time cannot be in the future!" });
+                }
+
                 var lab = await _context.Labs.FindAsync(newRecord.LabId);
 
                 if (lab == null) {
@@ -121,6 +129,14 @@ namespace Project_v1.Controllers {
         [Authorize]
         public async Task<IActionResult> UpdateMediaQualityControlRecord(string id, [FromBody] UpdateMediaQC updatedRecord) {
             try {
+                if (!ModelState.IsValid) {
+                    return BadRequest(ModelState);
+                }
+
+                if (updatedRecord.DateTime > DateTime.Now) {
+                    return BadRequest(new { Message = "Record's Date Time cannot be in the future!" });
+                }
+
                 var mediaQualityControlRecord = await _context.MediaQualityControls.FindAsync(id);
 
                 if (mediaQualityControlRecord == null) {

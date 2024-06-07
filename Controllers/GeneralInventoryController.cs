@@ -205,12 +205,12 @@ namespace Project_v1.Controllers {
         [Authorize]
         public async Task<IActionResult> AddGeneralCategory([FromBody] AddGeneralCategory category) {
             try {
-                if (category == null || !ModelState.IsValid) {
+                if (!ModelState.IsValid) {
                     return BadRequest(ModelState);
                 }
 
                 if (await _context.GeneralCategory.AnyAsync(c => c.GeneralCategoryName == category.GeneralCategoryName)) {
-                    return BadRequest(new Response { Status = "Error", Message = "Category already exists!" });
+                    return StatusCode(StatusCodes.Status403Forbidden, new { Message = "Category already exists!" });
                 }
 
                 var generalDategoryId = _idGenerator.GenerateGeneralCatagoryId();
@@ -245,15 +245,11 @@ namespace Project_v1.Controllers {
                 }
 
                 if (newGeneralItem.IssuedDate > DateOnly.FromDateTime(DateTime.Now)) {
-                    return BadRequest(new Response { Status = "Error", Message = "Issued Date cannot be in the future!" });
+                    return BadRequest(new { Message = "Issued Date cannot be in the future!" });
                 }
 
-                if (newGeneralItem.GeneralCategoryID == null) {
-                    return BadRequest(new Response { Status = "Error", Message = "Category ID cannot be null!" });
-                }
-
-                if (newGeneralItem.LabId == null) {
-                    return BadRequest(new Response { Status = "Error", Message = "Lab ID cannot be null!" });
+                if(await _context.GeneralInventory.AnyAsync(c => c.ItemName == newGeneralItem.ItemName)) {
+                    return StatusCode(StatusCodes.Status403Forbidden, new {  Message = "Item Already exists!" });
                 }
 
                 var generalInventoryId = _idGenerator.GenerateGeneralInventoryId();
@@ -294,10 +290,20 @@ namespace Project_v1.Controllers {
         [Authorize]
         public async Task<IActionResult> UpdateGeneralCategory([FromRoute] string id, [FromBody] UpdateGeneralCategory updatedCategory) {
             try {
+                if(!ModelState.IsValid) {
+                    return BadRequest(ModelState);
+                }
+
                 var generalCategory = await _context.GeneralCategory.FindAsync(id);
 
                 if (generalCategory == null) {
                     return NotFound();
+                }
+
+                if(generalCategory.GeneralCategoryName != updatedCategory.GeneralCategoryName) {
+                    if (await _context.GeneralCategory.AnyAsync(c => c.GeneralCategoryName == updatedCategory.GeneralCategoryName)) {
+                        return StatusCode(StatusCodes.Status403Forbidden, new { Message = "Category already exists!" });
+                    }
                 }
 
                 generalCategory.GeneralCategoryName = updatedCategory.GeneralCategoryName;
@@ -317,34 +323,44 @@ namespace Project_v1.Controllers {
         [HttpPut]
         [Route("UpdateGeneralInventoryItem/{id}")]
         [Authorize]
-        public async Task<IActionResult> UpdateGeneralInventoryItem([FromRoute] string id, [FromBody] UpdateGeneralItem newGeneralItem) {
+        public async Task<IActionResult> UpdateGeneralInventoryItem([FromRoute] string id, [FromBody] UpdateGeneralItem updateGeneralItem) {
             try {
+                if (!ModelState.IsValid) {
+                    return BadRequest(ModelState);
+                }
+
                 var generalInventoryItem = await _context.GeneralInventory.FindAsync(id);
 
                 if (generalInventoryItem == null) {
                     return NotFound();
                 }
 
+                if (generalInventoryItem.ItemName != updateGeneralItem.ItemName) {
+                    if (await _context.GeneralInventory.AnyAsync(c => c.ItemName == updateGeneralItem.ItemName)) {
+                        return StatusCode(StatusCodes.Status403Forbidden, new { Message = "Item already exists!" });
+                    }
+                }
+
                 if (!await _storageService.DeleteQRCode(id)) {
                     return StatusCode(StatusCodes.Status500InternalServerError, "Error deleting QR Code!");
                 }
 
-                byte[] updatedQRCode = _qrGenerator.GenerateGeneralInventoryQRCode(newGeneralItem.GeneralCategoryID, id);
+                byte[] updatedQRCode = _qrGenerator.GenerateGeneralInventoryQRCode(updateGeneralItem.GeneralCategoryID, id);
 
                 var updatedQRurl = await _storageService.UploadQRCode(new MemoryStream(updatedQRCode), id);
 
-                generalInventoryItem.ItemName = newGeneralItem.ItemName;
-                generalInventoryItem.IssuedDate = newGeneralItem.IssuedDate;
-                generalInventoryItem.IssuedBy = newGeneralItem.IssuedBy;
-                generalInventoryItem.Remarks = newGeneralItem.Remarks;
+                generalInventoryItem.ItemName = updateGeneralItem.ItemName;
+                generalInventoryItem.IssuedDate = updateGeneralItem.IssuedDate;
+                generalInventoryItem.IssuedBy = updateGeneralItem.IssuedBy;
+                generalInventoryItem.Remarks = updateGeneralItem.Remarks;
                 generalInventoryItem.ItemQR = updatedQRurl;
-                generalInventoryItem.GeneralCategoryID = newGeneralItem.GeneralCategoryID;
+                generalInventoryItem.GeneralCategoryID = updateGeneralItem.GeneralCategoryID;
 
                 await _context.SaveChangesAsync();
 
                 var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
-                _inventoryLogger.LogInformation($"Update General Inventory Item: {id} in {newGeneralItem.GeneralCategoryID} Category by: {userId}");
+                _inventoryLogger.LogInformation($"Update General Inventory Item: {id} in {updateGeneralItem.GeneralCategoryID} Category by: {userId}");
 
                 return Ok(new Response { Status = "Success", Message = "Item Updated Successfully!" });
             } catch (Exception e) {

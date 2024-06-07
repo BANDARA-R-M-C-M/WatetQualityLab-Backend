@@ -72,18 +72,18 @@ namespace Project_v1.Controllers {
         [Route("login")]
         public async Task<IActionResult> Login([FromBody] Login loginUser) {
             try {
-                if (loginUser == null || !ModelState.IsValid) {
-                    return BadRequest(new Response { Status = "Error", Message = "Invalid user data!" });
+                if (!ModelState.IsValid) {
+                    return BadRequest(ModelState);
                 }
 
                 var existingUser = await _userManager.FindByNameAsync(loginUser.UserName);
                 if (existingUser == null) {
-                    return StatusCode(StatusCodes.Status404NotFound, new Response { Status = "Error", Message = "User not found!" });
+                    return NotFound(new { Message = "Username or Password Invalid!" });
                 }
 
                 var validPassword = await _userManager.CheckPasswordAsync(existingUser, loginUser.Password);
                 if (!validPassword) {
-                    return StatusCode(StatusCodes.Status403Forbidden, new Response { Status = "Error", Message = "Invalid password!" });
+                    return NotFound(new { Message = "Username or Password Invalid!" });
                 }
 
                 var role = await _userManager.GetRolesAsync(existingUser);
@@ -115,20 +115,24 @@ namespace Project_v1.Controllers {
         //[Authorize]
         public async Task<IActionResult> Signup([FromBody] Signup registeredUser) {
             try {
-                if (registeredUser == null || !ModelState.IsValid) {
-                    return BadRequest(new Response { Status = "Error", Message = "Invalid user data!" });
+                if (!ModelState.IsValid) {
+                    return BadRequest(ModelState);
                 }
 
-                var existingId = await _context.Users.FirstOrDefaultAsync(u => u.Id == registeredUser.Id);
-                var existingUser = await _context.Users.FirstOrDefaultAsync(u => u.UserName == registeredUser.UserName);
-                var existingEmail = await _context.Users.FirstOrDefaultAsync(u => u.Email == registeredUser.Email);
+                //var existingId = await _context.Users.FirstOrDefaultAsync(u => u.Id == registeredUser.Id);
+                //var existingUser = await _context.Users.FirstOrDefaultAsync(u => u.UserName == registeredUser.UserName);
+                //var existingEmail = await _context.Users.FirstOrDefaultAsync(u => u.Email == registeredUser.Email);
 
-                if (existingId != null) {
-                    return StatusCode(StatusCodes.Status403Forbidden, new Response { Status = "Error", Message = "User ID already exists!" });
-                } else if (existingUser != null) {
-                    return StatusCode(StatusCodes.Status403Forbidden, new Response { Status = "Error", Message = "UserName already exists!" });
-                } else if (existingEmail != null) {
-                    return StatusCode(StatusCodes.Status403Forbidden, new Response { Status = "Error", Message = "Email already exists!" });
+                if (await _context.Users.AnyAsync(u => u.Id == registeredUser.Id)) {
+                    return StatusCode(StatusCodes.Status403Forbidden, new { Message = "User ID already exists!" });
+                }
+
+                if (await _context.Users.AnyAsync(u => u.UserName == registeredUser.UserName)) {
+                    return StatusCode(StatusCodes.Status403Forbidden, new { Message = "UserName already exists!" });
+                }
+
+                if (await _context.Users.AnyAsync(u => u.Email == registeredUser.Email)) {
+                    return StatusCode(StatusCodes.Status403Forbidden, new { Message = "Email already exists!" });
                 }
 
                 var newUser = new SystemUser {
