@@ -9,6 +9,9 @@ namespace Project_v1.Models {
 
         [Column(TypeName = "int")]
         public int IssuedQuantity { get; set; }
+        
+        [Column(TypeName = "int")]
+        public int AddedQuantity { get; set; }
 
         [Column(TypeName = "date")]
         public DateOnly IssuedDate { get; set; }

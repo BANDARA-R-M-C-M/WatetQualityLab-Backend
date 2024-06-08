@@ -13,6 +13,7 @@ using Project_v1.Services.FirebaseStrorage;
 using Project_v1.Services.IdGeneratorService;
 using Project_v1.Services.Logging;
 using Project_v1.Services.QRGeneratorService;
+using Project_v1.Services.ReportService;
 using Serilog;
 using System.Security.Claims;
 
@@ -27,6 +28,7 @@ namespace Project_v1.Controllers {
         private readonly IQRGenerator _qrGenerator;
         private readonly IStorageService _storageService;
         private readonly IFilter _filter;
+        private readonly IReportService _reportService;
         private readonly InventoryOperationsLogger _inventoryLogger;
 
         public GeneralInventoryController(ApplicationDBContext context,
@@ -35,6 +37,7 @@ namespace Project_v1.Controllers {
                                           IQRGenerator qRGenerator,
                                           IStorageService storageService,
                                           IFilter filter,
+                                          IReportService reportService,
                                           InventoryOperationsLogger inventoryLogger) {
             _context = context;
             _idGenerator = idGenerator;
@@ -42,6 +45,7 @@ namespace Project_v1.Controllers {
             _qrGenerator = qRGenerator;
             _storageService = storageService;
             _filter = filter;
+            _reportService = reportService;
             _inventoryLogger = inventoryLogger;
         }
 
@@ -199,6 +203,36 @@ namespace Project_v1.Controllers {
                 return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
             }
         }
+
+        [HttpGet]
+        [Route("GetInventoryDurationReport")]
+        [Authorize]
+        public async Task<IActionResult> GetInventoryDurationReport([FromQuery] int year) {
+            try {
+
+                var today = DateOnly.FromDateTime(DateTime.Now);
+
+                var inventories = await _context.GeneralInventory
+                    .Include(g => g.GeneralCategory)
+                    .Where(g => g.IssuedDate.Year == year)
+                    .Select(g => new GeneralInventoryReport {
+                        ItemName = g.ItemName,
+                        IssuedDate = g.IssuedDate,
+                        Duration = (today.DayNumber - g.IssuedDate.DayNumber),
+                        IssuedBy = g.IssuedBy,
+                        Remarks = g.Remarks,
+                        GeneralCategoryName = g.GeneralCategory.GeneralCategoryName
+                    })
+                    .ToListAsync();
+
+                byte[] report = _reportService.GenerateInventoryDurationReport(inventories, year);
+
+                return File(report, "application/pdf", "InventoryDurationReport-" + year + ".pdf");
+            } catch (Exception e) {
+                return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
+            }
+        }
+
 
         [HttpPost]
         [Route("AddGeneralCategory")]

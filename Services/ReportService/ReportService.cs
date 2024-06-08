@@ -4,6 +4,8 @@ using iText.Layout;
 using iText.Layout.Borders;
 using iText.Layout.Element;
 using iText.Layout.Properties;
+using Project_v1.Models.DTOs.GeneralInventoryItems;
+using Project_v1.Models.DTOs.SurgicalInventoryItems;
 using Project_v1.Models.DTOs.WCReport;
 using System.Globalization;
 
@@ -132,7 +134,7 @@ namespace Project_v1.Services.ReportService {
 
             pdfDoc.SetDefaultPageSize(PageSize.A4.Rotate());
 
-            Paragraph header = new Paragraph($"Water Quality Testing Laboratory, MOH Office - {year}")
+            Paragraph header = new Paragraph($"Water Quality Testing Laboratory - {year}")
                 .SetTextAlignment(TextAlignment.CENTER)
                 .SetFontSize(20)
                 .SetBold();
@@ -164,11 +166,100 @@ namespace Project_v1.Services.ReportService {
 
             document.Add(table);
 
-            Paragraph footer = new Paragraph($"For any information, please contact [MLT Name]. Water Quality Testing Laboratory")
-                .SetTextAlignment(TextAlignment.LEFT)
+            document.Close();
+
+            return stream.ToArray();
+        }
+
+        public byte[] GenerateInventoryDurationReport(List<GeneralInventoryReport> inventories, int year) {
+            using MemoryStream stream = new MemoryStream();
+            PdfDocument pdfDoc = new PdfDocument(new PdfWriter(stream));
+            Document document = new Document(pdfDoc);
+
+            pdfDoc.SetDefaultPageSize(PageSize.A4.Rotate());
+
+            Paragraph header = new Paragraph($"Inventory Duration Report - {year}")
+                .SetTextAlignment(TextAlignment.CENTER)
+                .SetFontSize(20)
+                .SetBold();
+            document.Add(header);
+
+            document.Add(new Paragraph("\n"));
+
+            Table table = new Table(UnitValue.CreatePercentArray(new float[] { 10, 10, 15, 20, 25, 20 }));
+            table.SetWidth(UnitValue.CreatePercentValue(100));
+
+            table.AddHeaderCell(new Cell().Add(new Paragraph("Category").SetBold()));
+            table.AddHeaderCell(new Cell().Add(new Paragraph("Item Name").SetBold()));
+            table.AddHeaderCell(new Cell().Add(new Paragraph("Issued Date").SetBold()));
+            table.AddHeaderCell(new Cell().Add(new Paragraph("Issued By").SetBold()));
+            table.AddHeaderCell(new Cell().Add(new Paragraph("Remarks").SetBold()));
+            table.AddHeaderCell(new Cell().Add(new Paragraph("Duration (days)").SetBold()));
+
+            foreach (var inventory in inventories) {
+                table.AddCell(new Cell().Add(new Paragraph(inventory.GeneralCategoryName)));
+                table.AddCell(new Cell().Add(new Paragraph(inventory.ItemName)));
+                table.AddCell(new Cell().Add(new Paragraph(inventory.IssuedDate.ToString("yyyy-MM-dd"))));
+                table.AddCell(new Cell().Add(new Paragraph(inventory.IssuedBy)));
+                table.AddCell(new Cell().Add(new Paragraph(inventory.Remarks)));
+                table.AddCell(new Cell().Add(new Paragraph(GetDuration(inventory.Duration))));
+            }
+
+            document.Add(table);
+
+            Paragraph footer = new Paragraph($"Generated on {DateTime.Today:yyyy-MM-dd}")
+                .SetTextAlignment(TextAlignment.RIGHT)
                 .SetFontSize(12)
                 .SetBold();
             document.Add(footer);
+
+            document.Close();
+
+            return stream.ToArray();
+
+            static String GetDuration(int duration) {
+                var years = duration / 365;
+                var months = (duration - years * 365) / 30;
+                var days = (duration - years * 365 - months * 30) % 30;
+                return (years + " years " + months + " months " + days + " days").ToString();
+            }
+        }
+
+        public byte[] GenerateItemIssuingReport(List<ItemIssuingReport> issuedItems, int year, int month) {
+            using MemoryStream stream = new MemoryStream();
+            PdfDocument pdfDoc = new PdfDocument(new PdfWriter(stream));
+            Document document = new Document(pdfDoc);
+
+            pdfDoc.SetDefaultPageSize(PageSize.A4.Rotate());
+
+            Paragraph header = new Paragraph($"Item Issuing Report - {month}/{year}")
+                .SetTextAlignment(TextAlignment.CENTER)
+                .SetFontSize(20)
+                .SetBold();
+            document.Add(header);
+
+            document.Add(new Paragraph("\n"));
+
+            Table table = new Table(new float[] { 1, 2, 1, 1, 1, 1 });
+            table.SetWidth(UnitValue.CreatePercentValue(100));
+
+            table.AddHeaderCell(new Cell().Add(new Paragraph("Category").SetBold()));
+            table.AddHeaderCell(new Cell().Add(new Paragraph("Item Name").SetBold()));
+            table.AddHeaderCell(new Cell().Add(new Paragraph("Initial Quantity").SetBold()));
+            table.AddHeaderCell(new Cell().Add(new Paragraph("Issued Quantity").SetBold()));
+            table.AddHeaderCell(new Cell().Add(new Paragraph("Added Quantity").SetBold()));
+            table.AddHeaderCell(new Cell().Add(new Paragraph("Remaining Quantity").SetBold()));
+
+            foreach (var item in issuedItems) {
+                table.AddCell(new Cell().Add(new Paragraph(item.SurgicalCategory)));
+                table.AddCell(new Cell().Add(new Paragraph(item.ItemName)));
+                table.AddCell(new Cell().Add(new Paragraph(item.InitialQuantity.ToString())));
+                table.AddCell(new Cell().Add(new Paragraph(item.IssuedInMonth.ToString())));
+                table.AddCell(new Cell().Add(new Paragraph(item.AddedInMonth.ToString())));
+                table.AddCell(new Cell().Add(new Paragraph(item.RemainingQuantity.ToString())));
+            }
+
+            document.Add(table);
 
             document.Close();
 

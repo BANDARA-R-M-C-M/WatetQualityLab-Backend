@@ -18,6 +18,7 @@ using Project_v1.Services.Logging;
 using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
 using Firebase.Auth;
+using Project_v1.Services.ReportService;
 
 namespace Project_v1.Controllers {
     [Route("api/[controller]")]
@@ -30,6 +31,7 @@ namespace Project_v1.Controllers {
         private readonly IQRGenerator _qrGenerator;
         private readonly IStorageService _storageService;
         private readonly IFilter _filter;
+        public readonly IReportService _reportService;
         private readonly InventoryOperationsLogger _inventoryLogger;
 
         public SurgicalInventoryController(ApplicationDBContext context,
@@ -38,6 +40,7 @@ namespace Project_v1.Controllers {
                                           IQRGenerator qRGenerator,
                                           IStorageService storageService,
                                           IFilter filter,
+                                          IReportService reportService,
                                           InventoryOperationsLogger logger) {
             _context = context;
             _idGenerator = idGenerator;
@@ -46,6 +49,7 @@ namespace Project_v1.Controllers {
             _storageService = storageService;
             _filter = filter;
             _inventoryLogger = logger;
+            _reportService = reportService;
         }
 
         [HttpGet]
@@ -204,6 +208,61 @@ namespace Project_v1.Controllers {
             }
         }
 
+        [HttpGet]
+        [Route("GetItemIssuingReport")]
+        public async Task<IActionResult> GetItemIssuingReport([FromQuery] String MltId, [FromQuery] int Year, [FromQuery] int Month) {
+            try {
+                if (MltId == null) {
+                    return NotFound();
+                }
+
+                var mlt = await _userManager.FindByIdAsync(MltId);
+
+                if (mlt == null) {
+                    return NotFound($"User with username '{MltId}' not found.");
+                }
+
+                if (mlt.LabID == null) {
+                    return NotFound($"User with username '{MltId}' does not have a Lab assigned.");
+                }
+
+                var issuedItems = _context.SurgicalInventory
+                    .Include(item => item.IssuedItems)
+                    .Where(item => item.IssuedDate.Year <= Year && item.IssuedDate.Month <= Month)
+                    .Select(s => new ItemIssuingReport {
+                        ItemName = s.ItemName,
+                        SurgicalCategory = s.SurgicalCategory.SurgicalCategoryName,
+                        InitialQuantity = s.Quantity - s.IssuedItems
+                            .Where(i => i.IssuedDate.Month >= Month)
+                            .Sum(i => i.AddedQuantity) + s.IssuedItems
+                            .Where(i => i.IssuedDate.Month >= Month)
+                            .Sum(i => i.IssuedQuantity),
+                        IssuedInMonth = s.IssuedItems
+                            .Where(i => i.IssuedDate.Year == Year && i.IssuedDate.Month == Month)
+                            .Sum(i => i.IssuedQuantity),
+                        AddedInMonth = s.IssuedItems
+                            .Where(i => i.IssuedDate.Year == Year && i.IssuedDate.Month == Month)
+                            .Sum(i => i.AddedQuantity),
+                        RemainingQuantity = s.Quantity - s.IssuedItems
+                            .Where(i => i.IssuedDate.Month >= Month)
+                            .Sum(i => i.AddedQuantity) + s.IssuedItems
+                            .Where(i => i.IssuedDate.Month >= Month)
+                            .Sum(i => i.IssuedQuantity) - s.IssuedItems
+                            .Where(i => i.IssuedDate.Year == Year && i.IssuedDate.Month == Month)
+                            .Sum(i => i.IssuedQuantity) + s.IssuedItems
+                            .Where(i => i.IssuedDate.Year == Year && i.IssuedDate.Month == Month)
+                            .Sum(i => i.AddedQuantity)
+                    })
+                    .ToList();
+
+                var report = _reportService.GenerateItemIssuingReport(issuedItems, Year, Month);
+
+                return File(report, "application/pdf", "ItemIssuingReport.pdf");
+            } catch (Exception e) {
+                return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
+            }
+        }
+
         [HttpPost]
         [Route("AddSurgicalCategory")]
         [Authorize]
@@ -275,7 +334,7 @@ namespace Project_v1.Controllers {
 
                 var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
-                _inventoryLogger.LogInformation($"Added Surgical Inventory Item: {surgicalInventoryId} to {newSurgicalItem.SurgicalCategoryID} Category in Lab: {newSurgicalItem.LabId} by: {userId}");
+                _inventoryLogger.LogInformation($"Added Surgical Inventory Item: {surgicalInventoryId} to {newSurgicalItem.SurgicalCategoryID} Category || Quantity: {newSurgicalItem.Quantity} in Lab: {newSurgicalItem.LabId} by: {userId}");
 
                 return Ok(new Response { Status = "Success", Message = "Item Added Successfully!" });
             } catch (Exception e) {
@@ -331,7 +390,7 @@ namespace Project_v1.Controllers {
         [HttpPatch]
         [Route("AddQuantity/{id}")]
         [Authorize]
-        public async Task<IActionResult> AddQuantity([FromRoute] string id, [FromBody] AddQuantity addQuantity) {
+        public async Task<IActionResult> AddQuantity([FromRoute] string id, [FromBody] IssueItem addQuantity) {
             try {
                 if (!ModelState.IsValid) {
                     return BadRequest(ModelState);
@@ -342,9 +401,20 @@ namespace Project_v1.Controllers {
                 if (item == null) {
                     return NotFound();
                 }
+                var today = DateOnly.FromDateTime(DateTime.Now);
 
                 item.Quantity += addQuantity.Quantity;
 
+                var addedItem = new IssuedItem {
+                    IssuedItemID = _idGenerator.GenerateIssuedItemId(),
+                    AddedQuantity = addQuantity.Quantity,
+                    IssuedBy = addQuantity.IssuedBy,
+                    IssuedDate = today,
+                    Remarks = addQuantity.Remarks,
+                    SurgicalInventoryID = addQuantity.ItemId
+                };
+
+                await _context.IssuedItems.AddAsync(addedItem);
                 await _context.SaveChangesAsync();
 
                 var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -437,7 +507,7 @@ namespace Project_v1.Controllers {
 
                 var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
-                _inventoryLogger.LogInformation($"Updated Surgical Inventory Item: {id} in {updatedItem.SurgicalCategoryID} Category by: {userId}");
+                _inventoryLogger.LogInformation($"Updated Surgical Inventory Item: {id} in {updatedItem.SurgicalCategoryID} Category || Quantity: {updatedItem.Quantity} by: {userId}");
 
                 return Ok(new Response { Status = "Success", Message = "Item Updated Successfully!" });
             } catch (Exception e) {
