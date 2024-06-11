@@ -323,7 +323,7 @@ namespace Project_v1.Controllers {
 
                 if (existingLab.LabName != lab.LabName) {
                     if (await _context.Labs.AnyAsync(c => c.LabName == lab.LabName)) {
-                        return StatusCode(StatusCodes.Status403Forbidden, new { Message = "PHI Area already exists!" });
+                        return StatusCode(StatusCodes.Status403Forbidden, new { Message = "Lab already exists!" });
                     }
                 }
 

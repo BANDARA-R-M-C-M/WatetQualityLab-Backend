@@ -112,7 +112,6 @@ namespace Project_v1.Controllers {
 
         [HttpPost]
         [Route("signup")]
-        //[Authorize]
         public async Task<IActionResult> Signup([FromBody] Signup registeredUser) {
             try {
                 if (!ModelState.IsValid) {

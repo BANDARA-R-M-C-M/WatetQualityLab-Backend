@@ -3,8 +3,7 @@
 namespace Project_v1.Models.DTOs.Login {
     public class Login {
         [Required]
-        [RegularExpression(@"^[a-zA-Z]+$", ErrorMessage = "Letters Only")]
-        [StringLength(30, ErrorMessage = "Content no exeed 40 characters")]
+        [StringLength(30, ErrorMessage = "Content no exeed 30 characters")]
         [DataType(DataType.Text)]
         public string UserName { get; set; }
 

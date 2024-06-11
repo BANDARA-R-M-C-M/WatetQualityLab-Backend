@@ -7,7 +7,6 @@ namespace Project_v1.Models.DTOs.Signup {
         public string Id { get; set; }
 
         [Required]
-        [RegularExpression(@"^[a-zA-Z]+$", ErrorMessage = "Letters Only")]
         [StringLength(30, ErrorMessage = "Content no exeed 40 characters")]
         [DataType(DataType.Text)]
         public string UserName { get; set; }

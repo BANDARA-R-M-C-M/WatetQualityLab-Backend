@@ -209,21 +209,22 @@ namespace Project_v1.Controllers {
         }
 
         [HttpGet]
-        [Route("GetItemIssuingReport")]
-        public async Task<IActionResult> GetItemIssuingReport([FromQuery] String MltId, [FromQuery] int Year, [FromQuery] int Month) {
+        [Route("GetIssuedItemDetails")]
+        [Authorize]
+        public async Task<IActionResult> GetIssuedItems([FromQuery] QueryObject query, [FromQuery] int Year, [FromQuery] int Month) {
             try {
-                if (MltId == null) {
+                if (query.UserId == null) {
                     return NotFound();
                 }
 
-                var mlt = await _userManager.FindByIdAsync(MltId);
+                var mlt = await _userManager.FindByIdAsync(query.UserId);
 
                 if (mlt == null) {
-                    return NotFound($"User with username '{MltId}' not found.");
+                    return NotFound($"User with username '{query.UserId}' not found.");
                 }
 
                 if (mlt.LabID == null) {
-                    return NotFound($"User with username '{MltId}' does not have a Lab assigned.");
+                    return NotFound($"User with username '{query.UserId}' does not have a Lab assigned.");
                 }
 
                 var issuedItems = _context.SurgicalInventory
@@ -252,8 +253,63 @@ namespace Project_v1.Controllers {
                             .Sum(i => i.IssuedQuantity) + s.IssuedItems
                             .Where(i => i.IssuedDate.Year == Year && i.IssuedDate.Month == Month)
                             .Sum(i => i.AddedQuantity)
+                    });
+
+                var filteredResult = await _filter.Filtering(issuedItems, query);
+
+                return Ok(filteredResult);
+            } catch (Exception e) {
+                return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
+            }
+        }
+
+        [HttpGet]
+        [Route("GetItemIssuingReport")]
+        [Authorize]
+        public async Task<IActionResult> GetItemIssuingReport([FromQuery] String MltId, [FromQuery] int Year, [FromQuery] int Month) {
+            try {
+                if (MltId == null) {
+                    return NotFound();
+                }
+
+                var mlt = await _userManager.FindByIdAsync(MltId);
+
+                if (mlt == null) {
+                    return NotFound($"User with username '{MltId}' not found.");
+                }
+
+                if (mlt.LabID == null) {
+                    return NotFound($"User with username '{MltId}' does not have a Lab assigned.");
+                }
+
+                var issuedItems = await _context.SurgicalInventory
+                    .Include(item => item.IssuedItems)
+                    .Where(item => item.IssuedDate.Year <= Year && item.IssuedDate.Month <= Month)
+                    .Select(s => new ItemIssuingReport {
+                        ItemName = s.ItemName,
+                        SurgicalCategory = s.SurgicalCategory.SurgicalCategoryName,
+                        InitialQuantity = s.Quantity - s.IssuedItems
+                            .Where(i => i.IssuedDate.Month >= Month)
+                            .Sum(i => i.AddedQuantity) + s.IssuedItems
+                            .Where(i => i.IssuedDate.Month >= Month)
+                            .Sum(i => i.IssuedQuantity),
+                        IssuedInMonth = s.IssuedItems
+                            .Where(i => i.IssuedDate.Year == Year && i.IssuedDate.Month == Month)
+                            .Sum(i => i.IssuedQuantity),
+                        AddedInMonth = s.IssuedItems
+                            .Where(i => i.IssuedDate.Year == Year && i.IssuedDate.Month == Month)
+                            .Sum(i => i.AddedQuantity),
+                        RemainingQuantity = s.Quantity - s.IssuedItems
+                            .Where(i => i.IssuedDate.Month >= Month)
+                            .Sum(i => i.AddedQuantity) + s.IssuedItems
+                            .Where(i => i.IssuedDate.Month >= Month)
+                            .Sum(i => i.IssuedQuantity) - s.IssuedItems
+                            .Where(i => i.IssuedDate.Year == Year && i.IssuedDate.Month == Month)
+                            .Sum(i => i.IssuedQuantity) + s.IssuedItems
+                            .Where(i => i.IssuedDate.Year == Year && i.IssuedDate.Month == Month)
+                            .Sum(i => i.AddedQuantity)
                     })
-                    .ToList();
+                    .ToListAsync();
 
                 var report = _reportService.GenerateItemIssuingReport(issuedItems, Year, Month);
 
@@ -304,9 +360,9 @@ namespace Project_v1.Controllers {
                     return BadRequest(ModelState);
                 }
 
-                if (await _context.SurgicalInventory.AnyAsync(c => c.ItemName == newSurgicalItem.ItemName)) {
-                    return StatusCode(StatusCodes.Status403Forbidden, new { Message = "Item Name exists!" });
-                }
+                //if (await _context.SurgicalInventory.AnyAsync(c => c.ItemName == newSurgicalItem.ItemName)) {
+                //    return StatusCode(StatusCodes.Status403Forbidden, new { Message = "Item Name exists!" });
+                //}
 
                 if (newSurgicalItem.IssuedDate > DateOnly.FromDateTime(DateTime.Now)) {
                     return BadRequest(new { Message = "Issued Date cannot be in the future!" });
@@ -477,11 +533,11 @@ namespace Project_v1.Controllers {
                     return NotFound();
                 }
 
-                if (surgicalInventoryItem.ItemName != updatedItem.ItemName) {
-                    if (await _context.SurgicalInventory.AnyAsync(c => c.ItemName == updatedItem.ItemName)) {
-                        return StatusCode(StatusCodes.Status403Forbidden, new { Message = "Item already exists!" });
-                    }
-                }
+                //if (surgicalInventoryItem.ItemName != updatedItem.ItemName) {
+                //    if (await _context.SurgicalInventory.AnyAsync(c => c.ItemName == updatedItem.ItemName)) {
+                //        return StatusCode(StatusCodes.Status403Forbidden, new { Message = "Item already exists!" });
+                //    }
+                //}
 
                 if (updatedItem.IssuedDate > DateOnly.FromDateTime(DateTime.Now)) {
                     return BadRequest(new { Message = "Issued Date cannot be in the future!" });

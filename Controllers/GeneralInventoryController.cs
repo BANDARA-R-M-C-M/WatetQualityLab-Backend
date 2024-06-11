@@ -205,16 +205,70 @@ namespace Project_v1.Controllers {
         }
 
         [HttpGet]
+        [Route("GetInventoryDurationDetails")]
+        [Authorize]
+        public async Task<IActionResult> GetInventoryDurationDetails([FromQuery] QueryObject query, [FromQuery] int Year) {
+            try {
+                if (query.UserId == null) {
+                    return NotFound();
+                }
+
+                var mlt = await _userManager.FindByIdAsync(query.UserId);
+
+                if (mlt == null) {
+                    return NotFound($"User with username '{query.UserId}' not found.");
+                }
+
+                if (mlt.LabID == null) {
+                    return NotFound($"User with username '{query.UserId}' does not have a Lab assigned.");
+                }
+
+                var today = DateOnly.FromDateTime(DateTime.Now);
+
+                var inventories = _context.GeneralInventory
+                    .Include(g => g.GeneralCategory)
+                    .Where(g => g.IssuedDate.Year <= Year)
+                    .Select(g => new GeneralInventoryReport {
+                        ItemName = g.ItemName,
+                        IssuedDate = g.IssuedDate,
+                        Duration = (today.DayNumber - g.IssuedDate.DayNumber),
+                        IssuedBy = g.IssuedBy,
+                        Remarks = g.Remarks,
+                        GeneralCategoryName = g.GeneralCategory.GeneralCategoryName
+                    });
+
+                var filteredResult = await _filter.Filtering(inventories, query);
+
+                return Ok(filteredResult);
+            } catch (Exception e) {
+                return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
+            }
+        }
+
+        [HttpGet]
         [Route("GetInventoryDurationReport")]
         [Authorize]
-        public async Task<IActionResult> GetInventoryDurationReport([FromQuery] int year) {
+        public async Task<IActionResult> GetInventoryDurationReport([FromQuery] String MltId, [FromQuery] int Year) {
             try {
+                if (MltId == null) {
+                    return NotFound();
+                }
+
+                var mlt = await _userManager.FindByIdAsync(MltId);
+
+                if (mlt == null) {
+                    return NotFound($"User with username '{MltId}' not found.");
+                }
+
+                if (mlt.LabID == null) {
+                    return NotFound($"User with username '{MltId}' does not have a Lab assigned.");
+                }
 
                 var today = DateOnly.FromDateTime(DateTime.Now);
 
                 var inventories = await _context.GeneralInventory
                     .Include(g => g.GeneralCategory)
-                    .Where(g => g.IssuedDate.Year == year)
+                    .Where(g => g.IssuedDate.Year <= Year)
                     .Select(g => new GeneralInventoryReport {
                         ItemName = g.ItemName,
                         IssuedDate = g.IssuedDate,
@@ -225,9 +279,9 @@ namespace Project_v1.Controllers {
                     })
                     .ToListAsync();
 
-                byte[] report = _reportService.GenerateInventoryDurationReport(inventories, year);
+                byte[] report = _reportService.GenerateInventoryDurationReport(inventories, Year);
 
-                return File(report, "application/pdf", "InventoryDurationReport-" + year + ".pdf");
+                return File(report, "application/pdf", "InventoryDurationReport-" + Year + ".pdf");
             } catch (Exception e) {
                 return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
             }
@@ -282,8 +336,8 @@ namespace Project_v1.Controllers {
                     return BadRequest(new { Message = "Issued Date cannot be in the future!" });
                 }
 
-                if(await _context.GeneralInventory.AnyAsync(c => c.ItemName == newGeneralItem.ItemName)) {
-                    return StatusCode(StatusCodes.Status403Forbidden, new {  Message = "Item Already exists!" });
+                if (await _context.GeneralInventory.AnyAsync(c => c.ItemName == newGeneralItem.ItemName)) {
+                    return StatusCode(StatusCodes.Status403Forbidden, new { Message = "Item Already exists!" });
                 }
 
                 var generalInventoryId = _idGenerator.GenerateGeneralInventoryId();
@@ -324,7 +378,7 @@ namespace Project_v1.Controllers {
         [Authorize]
         public async Task<IActionResult> UpdateGeneralCategory([FromRoute] string id, [FromBody] UpdateGeneralCategory updatedCategory) {
             try {
-                if(!ModelState.IsValid) {
+                if (!ModelState.IsValid) {
                     return BadRequest(ModelState);
                 }
 
@@ -334,7 +388,7 @@ namespace Project_v1.Controllers {
                     return NotFound();
                 }
 
-                if(generalCategory.GeneralCategoryName != updatedCategory.GeneralCategoryName) {
+                if (generalCategory.GeneralCategoryName != updatedCategory.GeneralCategoryName) {
                     if (await _context.GeneralCategory.AnyAsync(c => c.GeneralCategoryName == updatedCategory.GeneralCategoryName)) {
                         return StatusCode(StatusCodes.Status403Forbidden, new { Message = "Category already exists!" });
                     }

@@ -31,6 +31,7 @@ var userActionColumnOptions = new ColumnOptions();
 var inventoryLogger = new LoggerConfiguration()
     .MinimumLevel.Information()
     .WriteTo.Console()
+    .WriteTo.File("Logs/inventoryLog.txt", rollingInterval: RollingInterval.Month)
     .WriteTo.MSSqlServer(
         connectionString: builder.Configuration.GetConnectionString("DefaultConnection"),
         sinkOptions: new MSSqlServerSinkOptions {
@@ -44,6 +45,7 @@ var inventoryLogger = new LoggerConfiguration()
 var userActionLogger = new LoggerConfiguration()
     .MinimumLevel.Information()
     .WriteTo.Console()
+    .WriteTo.File("Logs/userActionLog.txt", rollingInterval: RollingInterval.Month)
     .WriteTo.MSSqlServer(
         connectionString: builder.Configuration.GetConnectionString("DefaultConnection"),
         sinkOptions: new MSSqlServerSinkOptions {
@@ -57,6 +59,7 @@ var userActionLogger = new LoggerConfiguration()
 Log.Logger = new LoggerConfiguration()
     .MinimumLevel.Information()
     .WriteTo.Console()
+    .WriteTo.File("Logs/log.txt", rollingInterval: RollingInterval.Month)
     .CreateLogger();
 
 builder.Host.UseSerilog();
