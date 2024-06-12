@@ -118,10 +118,6 @@ namespace Project_v1.Controllers {
                     return BadRequest(ModelState);
                 }
 
-                //var existingId = await _context.Users.FirstOrDefaultAsync(u => u.Id == registeredUser.Id);
-                //var existingUser = await _context.Users.FirstOrDefaultAsync(u => u.UserName == registeredUser.UserName);
-                //var existingEmail = await _context.Users.FirstOrDefaultAsync(u => u.Email == registeredUser.Email);
-
                 if (await _context.Users.AnyAsync(u => u.Id == registeredUser.Id)) {
                     return StatusCode(StatusCodes.Status403Forbidden, new { Message = "User ID already exists!" });
                 }
@@ -157,24 +153,6 @@ namespace Project_v1.Controllers {
                 _actionsLogger.LogInformation($"User {registeredUser.Id} created by: {userId}");
 
                 return StatusCode(StatusCodes.Status201Created, new Response { Status = "Success", Message = "User created successfully!" });
-            } catch (Exception e) {
-                return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
-            }
-        }
-
-        [HttpPut]
-        [Route("UpdatePassword")]
-        public async Task<IActionResult> UpdatePassword([FromQuery] String UserId) {
-            try {
-                var user = await _userManager.FindByIdAsync(UserId);
-
-                if (user == null) {
-                    return NotFound(new {Message = "User not found!"});
-                }
-
-                var currentPassword = await _userManager.CheckPasswordAsync(user, "password");
-
-                return Ok(currentPassword);
             } catch (Exception e) {
                 return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
             }
