@@ -10,7 +10,7 @@ namespace Project_v1.Models {
         [Column(TypeName = "varchar(20)")]
         public string YourRefNo { get; set; }
 
-        [Column(TypeName = "varchar(10)")]
+        [Column(TypeName = "varchar(25)")]
         public string StateOfChlorination { get; set; }
 
         [Column(TypeName = "date")]
@@ -41,7 +41,6 @@ namespace Project_v1.Models {
         [Column(TypeName = "varchar(40)")]
         public string PHIAreaId { get; set; }
         public virtual PHIArea PHIArea { get; set; }
-        //public virtual ICollection<Report> Reports { get; set; } = new List<Report>();
         public virtual Report Reports { get; set; }
     }
 }

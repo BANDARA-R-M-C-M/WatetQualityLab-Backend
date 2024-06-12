@@ -26,7 +26,6 @@ namespace Project_v1.Controllers {
         private readonly UserManager<SystemUser> _userManager;
         private readonly IIdGenerator _idGenerator;
         private readonly IQRGenerator _qrGenerator;
-        private readonly IStorageService _storageService;
         private readonly IFilter _filter;
         private readonly IReportService _reportService;
         private readonly InventoryOperationsLogger _inventoryLogger;
@@ -35,7 +34,6 @@ namespace Project_v1.Controllers {
                                           IIdGenerator idGenerator,
                                           UserManager<SystemUser> userManager,
                                           IQRGenerator qRGenerator,
-                                          IStorageService storageService,
                                           IFilter filter,
                                           IReportService reportService,
                                           InventoryOperationsLogger inventoryLogger) {
@@ -43,7 +41,6 @@ namespace Project_v1.Controllers {
             _idGenerator = idGenerator;
             _userManager = userManager;
             _qrGenerator = qRGenerator;
-            _storageService = storageService;
             _filter = filter;
             _reportService = reportService;
             _inventoryLogger = inventoryLogger;
@@ -171,7 +168,6 @@ namespace Project_v1.Controllers {
                             items.GeneralCategory.GeneralCategoryName,
                             DurationOfInventory = (today.DayNumber - items.IssuedDate.DayNumber),
                             items.Remarks,
-                            items.ItemQR,
                             items.GeneralCategory.LabId
                         });
 
@@ -194,11 +190,9 @@ namespace Project_v1.Controllers {
                     return NotFound();
                 }
 
-                var url = item.ItemQR;
+                byte[] qrCode = _qrGenerator.GenerateGeneralInventoryQRCode(item.GeneralCategoryID, itemId);
 
-                byte[] fileBytes = await _storageService.DownloadFile(url, itemId);
-
-                return File(fileBytes, "application/pdf", itemId);
+                return File(qrCode, "application/pdf", itemId);
             } catch (Exception e) {
                 return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
             }
@@ -342,21 +336,12 @@ namespace Project_v1.Controllers {
 
                 var generalInventoryId = _idGenerator.GenerateGeneralInventoryId();
 
-                byte[] QRCode = _qrGenerator.GenerateGeneralInventoryQRCode(newGeneralItem.GeneralCategoryID, generalInventoryId);
-
-                var QRurl = await _storageService.UploadQRCode(new MemoryStream(QRCode), generalInventoryId);
-
-                if (QRurl == null) {
-                    return StatusCode(StatusCodes.Status500InternalServerError, "Error uploading QR Code!");
-                }
-
                 var generalInventoryItem = new GeneralInventory {
                     GeneralInventoryID = generalInventoryId,
                     ItemName = newGeneralItem.ItemName,
                     IssuedDate = newGeneralItem.IssuedDate,
                     IssuedBy = newGeneralItem.IssuedBy,
                     Remarks = newGeneralItem.Remarks,
-                    ItemQR = QRurl,
                     GeneralCategoryID = newGeneralItem.GeneralCategoryID
                 };
 
@@ -429,19 +414,10 @@ namespace Project_v1.Controllers {
                     }
                 }
 
-                if (!await _storageService.DeleteQRCode(id)) {
-                    return StatusCode(StatusCodes.Status500InternalServerError, "Error deleting QR Code!");
-                }
-
-                byte[] updatedQRCode = _qrGenerator.GenerateGeneralInventoryQRCode(updateGeneralItem.GeneralCategoryID, id);
-
-                var updatedQRurl = await _storageService.UploadQRCode(new MemoryStream(updatedQRCode), id);
-
                 generalInventoryItem.ItemName = updateGeneralItem.ItemName;
                 generalInventoryItem.IssuedDate = updateGeneralItem.IssuedDate;
                 generalInventoryItem.IssuedBy = updateGeneralItem.IssuedBy;
                 generalInventoryItem.Remarks = updateGeneralItem.Remarks;
-                generalInventoryItem.ItemQR = updatedQRurl;
                 generalInventoryItem.GeneralCategoryID = updateGeneralItem.GeneralCategoryID;
 
                 await _context.SaveChangesAsync();
@@ -491,10 +467,8 @@ namespace Project_v1.Controllers {
                     return NotFound();
                 }
 
-                if (await _storageService.DeleteQRCode(id)) {
-                    _context.GeneralInventory.Remove(generalInventoryItem);
-                    await _context.SaveChangesAsync();
-                }
+                _context.GeneralInventory.Remove(generalInventoryItem);
+                await _context.SaveChangesAsync();
 
                 var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 

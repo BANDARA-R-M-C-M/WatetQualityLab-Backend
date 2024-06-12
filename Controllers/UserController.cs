@@ -162,6 +162,24 @@ namespace Project_v1.Controllers {
             }
         }
 
+        [HttpPut]
+        [Route("UpdatePassword")]
+        public async Task<IActionResult> UpdatePassword([FromQuery] String UserId) {
+            try {
+                var user = await _userManager.FindByIdAsync(UserId);
+
+                if (user == null) {
+                    return NotFound(new {Message = "User not found!"});
+                }
+
+                var currentPassword = await _userManager.CheckPasswordAsync(user, "password");
+
+                return Ok(currentPassword);
+            } catch (Exception e) {
+                return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
+            }
+        }
+
         [HttpGet]
         [Route("getMLTs")]
         [Authorize]

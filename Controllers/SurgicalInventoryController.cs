@@ -29,7 +29,6 @@ namespace Project_v1.Controllers {
         private readonly UserManager<SystemUser> _userManager;
         private readonly IIdGenerator _idGenerator;
         private readonly IQRGenerator _qrGenerator;
-        private readonly IStorageService _storageService;
         private readonly IFilter _filter;
         public readonly IReportService _reportService;
         private readonly InventoryOperationsLogger _inventoryLogger;
@@ -38,7 +37,6 @@ namespace Project_v1.Controllers {
                                           IIdGenerator idGenerator,
                                           UserManager<SystemUser> userManager,
                                           IQRGenerator qRGenerator,
-                                          IStorageService storageService,
                                           IFilter filter,
                                           IReportService reportService,
                                           InventoryOperationsLogger logger) {
@@ -46,7 +44,6 @@ namespace Project_v1.Controllers {
             _idGenerator = idGenerator;
             _userManager = userManager;
             _qrGenerator = qRGenerator;
-            _storageService = storageService;
             _filter = filter;
             _inventoryLogger = logger;
             _reportService = reportService;
@@ -175,7 +172,6 @@ namespace Project_v1.Controllers {
                         items.SurgicalCategory.SurgicalCategoryName,
                         DurationOfInventory = (today.DayNumber - items.IssuedDate.DayNumber),
                         items.Remarks,
-                        items.ItemQR,
                         items.SurgicalCategory.LabId
                     });
 
@@ -198,11 +194,9 @@ namespace Project_v1.Controllers {
                     return NotFound();
                 }
 
-                var url = item.ItemQR;
+                byte[] qrCode = _qrGenerator.GenerateSurgicalInventoryQRCode(item.SurgicalCategoryID, itemId);
 
-                byte[] fileBytes = await _storageService.DownloadFile(url, itemId);
-
-                return File(fileBytes, "application/pdf", itemId);
+                return File(qrCode, "application/pdf", itemId);
             } catch (Exception e) {
                 return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
             }
@@ -360,19 +354,11 @@ namespace Project_v1.Controllers {
                     return BadRequest(ModelState);
                 }
 
-                //if (await _context.SurgicalInventory.AnyAsync(c => c.ItemName == newSurgicalItem.ItemName)) {
-                //    return StatusCode(StatusCodes.Status403Forbidden, new { Message = "Item Name exists!" });
-                //}
-
                 if (newSurgicalItem.IssuedDate > DateOnly.FromDateTime(DateTime.Now)) {
                     return BadRequest(new { Message = "Issued Date cannot be in the future!" });
                 }
 
                 var surgicalInventoryId = _idGenerator.GenerateSurgicalInventoryId();
-
-                byte[] QRCode = _qrGenerator.GenerateSurgicalInventoryQRCode(newSurgicalItem.SurgicalCategoryID, surgicalInventoryId);
-
-                var QRurl = await _storageService.UploadQRCode(new MemoryStream(QRCode), surgicalInventoryId);
 
                 var surgicalInventoryItem = new SurgicalInventory {
                     SurgicalInventoryID = surgicalInventoryId,
@@ -381,7 +367,6 @@ namespace Project_v1.Controllers {
                     IssuedBy = newSurgicalItem.IssuedBy,
                     Quantity = newSurgicalItem.Quantity,
                     Remarks = newSurgicalItem.Remarks,
-                    ItemQR = QRurl,
                     SurgicalCategoryID = newSurgicalItem.SurgicalCategoryID
                 };
 
@@ -533,30 +518,21 @@ namespace Project_v1.Controllers {
                     return NotFound();
                 }
 
-                //if (surgicalInventoryItem.ItemName != updatedItem.ItemName) {
-                //    if (await _context.SurgicalInventory.AnyAsync(c => c.ItemName == updatedItem.ItemName)) {
-                //        return StatusCode(StatusCodes.Status403Forbidden, new { Message = "Item already exists!" });
-                //    }
-                //}
+                if (surgicalInventoryItem.ItemName != updatedItem.ItemName) {
+                    if (await _context.SurgicalInventory.AnyAsync(c => c.ItemName == updatedItem.ItemName)) {
+                        return StatusCode(StatusCodes.Status403Forbidden, new { Message = "Item already exists!" });
+                    }
+                }
 
                 if (updatedItem.IssuedDate > DateOnly.FromDateTime(DateTime.Now)) {
                     return BadRequest(new { Message = "Issued Date cannot be in the future!" });
                 }
-
-                if (!await _storageService.DeleteQRCode(id)) {
-                    return StatusCode(StatusCodes.Status500InternalServerError, "Error deleting QR Code!");
-                }
-
-                byte[] QRCode = _qrGenerator.GenerateSurgicalInventoryQRCode(updatedItem.SurgicalCategoryID, id);
-
-                var QRurl = await _storageService.UploadQRCode(new MemoryStream(QRCode), id);
 
                 surgicalInventoryItem.ItemName = updatedItem.ItemName;
                 surgicalInventoryItem.IssuedDate = updatedItem.IssuedDate;
                 surgicalInventoryItem.IssuedBy = updatedItem.IssuedBy;
                 surgicalInventoryItem.Quantity = updatedItem.Quantity;
                 surgicalInventoryItem.Remarks = updatedItem.Remarks;
-                surgicalInventoryItem.ItemQR = QRurl;
                 surgicalInventoryItem.SurgicalCategoryID = updatedItem.SurgicalCategoryID;
 
                 await _context.SaveChangesAsync();
@@ -606,10 +582,8 @@ namespace Project_v1.Controllers {
                     return NotFound();
                 }
 
-                if (await _storageService.DeleteQRCode(id)) {
-                    _context.SurgicalInventory.Remove(surgicalInventoryItem);
-                    await _context.SaveChangesAsync();
-                }
+                _context.SurgicalInventory.Remove(surgicalInventoryItem);
+                await _context.SaveChangesAsync();
 
                 var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 

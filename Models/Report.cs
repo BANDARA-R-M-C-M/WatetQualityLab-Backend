@@ -25,9 +25,6 @@ namespace Project_v1.Models {
         [Column(TypeName = "varchar(200)")]
         public string Remarks { get; set; }
 
-        [Column(TypeName = "varchar(250)")]
-        public string ReportUrl { get; set; }
-
         [Column(TypeName = "bit")]
         public bool Contaminated { get; set; }
 

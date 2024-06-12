@@ -30,7 +30,6 @@ namespace Project_v1.Controllers {
         private readonly UserManager<SystemUser> _userManager;
         private readonly IReportService _reportService;
         private readonly IIdGenerator _idGenerator;
-        private readonly IStorageService _storageService;
         private readonly IFilter _filter;
         private readonly UserActionsLogger _actionsLogger;
 
@@ -38,14 +37,12 @@ namespace Project_v1.Controllers {
                                   UserManager<SystemUser> userManager,
                                   IReportService reportService,
                                   IIdGenerator idGenerator,
-                                  IStorageService storageService,
                                   IFilter filter,
                                   UserActionsLogger actionsLogger) {
             _context = context;
             _userManager = userManager;
             _reportService = reportService;
             _idGenerator = idGenerator;
-            _storageService = storageService;
             _filter = filter;
             _actionsLogger = actionsLogger;
         }
@@ -99,7 +96,6 @@ namespace Project_v1.Controllers {
                         report.Remarks,
                         report.Contaminated,
                         report.LabId,
-                        report.ReportUrl,
                         report.Sample.PHIArea.MOHArea.MOHAreaName
                     });
 
@@ -177,7 +173,6 @@ namespace Project_v1.Controllers {
                         report.AppearanceOfSample,
                         report.Remarks,
                         report.LabId,
-                        report.ReportUrl,
                         report.Sample.PHIArea.MOHArea.MOHAreaName
                     });
 
@@ -277,17 +272,44 @@ namespace Project_v1.Controllers {
         [Authorize]
         public async Task<IActionResult> GetReportPDF(String reportId) {
             try {
-                var item = await _context.Reports.FindAsync(reportId);
+                var report = await _context.Reports.FindAsync(reportId);
 
-                if (item == null) {
+                if (report == null) {
                     return NotFound();
                 }
 
-                var url = item.ReportUrl;
+                var sample = await _context.Samples.FindAsync(report.SampleId);
 
-                byte[] fileBytes = await _storageService.DownloadFile(url, reportId);
+                if (sample == null) {
+                    return NotFound();
+                }
 
-                return File(fileBytes, "application/pdf", reportId);
+                var lab = await _context.Labs.FindAsync(report.LabId);
+
+                if (lab == null) {
+                    return NotFound();
+                }
+
+                var newReportData = new FullReport {
+                    MyRefNo = report.MyRefNo,
+                    IssuedDate = report.IssuedDate,
+                    AppearanceOfSample = report.AppearanceOfSample,
+                    EcoliCount = report.EcoliCount,
+                    PresumptiveColiformCount = report.PresumptiveColiformCount,
+                    Results = report.Remarks,
+                    YourRefNo = sample.YourRefNo,
+                    CollectingSource = sample.CollectingSource,
+                    DateOfCollection = sample.DateOfCollection,
+                    AnalyzedDate = sample.AnalyzedDate,
+                    StateOfChlorination = sample.StateOfChlorination,
+                    LabName = lab.LabName,
+                    LabLocation = lab.LabLocation,
+                    LabTelephone = lab.LabTelephone
+                };
+
+                byte[] wcreport = _reportService.GenerateWaterQualityReport(newReportData);
+
+                return File(wcreport, "application/pdf", reportId);
             } catch (Exception e) {
                 return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
             }
@@ -295,7 +317,7 @@ namespace Project_v1.Controllers {
 
         [HttpGet]
         [Route("GetComments")]
-        //[Authorize]
+        [Authorize]
         public async Task<IActionResult> GetComments() {
             try {
                 var comments = await _context.Comments.ToListAsync();
@@ -324,6 +346,14 @@ namespace Project_v1.Controllers {
                     return StatusCode(StatusCodes.Status403Forbidden, new { Message = "YourRefNo already exists!" });
                 }
 
+                if (wcreport.AnalyzedDate < sample.DateOfCollection) {
+                    return BadRequest(new { Message = "Analyzed date cannot earlier than date of collection!" });
+                }
+
+                if (wcreport.AnalyzedDate > DateOnly.FromDateTime(DateTime.Now)) {
+                    return BadRequest(new { Message = "Analyzed Date cannot be in the future!" });
+                }
+
                 var lab = await _context.Labs.FindAsync(wcreport.LabId);
 
                 if (lab == null) {
@@ -333,31 +363,6 @@ namespace Project_v1.Controllers {
                 var reportId = _idGenerator.GenerateReportId();
                 var issuedDate = DateOnly.FromDateTime(DateTime.Now);
 
-                var newReportData = new FullReport {
-                    MyRefNo = wcreport.MyRefNo,
-                    IssuedDate = issuedDate,
-                    AppearanceOfSample = wcreport.AppearanceOfSample,
-                    EcoliCount = wcreport.EcoliCount,
-                    PresumptiveColiformCount = wcreport.PresumptiveColiformCount,
-                    Results = wcreport.Remarks,
-                    YourRefNo = sample.YourRefNo,
-                    CollectingSource = sample.CollectingSource,
-                    DateOfCollection = sample.DateOfCollection,
-                    AnalyzedDate = sample.AnalyzedDate,
-                    StateOfChlorination = sample.StateOfChlorination,
-                    LabName = lab.LabName,
-                    LabLocation = lab.LabLocation,
-                    LabTelephone = lab.LabTelephone
-                };
-
-                byte[] pdf = _reportService.GenerateWaterQualityReport(newReportData);
-
-                var reportUrl = await _storageService.UploadFile(new MemoryStream(pdf), reportId);
-
-                if (reportUrl == null) {
-                    return StatusCode(StatusCodes.Status500InternalServerError, new Response { Status = "Error", Message = "An error occurred while processing URL." });
-                }
-
                 var report = new Report {
                     ReportRefId = reportId,
                     MyRefNo = wcreport.MyRefNo,
@@ -366,7 +371,6 @@ namespace Project_v1.Controllers {
                     EcoliCount = wcreport.EcoliCount,
                     AppearanceOfSample = wcreport.AppearanceOfSample,
                     Remarks = wcreport.Remarks,
-                    ReportUrl = reportUrl,
                     Contaminated = wcreport.Contaminated,
                     MltId = wcreport.MltId,
                     SampleId = wcreport.SampleId,
@@ -413,7 +417,7 @@ namespace Project_v1.Controllers {
         [Authorize]
         public async Task<IActionResult> UpdateWCReport([FromRoute] String id, [FromBody] Wc_updatedReport updatedReport) {
             try {
-                if(!ModelState.IsValid) {
+                if (!ModelState.IsValid) {
                     return BadRequest(ModelState);
                 }
 
@@ -429,52 +433,13 @@ namespace Project_v1.Controllers {
                     }
                 }
 
-                var existingReportData = await _context.Reports.
-                    Where(report => report.ReportRefId == id)
-                    .Select(report => new {
-                        report.IssuedDate,
-                        report.Lab.LabName,
-                        report.Lab.LabLocation,
-                        report.Lab.LabTelephone,
-                        report.Sample.YourRefNo,
-                        report.Sample.CollectingSource,
-                        report.Sample.DateOfCollection,
-                        report.Sample.AnalyzedDate,
-                        report.Sample.StateOfChlorination
-                    })
-                    .FirstOrDefaultAsync();
+                report.MyRefNo = updatedReport.MyRefNo;
+                report.AppearanceOfSample = updatedReport.AppearanceOfSample;
+                report.PresumptiveColiformCount = updatedReport.PresumptiveColiformCount;
+                report.EcoliCount = updatedReport.EcoliCount;
+                report.Remarks = updatedReport.Remarks;
 
-                if (await _storageService.DeleteFile(id)) {
-                    var updatedReportData = new FullReport {
-                        MyRefNo = updatedReport.MyRefNo,
-                        IssuedDate = existingReportData.IssuedDate,
-                        AppearanceOfSample = updatedReport.AppearanceOfSample,
-                        EcoliCount = updatedReport.EcoliCount,
-                        PresumptiveColiformCount = updatedReport.PresumptiveColiformCount,
-                        Results = updatedReport.Remarks,
-                        YourRefNo = existingReportData.YourRefNo,
-                        CollectingSource = existingReportData.CollectingSource,
-                        DateOfCollection = existingReportData.DateOfCollection,
-                        AnalyzedDate = existingReportData.AnalyzedDate,
-                        StateOfChlorination = existingReportData.StateOfChlorination,
-                        LabName = existingReportData.LabName,
-                        LabLocation = existingReportData.LabLocation,
-                        LabTelephone = existingReportData.LabTelephone
-                    };
-
-                    byte[] reportPDF = _reportService.GenerateWaterQualityReport(updatedReportData);
-
-                    var reportUrl = await _storageService.UploadFile(new MemoryStream(reportPDF), id);
-
-                    report.MyRefNo = updatedReport.MyRefNo;
-                    report.AppearanceOfSample = updatedReport.AppearanceOfSample;
-                    report.PresumptiveColiformCount = updatedReport.PresumptiveColiformCount;
-                    report.EcoliCount = updatedReport.EcoliCount;
-                    report.Remarks = updatedReport.Remarks;
-                    report.ReportUrl = reportUrl;
-
-                    await _context.SaveChangesAsync();
-                }
+                await _context.SaveChangesAsync();
 
                 var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
@@ -526,10 +491,8 @@ namespace Project_v1.Controllers {
                     return NotFound(new Response { Status = "Error", Message = "Report not found!" });
                 }
 
-                if (await _storageService.DeleteFile(id)) {
-                    _context.Reports.Remove(report);
-                    await _context.SaveChangesAsync();
-                }
+                _context.Reports.Remove(report);
+                await _context.SaveChangesAsync();
 
                 var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 

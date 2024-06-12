@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Project_v1.Data;
 using Project_v1.Models;
+using Project_v1.Models.DTOs.GeneralInventoryItems;
 using Project_v1.Models.DTOs.Helper;
 using Project_v1.Models.DTOs.Response;
 using Project_v1.Models.DTOs.SampleCount;
@@ -385,8 +386,8 @@ namespace Project_v1.Controllers {
 
         [HttpGet]
         [Route("GetSampleCountDetails")]
-        [Authorize]
-        public async Task<IActionResult> GetSampleCountDetails([FromQuery] QueryObject query) {
+        [Authorize(Roles = "Phi")]
+        public async Task<IActionResult> GetSampleCountDetails([FromQuery] QueryObject query, int Month, int Year) {
             try {
                 if (query.UserId == null) {
                     return NotFound();
@@ -403,7 +404,7 @@ namespace Project_v1.Controllers {
                 }
 
                 var sampleCount = await _context.Samples
-                .Where(s => s.PhiId == query.UserId)
+                .Where(s => s.PhiId == query.UserId && s.DateOfCollection.Month == Month && s.DateOfCollection.Year == Year)
                 .Include(p => p.PHIArea)
                 .GroupBy(s => s.PHIArea.PHIAreaName)
                 .Select(g => new {
@@ -479,6 +480,10 @@ namespace Project_v1.Controllers {
                     return StatusCode(StatusCodes.Status403Forbidden, new { Message = "YourRefNo already exists!" });
                 }
 
+                if (wcsample.DateOfCollection > DateOnly.FromDateTime(DateTime.Now)) {
+                    return BadRequest(new { Message = "Date of Collection cannot be in the future!" });
+                }
+
                 var sample = new Sample {
                     SampleId = _idGenerator.GenerateSampleId(),
                     YourRefNo = wcsample.YourRefNo,
@@ -525,6 +530,10 @@ namespace Project_v1.Controllers {
                     if (await _context.Samples.AnyAsync(s => s.YourRefNo == updatedSample.YourRefNo)) {
                         return StatusCode(StatusCodes.Status403Forbidden, new { Message = "YourRefNo already exists!" });
                     }
+                }
+
+                if (updatedSample.DateOfCollection > DateOnly.FromDateTime(DateTime.Now)) {
+                    return BadRequest(new { Message = "Date of Collection cannot be in the future!" });
                 }
 
                 sample.YourRefNo = updatedSample.YourRefNo;

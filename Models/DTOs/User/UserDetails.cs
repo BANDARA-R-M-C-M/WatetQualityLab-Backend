@@ -2,7 +2,6 @@
 
 namespace Project_v1.Models.DTOs.User {
     public class UserDetails {
-        [RegularExpression(@"^[a-zA-Z]+$", ErrorMessage = "Letters Only")]
         [StringLength(30, ErrorMessage = "Content no exeed 40 characters")]
         [DataType(DataType.Text)]
         public string? UserName { get; set; }

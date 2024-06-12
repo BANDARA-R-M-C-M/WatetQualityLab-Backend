@@ -212,6 +212,10 @@ namespace Project_v1.Controllers {
                     return StatusCode(StatusCodes.Status403Forbidden, new { Message = "Lab already exists!" });
                 }
 
+                if(await _context.Labs.AnyAsync(l => l.LabTelephone == lab.LabTelephone)) {
+                    return StatusCode(StatusCodes.Status403Forbidden, new { Message = "Lab telephone number already exists!" });
+                }
+
                 var labId = _idGenerator.GenerateLabId();
 
                 var newLab = new Lab {

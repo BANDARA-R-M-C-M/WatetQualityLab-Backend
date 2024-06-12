@@ -19,9 +19,6 @@ namespace Project_v1.Models {
         [Column(TypeName = "varchar(150)")]
         public string Remarks { get; set; }
 
-        [Column(TypeName = "varchar(250)")]
-        public string ItemQR { get; set; }
-
         [ForeignKey("GeneralCategory")]
         [Column(TypeName = "varchar(40)")]
         public string GeneralCategoryID { get; set; }
