@@ -102,7 +102,7 @@ namespace Project_v1.Controllers {
                 }
 
                 if (phi.PHIAreaId == null) {
-                    return NotFound($"User with username '{query.UserId}' have a PHI Area assigned.");
+                    return NotFound("No PHI Area assigned.");
                 }
 
                 var samples = _context.Samples
@@ -143,7 +143,7 @@ namespace Project_v1.Controllers {
                 }
 
                 if (phi.PHIAreaId == null) {
-                    return NotFound($"User with username '{query.UserId}' have a PHI Area assigned.");
+                    return NotFound("No PHI Area assigned!");
                 }
 
                 var samples = _context.Samples
@@ -184,7 +184,7 @@ namespace Project_v1.Controllers {
                 }
 
                 if (mlt.LabID == null) {
-                    return NotFound($"User with username '{query.UserId}' have a Lab assigned.");
+                    return NotFound("No Laboratory assigned.");
                 }
 
                 var samples = _context.Samples
@@ -230,7 +230,7 @@ namespace Project_v1.Controllers {
                 }
 
                 if (mlt.LabID == null) {
-                    return NotFound($"User with username '{query.UserId}' have a Lab assigned.");
+                    return NotFound("No Laboratory assigned.");
                 }
 
                 var samples = _context.Samples
@@ -276,7 +276,7 @@ namespace Project_v1.Controllers {
                 }
 
                 if (mlt.LabID == null) {
-                    return NotFound($"User with username '{query.UserId}' does not have a Lab assigned.");
+                    return NotFound("No Laboratory assigned.");
                 }
 
                 var samples = _context.Samples
@@ -339,7 +339,7 @@ namespace Project_v1.Controllers {
                 }
 
                 if (mlt.LabID == null) {
-                    return NotFound($"User with username '{query.UserId}' does not have a Lab assigned.");
+                    return NotFound("No Laboratory assigned.");
                 }
 
                 var phiAreasList = _context.MOHAreas
@@ -400,7 +400,7 @@ namespace Project_v1.Controllers {
                 }
 
                 if (phi.PHIAreaId == null) {
-                    return NotFound($"User with username '{query.UserId}' have a PHI Area assigned.");
+                    return NotFound("No PHI Area assigned.");
                 }
 
                 var sampleCount = await _context.Samples

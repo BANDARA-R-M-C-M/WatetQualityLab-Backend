@@ -339,7 +339,7 @@ namespace Project_v1.Migrations
 
                     b.Property<string>("LabName")
                         .IsRequired()
-                        .HasColumnType("varchar(30)");
+                        .HasColumnType("varchar(40)");
 
                     b.Property<string>("LabTelephone")
                         .IsRequired()

@@ -7,7 +7,6 @@ using Project_v1.Models;
 using Project_v1.Services.IdGeneratorService;
 using Project_v1.Models.DTOs.SurgicalInventoryItems;
 using Project_v1.Models.DTOs.Response;
-using Project_v1.Services.FirebaseStrorage;
 using Project_v1.Services.QRGeneratorService;
 using Project_v1.Models.DTOs.GeneralInventoryItems;
 using System.Diagnostics;
@@ -68,7 +67,7 @@ namespace Project_v1.Controllers {
                 var lab = await _context.Labs.FindAsync(labId);
 
                 if (lab == null) {
-                    return NotFound();
+                    return NotFound("No Laboratory assigned!" );
                 }
 
                 var surgicalCategories = _context.SurgicalCategory

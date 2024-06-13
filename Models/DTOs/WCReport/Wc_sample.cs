@@ -9,7 +9,7 @@ namespace Project_v1.Models.DTOs.WCReport {
         public string YourRefNo { get; set; }
 
         [Required]
-        [StringLength(10, ErrorMessage = "Content no exeed 25 characters")]
+        [StringLength(25, ErrorMessage = "Content no exeed 25 characters")]
         [DataType(DataType.Text)]
         public string StateOfChlorination { get; set; }
 

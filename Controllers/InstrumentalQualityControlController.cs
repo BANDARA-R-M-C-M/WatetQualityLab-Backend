@@ -56,7 +56,7 @@ namespace Project_v1.Controllers {
                 var lab = await _context.Labs.FindAsync(mlt.LabID);
 
                 if (lab == null) {
-                    return NotFound();
+                    return NotFound("No Laboratory Assigned!");
                 }
 
                 var instrumentalQualityControlRecords = _context.InstrumentalQualityControls

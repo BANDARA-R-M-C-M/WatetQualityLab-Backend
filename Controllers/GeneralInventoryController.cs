@@ -9,12 +9,10 @@ using Project_v1.Models.DTOs.GeneralInventoryItems;
 using Project_v1.Models.DTOs.Helper;
 using Project_v1.Models.DTOs.Response;
 using Project_v1.Services.Filtering;
-using Project_v1.Services.FirebaseStrorage;
 using Project_v1.Services.IdGeneratorService;
 using Project_v1.Services.Logging;
 using Project_v1.Services.QRGeneratorService;
 using Project_v1.Services.ReportService;
-using Serilog;
 using System.Security.Claims;
 
 namespace Project_v1.Controllers {
@@ -66,7 +64,7 @@ namespace Project_v1.Controllers {
                 var lab = await _context.Labs.FindAsync(labId);
 
                 if (lab == null) {
-                    return NotFound();
+                    return NotFound("No Laboratory assigned!");
                 }
 
                 var generalCategories = _context.GeneralCategory

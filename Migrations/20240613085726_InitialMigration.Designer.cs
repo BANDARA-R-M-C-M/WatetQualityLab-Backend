@@ -12,8 +12,8 @@ using Project_v1.Data;
 namespace Project_v1.Migrations
 {
     [DbContext(typeof(ApplicationDBContext))]
-    [Migration("20240606161508_migration-01")]
-    partial class migration01
+    [Migration("20240613085726_InitialMigration")]
+    partial class InitialMigration
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -238,10 +238,6 @@ namespace Project_v1.Migrations
                         .IsRequired()
                         .HasColumnType("varchar(30)");
 
-                    b.Property<string>("ItemQR")
-                        .IsRequired()
-                        .HasColumnType("varchar(250)");
-
                     b.Property<string>("Remarks")
                         .IsRequired()
                         .HasColumnType("varchar(150)");
@@ -306,6 +302,9 @@ namespace Project_v1.Migrations
                 {
                     b.Property<string>("IssuedItemID")
                         .HasColumnType("varchar(40)");
+
+                    b.Property<int>("AddedQuantity")
+                        .HasColumnType("int");
 
                     b.Property<string>("IssuedBy")
                         .IsRequired()
@@ -474,10 +473,6 @@ namespace Project_v1.Migrations
                         .IsRequired()
                         .HasColumnType("varchar(200)");
 
-                    b.Property<string>("ReportUrl")
-                        .IsRequired()
-                        .HasColumnType("varchar(250)");
-
                     b.Property<string>("SampleId")
                         .IsRequired()
                         .HasColumnType("varchar(40)");
@@ -529,7 +524,7 @@ namespace Project_v1.Migrations
 
                     b.Property<string>("StateOfChlorination")
                         .IsRequired()
-                        .HasColumnType("varchar(10)");
+                        .HasColumnType("varchar(25)");
 
                     b.Property<string>("YourRefNo")
                         .IsRequired()
@@ -581,10 +576,6 @@ namespace Project_v1.Migrations
                     b.Property<string>("ItemName")
                         .IsRequired()
                         .HasColumnType("varchar(40)");
-
-                    b.Property<string>("ItemQR")
-                        .IsRequired()
-                        .HasColumnType("varchar(250)");
 
                     b.Property<int>("Quantity")
                         .HasColumnType("int");

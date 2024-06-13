@@ -8,7 +8,7 @@ namespace Project_v1.Models
         [Column(TypeName = "varchar(40)")]
         public string LabID { get; set; }
 
-        [Column(TypeName = "varchar(30)")]
+        [Column(TypeName = "varchar(40)")]
         public string LabName { get; set; }
 
         [Column(TypeName = "varchar(50)")]

@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Project_v1.Migrations
 {
     /// <inheritdoc />
-    public partial class migration01 : Migration
+    public partial class InitialMigration : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -117,7 +117,7 @@ namespace Project_v1.Migrations
                         column: x => x.LabId,
                         principalTable: "Labs",
                         principalColumn: "LabID",
-                        onDelete: ReferentialAction.NoAction);
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -142,7 +142,7 @@ namespace Project_v1.Migrations
                         column: x => x.LabId,
                         principalTable: "Labs",
                         principalColumn: "LabID",
-                        onDelete: ReferentialAction.NoAction);
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -180,7 +180,7 @@ namespace Project_v1.Migrations
                         column: x => x.LabId,
                         principalTable: "Labs",
                         principalColumn: "LabID",
-                        onDelete: ReferentialAction.NoAction);
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -192,7 +192,6 @@ namespace Project_v1.Migrations
                     IssuedDate = table.Column<DateOnly>(type: "date", nullable: false),
                     IssuedBy = table.Column<string>(type: "varchar(40)", nullable: false),
                     Remarks = table.Column<string>(type: "varchar(150)", nullable: false),
-                    ItemQR = table.Column<string>(type: "varchar(250)", nullable: false),
                     GeneralCategoryID = table.Column<string>(type: "varchar(40)", nullable: false)
                 },
                 constraints: table =>
@@ -222,7 +221,7 @@ namespace Project_v1.Migrations
                         column: x => x.MOHAreaId,
                         principalTable: "MOHAreas",
                         principalColumn: "MOHAreaID",
-                        onDelete: ReferentialAction.NoAction);
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -235,7 +234,6 @@ namespace Project_v1.Migrations
                     IssuedBy = table.Column<string>(type: "varchar(40)", nullable: false),
                     Quantity = table.Column<int>(type: "int", nullable: false),
                     Remarks = table.Column<string>(type: "varchar(150)", nullable: false),
-                    ItemQR = table.Column<string>(type: "varchar(250)", nullable: false),
                     SurgicalCategoryID = table.Column<string>(type: "varchar(40)", nullable: false)
                 },
                 constraints: table =>
@@ -246,7 +244,7 @@ namespace Project_v1.Migrations
                         column: x => x.SurgicalCategoryID,
                         principalTable: "SurgicalCategory",
                         principalColumn: "SurgicalCategoryID",
-                        onDelete: ReferentialAction.NoAction);
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -299,7 +297,7 @@ namespace Project_v1.Migrations
                 {
                     SampleId = table.Column<string>(type: "varchar(40)", nullable: false),
                     YourRefNo = table.Column<string>(type: "varchar(20)", nullable: false),
-                    StateOfChlorination = table.Column<string>(type: "varchar(10)", nullable: false),
+                    StateOfChlorination = table.Column<string>(type: "varchar(25)", nullable: false),
                     DateOfCollection = table.Column<DateOnly>(type: "date", nullable: false),
                     CatagoryOfSource = table.Column<string>(type: "varchar(40)", nullable: false),
                     CollectingSource = table.Column<string>(type: "varchar(40)", nullable: false),
@@ -318,7 +316,7 @@ namespace Project_v1.Migrations
                         column: x => x.PHIAreaId,
                         principalTable: "PHIAreas",
                         principalColumn: "PHIAreaID",
-                        onDelete: ReferentialAction.NoAction);
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -327,6 +325,7 @@ namespace Project_v1.Migrations
                 {
                     IssuedItemID = table.Column<string>(type: "varchar(40)", nullable: false),
                     IssuedQuantity = table.Column<int>(type: "int", nullable: false),
+                    AddedQuantity = table.Column<int>(type: "int", nullable: false),
                     IssuedDate = table.Column<DateOnly>(type: "date", nullable: false),
                     IssuedBy = table.Column<string>(type: "varchar(40)", nullable: false),
                     Remarks = table.Column<string>(type: "varchar(150)", nullable: false),
@@ -340,7 +339,7 @@ namespace Project_v1.Migrations
                         column: x => x.SurgicalInventoryID,
                         principalTable: "SurgicalInventory",
                         principalColumn: "SurgicalInventoryID",
-                        onDelete: ReferentialAction.NoAction);
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -361,7 +360,7 @@ namespace Project_v1.Migrations
                         column: x => x.UserId,
                         principalTable: "AspNetUsers",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.NoAction);
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -439,7 +438,6 @@ namespace Project_v1.Migrations
                     EcoliCount = table.Column<int>(type: "int", nullable: false),
                     AppearanceOfSample = table.Column<string>(type: "varchar(40)", nullable: false),
                     Remarks = table.Column<string>(type: "varchar(200)", nullable: false),
-                    ReportUrl = table.Column<string>(type: "varchar(250)", nullable: false),
                     Contaminated = table.Column<bool>(type: "bit", nullable: false),
                     MltId = table.Column<string>(type: "varchar(40)", nullable: false),
                     LabId = table.Column<string>(type: "varchar(40)", nullable: false),
@@ -453,7 +451,7 @@ namespace Project_v1.Migrations
                         column: x => x.LabId,
                         principalTable: "Labs",
                         principalColumn: "LabID",
-                        onDelete: ReferentialAction.NoAction);
+                        onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
                         name: "FK_Reports_Samples_SampleId",
                         column: x => x.SampleId,

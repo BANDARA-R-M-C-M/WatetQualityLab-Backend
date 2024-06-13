@@ -12,7 +12,6 @@ using Project_v1.Models.DTOs.Helper;
 using Project_v1.Models.DTOs.Response;
 using Project_v1.Models.DTOs.WCReport;
 using Project_v1.Services.Filtering;
-using Project_v1.Services.FirebaseStrorage;
 using Project_v1.Services.IdGeneratorService;
 using Project_v1.Services.Logging;
 using Project_v1.Services.ReportService;
@@ -75,7 +74,7 @@ namespace Project_v1.Controllers {
                 }
 
                 if (mlt.LabID == null) {
-                    return NotFound($"User with username '{query.UserId}' have a Lab assigned.");
+                    return NotFound($"No Laboratory assigned.");
                 }
 
                 var reports = _context.Reports
@@ -123,7 +122,7 @@ namespace Project_v1.Controllers {
                 }
 
                 if (moh.MOHAreaId == null) {
-                    return NotFound($"User with username '{query.UserId}' have a MOH Area assigned.");
+                    return NotFound($"No MOH Area assigned.");
                 }
 
                 var mohArea = await _context.MOHAreas.Where(m => m.MOHAreaID == moh.MOHAreaId).ToListAsync();
@@ -194,8 +193,12 @@ namespace Project_v1.Controllers {
 
                 var moh = await _userManager.FindByIdAsync(query.UserId);
 
-                if (moh == null || moh.MOHAreaId == null) {
+                if (moh == null) {
                     return NotFound();
+                }
+
+                if (moh.MOHAreaId == null) {
+                    return NotFound("No MOH Area assigned!");
                 }
 
                 var phiAreaList = _context.PHIAreas
@@ -242,7 +245,7 @@ namespace Project_v1.Controllers {
                 }
 
                 if (moh.MOHAreaId == null) {
-                    return NotFound();
+                    return NotFound("No MOH Area assigned!");
                 }
 
                 var phiAreaList = await _context.PHIAreas
