@@ -98,7 +98,7 @@ namespace Project_v1.Services.ReportService {
                 .SetTextAlignment(TextAlignment.CENTER);
             table.AddCell(presumptiveColiformLimitCell);
 
-            Cell presumptiveColiformResultsCell = new Cell().Add(new Paragraph(wcreport.PresumptiveColiformCount.ToString() + "/100ml"))
+            Cell presumptiveColiformResultsCell = new Cell().Add(new Paragraph(wcreport.PresumptiveColiformCount + "/100ml"))
                 .SetTextAlignment(TextAlignment.CENTER)
                 .SetFontSize(11);
             table.AddCell(presumptiveColiformResultsCell);
@@ -111,7 +111,7 @@ namespace Project_v1.Services.ReportService {
                 .SetTextAlignment(TextAlignment.CENTER);
             table.AddCell(eColiLimitCell);
 
-            Cell eColiResultsCell = new Cell().Add(new Paragraph(wcreport.EcoliCount.ToString() + "/100ml"))
+            Cell eColiResultsCell = new Cell().Add(new Paragraph(wcreport.EcoliCount + "/100ml"))
                 .SetTextAlignment(TextAlignment.CENTER)
                 .SetFontSize(11);
             table.AddCell(eColiResultsCell);
@@ -240,11 +240,12 @@ namespace Project_v1.Services.ReportService {
 
             document.Add(new Paragraph("\n"));
 
-            Table table = new Table(new float[] { 1, 2, 1, 1, 1, 1 });
+            Table table = new Table(new float[] { 1, 2, 1, 1, 1, 1, 1 });
             table.SetWidth(UnitValue.CreatePercentValue(100));
 
             table.AddHeaderCell(new Cell().Add(new Paragraph("Category").SetBold()));
             table.AddHeaderCell(new Cell().Add(new Paragraph("Item Name").SetBold()));
+            table.AddHeaderCell(new Cell().Add(new Paragraph("Item Issued By").SetBold()));
             table.AddHeaderCell(new Cell().Add(new Paragraph("Initial Quantity").SetBold()));
             table.AddHeaderCell(new Cell().Add(new Paragraph("Issued Quantity").SetBold()));
             table.AddHeaderCell(new Cell().Add(new Paragraph("Added Quantity").SetBold()));
@@ -253,6 +254,7 @@ namespace Project_v1.Services.ReportService {
             foreach (var item in issuedItems) {
                 table.AddCell(new Cell().Add(new Paragraph(item.SurgicalCategory)));
                 table.AddCell(new Cell().Add(new Paragraph(item.ItemName)));
+                table.AddCell(new Cell().Add(new Paragraph(item.IssuedBy)));
                 table.AddCell(new Cell().Add(new Paragraph(item.InitialQuantity.ToString())));
                 table.AddCell(new Cell().Add(new Paragraph(item.IssuedInMonth.ToString())));
                 table.AddCell(new Cell().Add(new Paragraph(item.AddedInMonth.ToString())));

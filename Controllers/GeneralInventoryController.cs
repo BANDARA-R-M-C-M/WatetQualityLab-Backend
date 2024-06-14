@@ -212,7 +212,7 @@ namespace Project_v1.Controllers {
                 }
 
                 if (mlt.LabID == null) {
-                    return NotFound($"User with username '{query.UserId}' does not have a Lab assigned.");
+                    return NotFound("No Lab assigned.");
                 }
 
                 var today = DateOnly.FromDateTime(DateTime.Now);

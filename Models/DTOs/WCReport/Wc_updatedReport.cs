@@ -14,12 +14,14 @@ namespace Project_v1.Models.DTOs.WCReport {
         public string AppearanceOfSample { get; set; }
 
         [Required]
-        [Range(0, int.MaxValue, ErrorMessage = "Count must be a non-negative number")]
-        public int PresumptiveColiformCount { get; set; }
+        [StringLength(20, ErrorMessage = "Content no exeed 20 characters")]
+        [DataType(DataType.Text)]
+        public string PresumptiveColiformCount { get; set; }
 
         [Required]
-        [Range(0, int.MaxValue, ErrorMessage = "Count must be a non-negative number")]
-        public int EcoliCount { get; set; }
+        [StringLength(20, ErrorMessage = "Content no exeed 20 characters")]
+        [DataType(DataType.Text)]
+        public string EcoliCount { get; set; }
 
         [Required]
         [StringLength(200, ErrorMessage = "Cannot enter more tha 200 characters")]

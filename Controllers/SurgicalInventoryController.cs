@@ -67,7 +67,7 @@ namespace Project_v1.Controllers {
                 var lab = await _context.Labs.FindAsync(labId);
 
                 if (lab == null) {
-                    return NotFound("No Laboratory assigned!" );
+                    return NotFound("No Laboratory assigned!");
                 }
 
                 var surgicalCategories = _context.SurgicalCategory
@@ -217,7 +217,7 @@ namespace Project_v1.Controllers {
                 }
 
                 if (mlt.LabID == null) {
-                    return NotFound($"User with username '{query.UserId}' does not have a Lab assigned.");
+                    return NotFound("No Lab assigned.");
                 }
 
                 var issuedItems = _context.SurgicalInventory
@@ -226,6 +226,7 @@ namespace Project_v1.Controllers {
                     .Select(s => new ItemIssuingReport {
                         ItemName = s.ItemName,
                         SurgicalCategory = s.SurgicalCategory.SurgicalCategoryName,
+                        IssuedBy = s.IssuedBy,
                         InitialQuantity = s.Quantity - s.IssuedItems
                             .Where(i => i.IssuedDate.Month >= Month)
                             .Sum(i => i.AddedQuantity) + s.IssuedItems
@@ -281,6 +282,7 @@ namespace Project_v1.Controllers {
                     .Select(s => new ItemIssuingReport {
                         ItemName = s.ItemName,
                         SurgicalCategory = s.SurgicalCategory.SurgicalCategoryName,
+                        IssuedBy = s.IssuedBy,
                         InitialQuantity = s.Quantity - s.IssuedItems
                             .Where(i => i.IssuedDate.Month >= Month)
                             .Sum(i => i.AddedQuantity) + s.IssuedItems

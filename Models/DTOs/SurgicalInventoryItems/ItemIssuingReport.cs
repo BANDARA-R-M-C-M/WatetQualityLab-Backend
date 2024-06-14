@@ -2,6 +2,7 @@
     public class ItemIssuingReport {
         public string ItemName { get; set; }
         public string SurgicalCategory { get; set; }
+        public string IssuedBy { get; set; }
         public int InitialQuantity { get; set; }
         public int IssuedInMonth { get; set; }
         public int AddedInMonth { get; set; }

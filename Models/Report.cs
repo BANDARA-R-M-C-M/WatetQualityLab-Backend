@@ -10,14 +10,14 @@ namespace Project_v1.Models {
         [Column(TypeName = "varchar(10)")]
         public string MyRefNo { get; set; }
 
-        [Column(TypeName = "int")]
-        public int PresumptiveColiformCount { get; set; }
+        [Column(TypeName = "varchar(20)")]
+        public string PresumptiveColiformCount { get; set; }
 
         [Column(TypeName = "date")]
         public DateOnly IssuedDate { get; set; }
 
-        [Column(TypeName = "int")]
-        public int EcoliCount { get; set; }
+        [Column(TypeName = "varchar(20)")]
+        public string EcoliCount { get; set; }
 
         [Column(TypeName = "varchar(40)")]
         public string AppearanceOfSample { get; set; }
